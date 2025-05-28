@@ -1,146 +1,17 @@
-/*
-  Warnings:
+-- CreateEnum
+CREATE TYPE "ResFaseI" AS ENUM ('C', 'I', 'NA');
 
-  - You are about to drop the `Categoria` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Elemento` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionFase1` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionFase2` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionFase3` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionFase4` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionResumenFase1` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionResumenFase2` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionResumenFase3` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `EvaluacionResumenFase4` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Grupo` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Prestamo` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Producto` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Rubro` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Sucursal` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Usuario` table. If the table is not empty, all the data it contains will be lost.
+-- CreateEnum
+CREATE TYPE "ResFaseII" AS ENUM ('S', 'NS');
 
-*/
--- DropForeignKey
-ALTER TABLE "Elemento" DROP CONSTRAINT "Elemento_R04R_id_fkey";
+-- CreateEnum
+CREATE TYPE "ResFaseIII" AS ENUM ('C', 'I', 'NA', 'P');
 
--- DropForeignKey
-ALTER TABLE "EvaluacionFase1" DROP CONSTRAINT "EvaluacionFase1_R05E_id_fkey";
+-- CreateEnum
+CREATE TYPE "Calificativo" AS ENUM ('CORRECTO', 'ACEPTABLE', 'DEFICIENTE', 'PENDIENTE');
 
--- DropForeignKey
-ALTER TABLE "EvaluacionFase1" DROP CONSTRAINT "EvaluacionFase1_R05Ev_por_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase1" DROP CONSTRAINT "EvaluacionFase1_R05P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase2" DROP CONSTRAINT "EvaluacionFase2_R07E_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase2" DROP CONSTRAINT "EvaluacionFase2_R07Ev_por_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase2" DROP CONSTRAINT "EvaluacionFase2_R07P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase3" DROP CONSTRAINT "EvaluacionFase3_R09E_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase3" DROP CONSTRAINT "EvaluacionFase3_R09Ev_por_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase3" DROP CONSTRAINT "EvaluacionFase3_R09P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase4" DROP CONSTRAINT "EvaluacionFase4_R15E_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase4" DROP CONSTRAINT "EvaluacionFase4_R15Ev_por_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionFase4" DROP CONSTRAINT "EvaluacionFase4_R15P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionResumenFase1" DROP CONSTRAINT "EvaluacionResumenFase1_R06P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionResumenFase2" DROP CONSTRAINT "EvaluacionResumenFase2_R08P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionResumenFase3" DROP CONSTRAINT "EvaluacionResumenFase3_R10P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "EvaluacionResumenFase4" DROP CONSTRAINT "EvaluacionResumenFase4_R16P_num_fkey";
-
--- DropForeignKey
-ALTER TABLE "Prestamo" DROP CONSTRAINT "Prestamo_R01Cat_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Prestamo" DROP CONSTRAINT "Prestamo_R01Ejvo_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Prestamo" DROP CONSTRAINT "Prestamo_R01Pro_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Prestamo" DROP CONSTRAINT "Prestamo_R01SP_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Prestamo" DROP CONSTRAINT "Prestamo_R01Suc_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Producto" DROP CONSTRAINT "Producto_R13Cat_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Rubro" DROP CONSTRAINT "Rubro_R03G_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Usuario" DROP CONSTRAINT "Usuario_R12Suc_id_fkey";
-
--- DropTable
-DROP TABLE "Categoria";
-
--- DropTable
-DROP TABLE "Elemento";
-
--- DropTable
-DROP TABLE "EvaluacionFase1";
-
--- DropTable
-DROP TABLE "EvaluacionFase2";
-
--- DropTable
-DROP TABLE "EvaluacionFase3";
-
--- DropTable
-DROP TABLE "EvaluacionFase4";
-
--- DropTable
-DROP TABLE "EvaluacionResumenFase1";
-
--- DropTable
-DROP TABLE "EvaluacionResumenFase2";
-
--- DropTable
-DROP TABLE "EvaluacionResumenFase3";
-
--- DropTable
-DROP TABLE "EvaluacionResumenFase4";
-
--- DropTable
-DROP TABLE "Grupo";
-
--- DropTable
-DROP TABLE "Prestamo";
-
--- DropTable
-DROP TABLE "Producto";
-
--- DropTable
-DROP TABLE "Rubro";
-
--- DropTable
-DROP TABLE "Sucursal";
-
--- DropTable
-DROP TABLE "Usuario";
+-- CreateEnum
+CREATE TYPE "Resolucion" AS ENUM ('DEVUELTA', 'PASA_COMITE');
 
 -- CreateTable
 CREATE TABLE "R01Prestamo" (
@@ -274,6 +145,7 @@ CREATE TABLE "R10EvaluacionResumenFase3" (
 -- CreateTable
 CREATE TABLE "R11Sucursal" (
     "R11Id" UUID NOT NULL,
+    "R11NumSuc" TEXT NOT NULL,
     "R11Nom" TEXT NOT NULL,
 
     CONSTRAINT "R11Sucursal_pkey" PRIMARY KEY ("R11Id")
@@ -282,6 +154,7 @@ CREATE TABLE "R11Sucursal" (
 -- CreateTable
 CREATE TABLE "R12Usuario" (
     "R12Id" UUID NOT NULL,
+    "R12Ni" TEXT NOT NULL,
     "R12Nom" TEXT NOT NULL,
     "R12Suc_id" UUID NOT NULL,
     "R12Rol" TEXT NOT NULL,
@@ -339,6 +212,9 @@ CREATE TABLE "R16EvaluacionResumenFase4" (
 
     CONSTRAINT "R16EvaluacionResumenFase4_pkey" PRIMARY KEY ("R16P_num")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "R12Usuario_R12Ni_key" ON "R12Usuario"("R12Ni");
 
 -- AddForeignKey
 ALTER TABLE "R01Prestamo" ADD CONSTRAINT "R01Prestamo_R01Suc_id_fkey" FOREIGN KEY ("R01Suc_id") REFERENCES "R11Sucursal"("R11Id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -12,22 +12,26 @@ enum ResFaseI {
   I
   NA
 }
+
 enum ResFaseII {
   S
   NS
 }
+
 enum ResFaseIII {
   C
   I
   NA
   P
 }
+
 enum Calificativo {
   CORRECTO
   ACEPTABLE
   DEFICIENTE
   PENDIENTE
 }
+
 enum Resolucion {
   DEVUELTA
   PASA_COMITE
@@ -73,7 +77,7 @@ model R01Prestamo {
 }
 
 model R02Grupo {
-  R02Id  String  @id @default(uuid()) @db.Uuid
+  R02Id  String     @id @default(uuid()) @db.Uuid
   R02Nom String
   rubros R03Rubro[]
 }
@@ -114,7 +118,7 @@ model R05EvaluacionFase1 {
 }
 
 model R06EvaluacionResumenFase1 {
-  R06P_num String @id @db.Char(8)
+  R06P_num String       @id @db.Char(8)
   R06Ha    Int
   R06Hm    Int
   R06Hb    Int
@@ -126,13 +130,13 @@ model R06EvaluacionResumenFase1 {
 }
 
 model R07EvaluacionFase2 {
-  R07Id     String   @id @default(uuid()) @db.Uuid
-  R07P_num  String   @db.Char(8)
-  R07E_id   String   @db.Uuid
+  R07Id     String    @id @default(uuid()) @db.Uuid
+  R07P_num  String    @db.Char(8)
+  R07E_id   String    @db.Uuid
   R07Res    ResFaseII
   R07Obs    String?
-  R07Ev_por String   @db.Uuid
-  R07Ev_en  DateTime @default(now())
+  R07Ev_por String    @db.Uuid
+  R07Ev_en  DateTime  @default(now())
 
   prestamo  R01Prestamo @relation(fields: [R07P_num], references: [R01NUM])
   elemento  R04Elemento @relation(fields: [R07E_id], references: [R04Id])
@@ -140,7 +144,7 @@ model R07EvaluacionFase2 {
 }
 
 model R08EvaluacionResumenFase2 {
-  R08P_num String @id @db.Char(8)
+  R08P_num String       @id @db.Char(8)
   R08SolvT Int
   R08SolvA Int
   R08SolvM Int
@@ -153,13 +157,13 @@ model R08EvaluacionResumenFase2 {
 }
 
 model R09EvaluacionFase3 {
-  R09Id     String   @id @default(uuid()) @db.Uuid
-  R09P_num  String   @db.Char(8)
-  R09E_id   String   @db.Uuid
+  R09Id     String     @id @default(uuid()) @db.Uuid
+  R09P_num  String     @db.Char(8)
+  R09E_id   String     @db.Uuid
   R09Res    ResFaseIII
   R09Obs    String?
-  R09Ev_por String   @db.Uuid
-  R09Ev_en  DateTime @default(now())
+  R09Ev_por String     @db.Uuid
+  R09Ev_en  DateTime   @default(now())
 
   prestamo  R01Prestamo @relation(fields: [R09P_num], references: [R01NUM])
   elemento  R04Elemento @relation(fields: [R09E_id], references: [R04Id])
@@ -167,7 +171,7 @@ model R09EvaluacionFase3 {
 }
 
 model R10EvaluacionResumenFase3 {
-  R10P_num      String @id @db.Char(8)
+  R10P_num      String       @id @db.Char(8)
   R10Ha         Int
   R10Pendientes Int
   R10Rc         Int
@@ -177,7 +181,8 @@ model R10EvaluacionResumenFase3 {
 }
 
 model R11Sucursal {
-  R11Id     String     @id @default(uuid()) @db.Uuid
+  R11Id     String        @id @default(uuid()) @db.Uuid
+  R11NumSuc String
   R11Nom    String
   prestamos R01Prestamo[]
   usuarios  R12Usuario[]
@@ -185,6 +190,7 @@ model R11Sucursal {
 
 model R12Usuario {
   R12Id        String   @id @default(uuid()) @db.Uuid
+  R12Ni        String   @unique
   R12Nom       String
   R12Suc_id    String   @db.Uuid
   R12Rol       String
@@ -226,13 +232,13 @@ model R14Categoria {
 }
 
 model R15EvaluacionFase4 {
-  R15Id     String   @id @default(uuid()) @db.Uuid
-  R15P_num  String   @db.Char(8)
-  R15E_id   String   @db.Uuid
+  R15Id     String    @id @default(uuid()) @db.Uuid
+  R15P_num  String    @db.Char(8)
+  R15E_id   String    @db.Uuid
   R15Res    ResFaseII
   R15Obs    String?
-  R15Ev_por String   @db.Uuid
-  R15Ev_en  DateTime @default(now())
+  R15Ev_por String    @db.Uuid
+  R15Ev_en  DateTime  @default(now())
 
   prestamo  R01Prestamo @relation(fields: [R15P_num], references: [R01NUM])
   elemento  R04Elemento @relation(fields: [R15E_id], references: [R04Id])
@@ -240,7 +246,7 @@ model R15EvaluacionFase4 {
 }
 
 model R16EvaluacionResumenFase4 {
-  R16P_num  String @id @db.Char(8)
+  R16P_num  String       @id @db.Char(8)
   R16SolvT  Int
   R16SolvA  Int
   R16SolvM  Int

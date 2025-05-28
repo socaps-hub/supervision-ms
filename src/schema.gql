@@ -1,0 +1,37 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Usuario {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+type Sucursal {
+  R11Id: ID!
+  R11NumSuc: String!
+  R11Nom: String!
+}
+
+type Query {
+  usuarios: [Usuario!]!
+  usuario(id: Int!): Usuario!
+  sucursales: [Sucursal!]!
+}
+
+type Mutation {
+  createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
+  updateUsuario(updateUsuarioInput: UpdateUsuarioInput!): Usuario!
+  removeUsuario(id: Int!): Usuario!
+}
+
+input CreateUsuarioInput {
+  """Example field (placeholder)"""
+  exampleField: Int!
+}
+
+input UpdateUsuarioInput {
+  """Example field (placeholder)"""
+  exampleField: Int
+  id: Int!
+}
