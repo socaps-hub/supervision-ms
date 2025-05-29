@@ -6,30 +6,39 @@ import { UpdateUsuarioInput } from './dto/update-usuario.input';
 
 @Resolver(() => Usuario)
 export class UsuariosResolver {
+
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Mutation(() => Usuario)
-  createUsuario(@Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput) {
+  createUsuario(
+    @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput
+  ) {
     return this.usuariosService.create(createUsuarioInput);
   }
 
   @Query(() => [Usuario], { name: 'usuarios' })
-  findAll() {
-    return this.usuariosService.findAll();
+  findAll(
+    @Args('rol', { type: () => String, nullable: true }) rol: 'ejecutivo'|'admin'|'supervisor'
+  ) {
+    console.log(rol);
+    
+    return this.usuariosService.findAll( rol );
   }
 
   @Query(() => Usuario, { name: 'usuario' })
-  findOne(@Args('id', { type: () => Int }) id: number) {
-    return this.usuariosService.findOne(id);
+  findByNI(
+    @Args('ni', { type: () => String }) ni: string
+  ) {
+    return this.usuariosService.findByNI(ni);
   }
 
-  @Mutation(() => Usuario)
-  updateUsuario(@Args('updateUsuarioInput') updateUsuarioInput: UpdateUsuarioInput) {
-    return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
-  }
+  // @Mutation(() => Usuario)
+  // updateUsuario(@Args('updateUsuarioInput') updateUsuarioInput: UpdateUsuarioInput) {
+  //   return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
+  // }
 
-  @Mutation(() => Usuario)
-  removeUsuario(@Args('id', { type: () => Int }) id: number) {
-    return this.usuariosService.remove(id);
-  }
+  // @Mutation(() => Usuario)
+  // removeUsuario(@Args('id', { type: () => Int }) id: number) {
+  //   return this.usuariosService.remove(id);
+  // }
 }

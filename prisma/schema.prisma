@@ -194,7 +194,7 @@ model R12Usuario {
   R12Nom       String
   R12Suc_id    String   @db.Uuid
   R12Rol       String
-  R12Activ     Boolean
+  R12Activ     Boolean  @default(true)
   R12Creado_en DateTime @default(now())
 
   sucursal R11Sucursal @relation(fields: [R12Suc_id], references: [R11Id])

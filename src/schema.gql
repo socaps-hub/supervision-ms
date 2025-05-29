@@ -3,9 +3,19 @@
 # ------------------------------------------------------
 
 type Usuario {
-  """Example field (placeholder)"""
-  exampleField: Int!
+  id: String!
+  usuario: String!
+  nombre: String!
+  sucursal_id: String!
+  rol: String!
+  estado: Boolean!
+  creado_en: DateTime!
 }
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
 
 type Sucursal {
   R11Id: ID!
@@ -14,24 +24,18 @@ type Sucursal {
 }
 
 type Query {
-  usuarios: [Usuario!]!
-  usuario(id: Int!): Usuario!
+  usuarios(rol: String): [Usuario!]!
+  usuario(ni: String!): Usuario!
   sucursales: [Sucursal!]!
 }
 
 type Mutation {
   createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
-  updateUsuario(updateUsuarioInput: UpdateUsuarioInput!): Usuario!
-  removeUsuario(id: Int!): Usuario!
 }
 
 input CreateUsuarioInput {
-  """Example field (placeholder)"""
-  exampleField: Int!
-}
-
-input UpdateUsuarioInput {
-  """Example field (placeholder)"""
-  exampleField: Int
-  id: Int!
+  R12Ni: String!
+  R12Nom: String!
+  R12Suc_id: String!
+  R12Rol: String!
 }

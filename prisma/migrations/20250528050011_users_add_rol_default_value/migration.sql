@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "R12Usuario" ALTER COLUMN "R12Activ" SET DEFAULT true;

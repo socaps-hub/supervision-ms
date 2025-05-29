@@ -19,7 +19,7 @@ export class SucursalesService extends PrismaClient implements OnModuleInit {
   }
 
   async findAll(): Promise<Sucursal[]> {
-    return await this.r11Sucursal.findMany({});
+    return await this.r11Sucursal.findMany({})
   }
 
   // findOne(id: number) {
