@@ -66,4 +66,17 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     return user
   }
 
+  async findByID( id: string ): Promise<Usuario> {
+    
+    const user = await this.r12Usuario.findFirst({
+      where: { R12Id: id }
+    })
+
+    if ( !user || !user.R12Activ ) {
+      throw new NotFoundException(`Usuario con el id ${ id } no existe`)
+    }
+
+    return user
+  }
+
 }
