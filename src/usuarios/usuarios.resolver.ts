@@ -29,7 +29,7 @@ export class UsuariosResolver {
   findByNI(
     @Args('ni', { type: () => String }) ni: string
   ) {
-    return this.usuariosService.findByNI(ni);
+    return this.usuariosService.findByNI(ni, true);
   }
 
   // @Mutation(() => Usuario)

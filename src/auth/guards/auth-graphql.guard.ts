@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 
 import { Request } from 'express';
 import { envs } from 'src/config';
-import { CooperativasService } from 'src/cooperativas/cooperativas.service';
 import { UsuariosService } from 'src/usuarios/usuarios.service';
   
 @Injectable()
@@ -18,7 +17,6 @@ export class AuthGraphQLGuard implements CanActivate {
     constructor(
         private readonly _jwtService: JwtService,
         private readonly _usuariosService: UsuariosService,
-        private readonly _cooperativasService: CooperativasService,
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {

@@ -10,15 +10,15 @@ import { bcryptAdapter } from 'src/config';
 export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   private readonly _logger = new Logger('SucursalesService')
-
-  // create(createSucursaleInput: CreateSucursaleInput) {
-  //   return 'This action adds a new sucursale';
-  // }
-
+  
   async onModuleInit() {
     await this.$connect();
     this._logger.log('Database connected')
   }
+  
+  // create(createSucursaleInput: CreateSucursaleInput) {
+  //   return 'This action adds a new sucursale';
+  // }
 
   async findAll( role?: 'ejecutivo'|'admin'|'supervisor' ): Promise<Usuario[]> {
 
@@ -65,12 +65,12 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   }
 
-  async findByNI( userNI: string ): Promise<Usuario> {
+  async findByNI( userNI: string, withSucursales: boolean = false ): Promise<Usuario> {
     
     const user = await this.r12Usuario.findFirst({
       where: { R12Ni: userNI },
       include: {
-        sucursal: true
+        sucursal: withSucursales
       }
     })
 

@@ -43,7 +43,7 @@ export class AuthService extends PrismaClient implements OnModuleInit {
     const { R12Password, ...rest } = user
 
     return {
-      rest,
+      user: rest,
       token: await this.signJwt({ R12Id: user.R12Id, R12Suc_id: user.R12Suc_id, R12Coop_id: user.R12Coop_id })
     }
 

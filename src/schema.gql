@@ -33,6 +33,20 @@ type Cooperativa {
   sucursales: [Sucursal!]!
 }
 
+type Producto {
+  R13Id: String!
+  R13Nom: String!
+  R13Cat_id: ID!
+  R13Activ: Boolean!
+  R13Coop_id: String!
+}
+
+type Categoria {
+  R14Id: String!
+  R14Nom: String!
+  R14Activ: Boolean!
+}
+
 type Query {
   usuarios(rol: String): [Usuario!]!
   usuario(ni: String!): Usuario!
@@ -40,10 +54,18 @@ type Query {
   sucursal(id: ID!): Sucursal!
   cooperativas: [Cooperativa!]!
   cooperativa(id: ID!): Cooperativa!
+  productos: [Producto!]!
+  producto(id: Int!): Producto!
+  categorias: [Categoria!]!
+  categoria(id: ID!): Categoria!
 }
 
 type Mutation {
   createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
+  createProducto(createProductoInput: CreateProductoInput!): Producto!
+  updateProducto(updateProductoInput: UpdateProductoInput!): Producto!
+  removeProducto(id: Int!): Producto!
+  createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
 }
 
 input CreateUsuarioInput {
@@ -53,4 +75,19 @@ input CreateUsuarioInput {
   R12Suc_id: String!
   R12Coop_id: String!
   R12Rol: String!
+}
+
+input CreateProductoInput {
+  R13Nom: String!
+  R13Cat_id: ID!
+}
+
+input UpdateProductoInput {
+  R13Nom: String
+  R13Cat_id: ID
+  id: Int!
+}
+
+input CreateCategoriaInput {
+  R14Nom: String!
 }
