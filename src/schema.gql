@@ -33,18 +33,19 @@ type Cooperativa {
   sucursales: [Sucursal!]!
 }
 
+type Categoria {
+  R14Id: String!
+  R14Nom: String!
+  R14Activ: Boolean!
+}
+
 type Producto {
   R13Id: String!
   R13Nom: String!
   R13Cat_id: ID!
   R13Activ: Boolean!
   R13Coop_id: String!
-}
-
-type Categoria {
-  R14Id: String!
-  R14Nom: String!
-  R14Activ: Boolean!
+  categoria: Categoria!
 }
 
 type Query {

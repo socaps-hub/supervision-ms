@@ -1,24 +1,32 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+
 import { ProductosService } from './productos.service';
 import { Producto } from './entities/producto.entity';
 import { CreateProductoInput } from './dto/create-producto.input';
 import { UpdateProductoInput } from './dto/update-producto.input';
+import { AuthGraphQLGuard } from 'src/auth/guards/auth-graphql.guard';
+import { GetUserGraphQL } from 'src/auth/decorators/user-graphql.decorator';
+import { Usuario } from 'src/usuarios/entities/usuario.entity';
 
 @Resolver(() => Producto)
+@UseGuards( AuthGraphQLGuard )
 export class ProductosResolver {
   constructor(private readonly productosService: ProductosService) {}
 
   @Mutation(() => Producto)
   createProducto(
-    @Args('createProductoInput') createProductoInput: CreateProductoInput
+    @Args('createProductoInput') createProductoInput: CreateProductoInput,
+    @GetUserGraphQL() user: Usuario
   ) {
-    return createProductoInput
-    // return this.productosService.create(createProductoInput);
+    return this.productosService.create(createProductoInput, user);
   }
 
   @Query(() => [Producto], { name: 'productos' })
-  findAll() {
-    return this.productosService.findAll();
+  findAll(
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.productosService.findAll(user);
   }
 
   @Query(() => Producto, { name: 'producto' })

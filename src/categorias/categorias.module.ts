@@ -7,6 +7,9 @@ import { UsuariosModule } from 'src/usuarios/usuarios.module';
   providers: [CategoriasResolver, CategoriasService],
   imports: [
     UsuariosModule,
+  ],
+  exports: [
+    CategoriasService,
   ]
 })
 export class CategoriasModule {}
