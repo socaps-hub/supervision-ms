@@ -12,6 +12,8 @@ export class Usuario {
   @Field( () => String, { name: 'nombre' })
   R12Nom: string
   
+  R12Password: string
+  
   @Field( () => String, { name: 'sucursal_id' })
   R12Suc_id: string
   

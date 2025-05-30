@@ -37,6 +37,21 @@ enum Resolucion {
   PASA_COMITE
 }
 
+model R17Cooperativas {
+  R17Id        String   @id @default(uuid()) @db.Uuid
+  R17Nom       String
+  R17Activ     Boolean  @default(true)
+  R17Logo      String
+  R17Creada_en DateTime @default(now())
+
+  sucursales R11Sucursal[]
+  usuarios   R12Usuario[]
+  prestamos  R01Prestamo[]
+  grupos     R02Grupo[]
+  productos  R13Producto[]
+  categorias R14Categoria[]
+}
+
 model R01Prestamo {
   R01NUM     String   @id @db.Char(8)
   R01Suc_id  String   @db.Uuid
@@ -58,12 +73,14 @@ model R01Prestamo {
   R01ObsT    String?
   R01Est     String
   R01Activ   Boolean
+  R01Coop_id String   @db.Uuid
 
-  sucursal   R11Sucursal  @relation(fields: [R01Suc_id], references: [R11Id])
-  supervisor R12Usuario   @relation("Supervisor", fields: [R01SP_id], references: [R12Id])
-  ejecutivo  R12Usuario   @relation("Ejecutivo", fields: [R01Ejvo_id], references: [R12Id])
-  producto   R13Producto  @relation(fields: [R01Pro_id], references: [R13Id])
-  categoria  R14Categoria @relation(fields: [R01Cat_id], references: [R14Id])
+  sucursal    R11Sucursal     @relation(fields: [R01Suc_id], references: [R11Id])
+  supervisor  R12Usuario      @relation("Supervisor", fields: [R01SP_id], references: [R12Id])
+  ejecutivo   R12Usuario      @relation("Ejecutivo", fields: [R01Ejvo_id], references: [R12Id])
+  producto    R13Producto     @relation(fields: [R01Pro_id], references: [R13Id])
+  categoria   R14Categoria    @relation(fields: [R01Cat_id], references: [R14Id])
+  cooperativa R17Cooperativas @relation(fields: [R01Coop_id], references: [R17Id])
 
   evaluacionesF1 R05EvaluacionFase1[]
   evaluacionesF2 R07EvaluacionFase2[]
@@ -77,9 +94,12 @@ model R01Prestamo {
 }
 
 model R02Grupo {
-  R02Id  String     @id @default(uuid()) @db.Uuid
-  R02Nom String
-  rubros R03Rubro[]
+  R02Id      String @id @default(uuid()) @db.Uuid
+  R02Nom     String
+  R02Coop_id String @db.Uuid
+
+  cooperativa R17Cooperativas @relation(fields: [R02Coop_id], references: [R17Id])
+  rubros      R03Rubro[]
 }
 
 model R03Rubro {
@@ -181,23 +201,29 @@ model R10EvaluacionResumenFase3 {
 }
 
 model R11Sucursal {
-  R11Id     String        @id @default(uuid()) @db.Uuid
-  R11NumSuc String
-  R11Nom    String
-  prestamos R01Prestamo[]
-  usuarios  R12Usuario[]
+  R11Id      String @id @default(uuid()) @db.Uuid
+  R11NumSuc  String
+  R11Nom     String
+  R11Coop_id String @db.Uuid
+
+  cooperativa R17Cooperativas @relation(fields: [R11Coop_id], references: [R17Id])
+  prestamos   R01Prestamo[]
+  usuarios    R12Usuario[]
 }
 
 model R12Usuario {
   R12Id        String   @id @default(uuid()) @db.Uuid
   R12Ni        String   @unique
+  R12Password  String   
   R12Nom       String
   R12Suc_id    String   @db.Uuid
   R12Rol       String
   R12Activ     Boolean  @default(true)
   R12Creado_en DateTime @default(now())
+  R12Coop_id   String   @db.Uuid
 
-  sucursal R11Sucursal @relation(fields: [R12Suc_id], references: [R11Id])
+  cooperativa R17Cooperativas @relation(fields: [R12Coop_id], references: [R17Id])
+  sucursal    R11Sucursal     @relation(fields: [R12Suc_id], references: [R11Id])
 
   Prestamo_Super R01Prestamo[] @relation("Supervisor")
 
@@ -213,19 +239,24 @@ model R12Usuario {
 }
 
 model R13Producto {
-  R13Id     String  @id @default(uuid()) @db.Uuid
-  R13Nom    String
-  R13Cat_id String  @db.Uuid
-  R13Activ  Boolean
+  R13Id      String  @id @default(uuid()) @db.Uuid
+  R13Nom     String
+  R13Cat_id  String  @db.Uuid
+  R13Activ   Boolean
+  R13Coop_id String  @db.Uuid
 
-  categoria R14Categoria  @relation(fields: [R13Cat_id], references: [R14Id])
-  prestamos R01Prestamo[]
+  cooperativa R17Cooperativas @relation(fields: [R13Coop_id], references: [R17Id])
+  categoria   R14Categoria    @relation(fields: [R13Cat_id], references: [R14Id])
+  prestamos   R01Prestamo[]
 }
 
 model R14Categoria {
-  R14Id    String  @id @default(uuid()) @db.Uuid
-  R14Nom   String
-  R14Activ Boolean
+  R14Id      String  @id @default(uuid()) @db.Uuid
+  R14Nom     String
+  R14Activ   Boolean
+  R14Coop_id String  @db.Uuid
+
+  cooperativa R17Cooperativas @relation(fields: [R14Coop_id], references: [R17Id])
 
   productos R13Producto[]
   prestamos R01Prestamo[]

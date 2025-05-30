@@ -5,6 +5,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { UsuariosService } from 'src/usuarios/usuarios.service';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { bcryptAdapter } from 'src/config';
 
 @Injectable()
 export class AuthService extends PrismaClient implements OnModuleInit {
@@ -27,7 +28,7 @@ export class AuthService extends PrismaClient implements OnModuleInit {
     return this._jwtService.sign(payload)
   }
 
-  async login( { ni }: LoginUserDto ) {
+  async login( { ni, password }: LoginUserDto ) {
      
     const user = await this._usuariosService.findByNI( ni.toUpperCase() )
 
@@ -35,8 +36,14 @@ export class AuthService extends PrismaClient implements OnModuleInit {
       throw new BadRequestException('Usuario incorrecto')
     }
 
+    if ( !bcryptAdapter.compare( password, user.R12Password ) ) {
+      throw new BadRequestException('Credenciales incorrectas')
+    }
+
+    const { R12Password, ...rest } = user
+
     return {
-      user,
+      rest,
       token: await this.signJwt({ R12Id: user.R12Id, R12Suc_id: user.R12Suc_id })
     }
 

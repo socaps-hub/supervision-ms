@@ -4,6 +4,7 @@ import { UpdateUsuarioInput } from './dto/update-usuario.input';
 import { PrismaClient } from '@prisma/client';
 import { create } from 'domain';
 import { Usuario } from './entities/usuario.entity';
+import { bcryptAdapter } from 'src/config';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -38,19 +39,23 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
   async create(createUsuarioInput: CreateUsuarioInput) {
 
-    const { R12Ni } = createUsuarioInput
+      const { R12Ni, R12Password } = createUsuarioInput
+  
+      const user = await await this.r12Usuario.findFirst({
+        where: { R12Ni }
+      })
+  
+      if ( user ) {
+        throw new BadRequestException(`Usuario con NI ${ R12Ni } ya existe`)
+      }
+  
+      return this.r12Usuario.create({
+        data: {
+          ...createUsuarioInput,
+          R12Password: bcryptAdapter.hash(R12Password)
+        }
+      })
 
-    const user = await await this.r12Usuario.findFirst({
-      where: { R12Ni }
-    })
-
-    if ( user ) {
-      throw new BadRequestException(`Usuario con NI ${ R12Ni } ya existe`)
-    }
-
-    return this.r12Usuario.create({
-      data: createUsuarioInput
-    })
   }
 
   async findByNI( userNI: string ): Promise<Usuario> {
