@@ -21,7 +21,7 @@ export class AuthService extends PrismaClient implements OnModuleInit {
 
   onModuleInit() {
       this.$connect()
-      this._logger.log('MongoDB connected')
+      this._logger.log('Database connected')
   }
 
   async signJwt( payload: JwtPayload ) {
@@ -44,7 +44,7 @@ export class AuthService extends PrismaClient implements OnModuleInit {
 
     return {
       rest,
-      token: await this.signJwt({ R12Id: user.R12Id, R12Suc_id: user.R12Suc_id })
+      token: await this.signJwt({ R12Id: user.R12Id, R12Suc_id: user.R12Suc_id, R12Coop_id: user.R12Coop_id })
     }
 
   }
@@ -53,7 +53,7 @@ export class AuthService extends PrismaClient implements OnModuleInit {
 
     return { 
       user,
-      token: await this.signJwt({ R12Id: user.R12Id, R12Suc_id: user.R12Suc_id })
+      token: await this.signJwt({ R12Id: user.R12Id, R12Suc_id: user.R12Suc_id, R12Coop_id: user.R12Coop_id })
     }
   }
 

@@ -6,6 +6,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { SucursalesModule } from './sucursales/sucursales.module';
 import { AuthModule } from './auth/auth.module';
+import { CooperativasModule } from './cooperativas/cooperativas.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuthModule } from './auth/auth.module';
     UsuariosModule,
     SucursalesModule,
     AuthModule,
+    CooperativasModule,
   ],
   controllers: [],
   providers: [],

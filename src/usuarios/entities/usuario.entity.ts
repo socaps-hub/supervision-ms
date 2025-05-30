@@ -1,4 +1,5 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { Sucursal } from 'src/sucursales/entities/sucursal.entity';
 
 @ObjectType()
 export class Usuario {
@@ -26,4 +27,8 @@ export class Usuario {
   @Field( () => Date, { name: 'creado_en' })
   R12Creado_en: Date
 
+  R12Coop_id: string
+
+  @Field( () => Sucursal )
+  sucursal: Sucursal
 }

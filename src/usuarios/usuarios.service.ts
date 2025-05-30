@@ -26,13 +26,20 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
     if ( role) {
       users = await this.r12Usuario.findMany({
-        where: { R12Rol: role }
+        where: { R12Rol: role },
+        include: {
+          sucursal: true
+        }
       })
       
       return users
     }
 
-    users = await this.r12Usuario.findMany({})
+    users = await this.r12Usuario.findMany({
+      include: {
+        sucursal: true
+      }
+    })
 
     return users
   }
@@ -61,7 +68,10 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
   async findByNI( userNI: string ): Promise<Usuario> {
     
     const user = await this.r12Usuario.findFirst({
-      where: { R12Ni: userNI }
+      where: { R12Ni: userNI },
+      include: {
+        sucursal: true
+      }
     })
 
     if ( !user || !user.R12Activ ) {
@@ -74,7 +84,10 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
   async findByID( id: string ): Promise<Usuario> {
     
     const user = await this.r12Usuario.findFirst({
-      where: { R12Id: id }
+      where: { R12Id: id },
+      include: {
+        sucursal: true
+      }
     })
 
     if ( !user || !user.R12Activ ) {
