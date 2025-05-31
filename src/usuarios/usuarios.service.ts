@@ -81,12 +81,14 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     return user
   }
 
-  async findByID( id: string ): Promise<Usuario> {
+  async findByID( id: string ) {
     
     const user = await this.r12Usuario.findFirst({
       where: { R12Id: id },
       include: {
-        sucursal: true
+        sucursal: {
+          select: { R11Nom: true, R11NumSuc: true }
+        }
       }
     })
 

@@ -31,15 +31,16 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     const product = await this.r13Producto.findFirst({
       where: {
         R13Coop_id: user.R12Coop_id,
-        R13Nom
+        R13Nom: R13Nom.toLowerCase().trim()
       }
     })
 
-    if ( product ) throw new BadRequestException(`EL producto (${ R13Nom }) ya existe en tu cooperativa`)
+    if ( product ) throw new BadRequestException(`El producto (${ R13Nom }) ya existe en tu cooperativa`)
 
     return await this.r13Producto.create({
       data: {
         ...createProductoInput,
+        R13Nom: R13Nom.toLowerCase(),
         R13Activ: true,
         R13Coop_id: user.R12Coop_id,
       },
