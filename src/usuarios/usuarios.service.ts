@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
-import { CreateUsuarioInput } from './dto/create-usuario.input';
-import { UpdateUsuarioInput } from './dto/update-usuario.input';
+import { CreateUsuarioInput } from './dto/inputs/create-usuario.input';
+import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 import { PrismaClient } from '@prisma/client';
 import { create } from 'domain';
 import { Usuario } from './entities/usuario.entity';
 import { bcryptAdapter } from 'src/config';
+import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -20,11 +21,11 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
   //   return 'This action adds a new sucursale';
   // }
 
-  async findAll( role?: 'ejecutivo'|'admin'|'supervisor' ): Promise<Usuario[]> {
+  async findAll( role: ValidRoles ): Promise<Usuario[]> {
 
     let users: Usuario[] = []
 
-    if ( role) {
+    if ( role ) {
       users = await this.r12Usuario.findMany({
         where: { R12Rol: role },
         include: {

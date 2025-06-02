@@ -1,8 +1,9 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { UsuariosService } from './usuarios.service';
 import { Usuario } from './entities/usuario.entity';
-import { CreateUsuarioInput } from './dto/create-usuario.input';
-import { UpdateUsuarioInput } from './dto/update-usuario.input';
+import { CreateUsuarioInput } from './dto/inputs/create-usuario.input';
+import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
+import { ValidRolesArgs } from './dto/args/roles.arg';
 
 @Resolver(() => Usuario)
 export class UsuariosResolver {
@@ -18,11 +19,9 @@ export class UsuariosResolver {
 
   @Query(() => [Usuario], { name: 'usuarios' })
   findAll(
-    @Args('rol', { type: () => String, nullable: true }) rol: 'ejecutivo'|'admin'|'supervisor'
+    @Args() validRoles: ValidRolesArgs
   ) {
-    console.log(rol);
-    
-    return this.usuariosService.findAll( rol );
+    return this.usuariosService.findAll( validRoles.role );
   }
 
   @Query(() => Usuario, { name: 'usuario' })

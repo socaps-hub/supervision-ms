@@ -49,7 +49,7 @@ type Producto {
 }
 
 type Query {
-  usuarios(rol: String): [Usuario!]!
+  usuarios(role: ValidRoles): [Usuario!]!
   usuario(ni: String!): Usuario!
   sucursales: [Sucursal!]!
   sucursal(id: ID!): Sucursal!
@@ -59,6 +59,13 @@ type Query {
   producto(id: Int!): Producto!
   categorias: [Categoria!]!
   categoria(id: ID!): Categoria!
+}
+
+enum ValidRoles {
+  admin
+  ejecutivo
+  supervisor
+  superUser
 }
 
 type Mutation {
