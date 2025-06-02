@@ -21,13 +21,13 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
   //   return 'This action adds a new sucursale';
   // }
 
-  async findAll( role: ValidRoles ): Promise<Usuario[]> {
+  async findAll( role: ValidRoles, user: Usuario ): Promise<Usuario[]> {
 
     let users: Usuario[] = []
 
     if ( role ) {
       users = await this.r12Usuario.findMany({
-        where: { R12Rol: role },
+        where: { R12Rol: role, R12Coop_id: user.R12Coop_id, R12Activ: true },
         include: {
           sucursal: true
         }
@@ -45,21 +45,23 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     return users
   }
 
-  async create(createUsuarioInput: CreateUsuarioInput) {
+  async create(createUsuarioInput: CreateUsuarioInput, user: Usuario) {
 
       const { R12Ni, R12Password } = createUsuarioInput
   
-      const user = await await this.r12Usuario.findFirst({
+      const userDB = await await this.r12Usuario.findFirst({
         where: { R12Ni }
       })
   
-      if ( user ) {
+      if ( userDB ) {
         throw new BadRequestException(`Usuario con NI ${ R12Ni } ya existe`)
       }
   
       return this.r12Usuario.create({
         data: {
           ...createUsuarioInput,
+          R12Suc_id: user.R12Suc_id,
+          R12Coop_id: user.R12Coop_id,
           R12Password: bcryptAdapter.hash(R12Password)
         }
       })

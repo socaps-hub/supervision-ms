@@ -4,24 +4,30 @@ import { Usuario } from './entities/usuario.entity';
 import { CreateUsuarioInput } from './dto/inputs/create-usuario.input';
 import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 import { ValidRolesArgs } from './dto/args/roles.arg';
+import { UseGuards } from '@nestjs/common';
+import { AuthGraphQLGuard } from 'src/auth/guards/auth-graphql.guard';
+import { GetUserGraphQL } from 'src/auth/decorators/user-graphql.decorator';
 
 @Resolver(() => Usuario)
+@UseGuards( AuthGraphQLGuard )
 export class UsuariosResolver {
 
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Mutation(() => Usuario)
   createUsuario(
-    @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput
+    @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput,
+    @GetUserGraphQL() user: Usuario
   ) {
-    return this.usuariosService.create(createUsuarioInput);
+    return this.usuariosService.create(createUsuarioInput, user);
   }
 
   @Query(() => [Usuario], { name: 'usuarios' })
   findAll(
-    @Args() validRoles: ValidRolesArgs
+    @Args() validRoles: ValidRolesArgs,
+    @GetUserGraphQL() user: Usuario
   ) {
-    return this.usuariosService.findAll( validRoles.role );
+    return this.usuariosService.findAll( validRoles.role, user );
   }
 
   @Query(() => Usuario, { name: 'usuario' })

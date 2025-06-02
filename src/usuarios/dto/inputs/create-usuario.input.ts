@@ -21,14 +21,6 @@ export class CreateUsuarioInput {
   @MinLength(6)
   R12Password: string
   
-  @Field(() => String)
-  @IsUUID()
-  R12Suc_id: string
-
-  @Field(() => String)
-  @IsUUID()
-  R12Coop_id: string
-  
   @Field(() => ValidRoles )
   @IsString()
   R12Rol: string 

@@ -80,8 +80,6 @@ input CreateUsuarioInput {
   R12Ni: String!
   R12Nom: String!
   R12Password: String!
-  R12Suc_id: String!
-  R12Coop_id: String!
   R12Rol: ValidRoles!
 }
 
