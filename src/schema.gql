@@ -82,7 +82,7 @@ input CreateUsuarioInput {
   R12Password: String!
   R12Suc_id: String!
   R12Coop_id: String!
-  R12Rol: String!
+  R12Rol: ValidRoles!
 }
 
 input CreateProductoInput {

@@ -1,5 +1,6 @@
 import { InputType, Int, Field, ID } from '@nestjs/graphql';
 import { IsIn, IsNotEmpty, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 
 @InputType()
 export class CreateUsuarioInput {
@@ -28,9 +29,8 @@ export class CreateUsuarioInput {
   @IsUUID()
   R12Coop_id: string
   
-  @Field(() => String )
+  @Field(() => ValidRoles )
   @IsString()
-  @IsIn(['ejecutivo', 'supervisor', 'admin'])
   R12Rol: string 
 
 }
