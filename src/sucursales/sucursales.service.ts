@@ -21,9 +21,9 @@ export class SucursalesService extends PrismaClient implements OnModuleInit {
 
   async findAll( user: Usuario ): Promise<Sucursal[]> {
     return await this.r11Sucursal.findMany({
-      // where: {
-      //   R11Coop_id: user.
-      // }
+      where: {
+        R11Coop_id: user.R12Coop_id,
+      }
     })
   }
 

@@ -1,10 +1,10 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
 import { UsuariosService } from './usuarios.service';
 import { Usuario } from './entities/usuario.entity';
 import { CreateUsuarioInput } from './dto/inputs/create-usuario.input';
 import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 import { ValidRolesArgs } from './dto/args/roles.arg';
-import { UseGuards } from '@nestjs/common';
+import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { AuthGraphQLGuard } from 'src/auth/guards/auth-graphql.guard';
 import { GetUserGraphQL } from 'src/auth/decorators/user-graphql.decorator';
 
@@ -42,8 +42,15 @@ export class UsuariosResolver {
   //   return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
   // }
 
-  // @Mutation(() => Usuario)
-  // removeUsuario(@Args('id', { type: () => Int }) id: number) {
-  //   return this.usuariosService.remove(id);
-  // }
+  @Mutation(() => Usuario)
+  desactivateUser(
+    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string) {
+    return this.usuariosService.desactivate(id);
+  }
+
+  @Mutation(() => Usuario)
+  activateUser(
+    @Args('userNI', { type: () => String }) userNI: string) {
+    return this.usuariosService.activate(userNI.toUpperCase());
+  }
 }

@@ -25,4 +25,8 @@ export class CreateUsuarioInput {
   @IsString()
   R12Rol: string 
 
+  @Field(() => ID)
+  @IsUUID()
+  R12Suc_id: string
+
 }

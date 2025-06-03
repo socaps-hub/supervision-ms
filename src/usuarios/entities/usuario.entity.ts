@@ -4,27 +4,27 @@ import { Sucursal } from 'src/sucursales/entities/sucursal.entity';
 @ObjectType()
 export class Usuario {
 
-  @Field( () => String, { name: 'id' })
+  @Field( () => String)
   R12Id: string
   
-  @Field( () => String, { name: 'usuario' })
+  @Field( () => String)
   R12Ni: string
   
-  @Field( () => String, { name: 'nombre' })
+  @Field( () => String)
   R12Nom: string
   
   R12Password: string
   
-  @Field( () => String, { name: 'sucursal_id' })
+  @Field( () => String)
   R12Suc_id: string
   
-  @Field( () => String, { name: 'rol' })
+  @Field( () => String)
   R12Rol: string
   
-  @Field( () => Boolean, { name: 'estado' })
+  @Field( () => Boolean)
   R12Activ: boolean
   
-  @Field( () => Date, { name: 'creado_en' })
+  @Field( () => Date)
   R12Creado_en: Date
 
   R12Coop_id: string

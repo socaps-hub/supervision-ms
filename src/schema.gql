@@ -9,13 +9,13 @@ type Sucursal {
 }
 
 type Usuario {
-  id: String!
-  usuario: String!
-  nombre: String!
-  sucursal_id: String!
-  rol: String!
-  estado: Boolean!
-  creado_en: DateTime!
+  R12Id: String!
+  R12Ni: String!
+  R12Nom: String!
+  R12Suc_id: String!
+  R12Rol: String!
+  R12Activ: Boolean!
+  R12Creado_en: DateTime!
   sucursal: Sucursal!
 }
 
@@ -70,6 +70,8 @@ enum ValidRoles {
 
 type Mutation {
   createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
+  desactivateUser(id: ID!): Usuario!
+  activateUser(userNI: String!): Usuario!
   createProducto(createProductoInput: CreateProductoInput!): Producto!
   updateProducto(updateProductoInput: UpdateProductoInput!): Producto!
   removeProducto(id: Int!): Producto!
@@ -81,6 +83,7 @@ input CreateUsuarioInput {
   R12Nom: String!
   R12Password: String!
   R12Rol: ValidRoles!
+  R12Suc_id: ID!
 }
 
 input CreateProductoInput {

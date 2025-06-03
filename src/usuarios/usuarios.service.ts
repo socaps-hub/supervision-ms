@@ -50,19 +50,26 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       const { R12Ni, R12Password } = createUsuarioInput
   
       const userDB = await await this.r12Usuario.findFirst({
-        where: { R12Ni }
+        where: { R12Ni },
       })
   
       if ( userDB ) {
-        throw new BadRequestException(`Usuario con NI ${ R12Ni } ya existe`)
+
+        if ( !userDB.R12Activ ) {
+          throw new BadRequestException(`Usuario con usuario ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
+        }
+
+        throw new BadRequestException(`Usuario con usuario ${ R12Ni } ya existe`)
       }
   
       return this.r12Usuario.create({
         data: {
           ...createUsuarioInput,
-          R12Suc_id: user.R12Suc_id,
           R12Coop_id: user.R12Coop_id,
           R12Password: bcryptAdapter.hash(R12Password)
+        },
+        include: {
+          sucursal: true
         }
       })
 
@@ -78,7 +85,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user || !user.R12Activ ) {
-      throw new NotFoundException(`Usuario con el NI ${ userNI } no existe`)
+      throw new NotFoundException(`Usuario con el usuario ${ userNI } no existe`)
     }
 
     return user
@@ -100,6 +107,66 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     }
 
     return user
+  }
+
+  async activate( userNI: string ) {
+
+    const user = await this.r12Usuario.findFirst({
+      where: { R12Ni: userNI },
+      include: {
+        sucursal: true
+      }
+    })
+
+    if ( !user ) {
+      throw new NotFoundException(`Usuario con el usuario ${ userNI } no existe`)
+    }
+
+    user.R12Activ = true
+
+    return this.r12Usuario.update({
+      where: { R12Ni: userNI },
+      data: {
+        R12Id: user.R12Id,
+        R12Ni: user.R12Ni,
+        R12Password: user.R12Password,
+        R12Nom: user.R12Nom,
+        R12Suc_id: user.R12Suc_id,
+        R12Rol: user.R12Rol,
+        R12Activ: user.R12Activ,
+        R12Creado_en: user.R12Creado_en,
+        R12Coop_id: user.R12Coop_id,
+      },
+      include: {
+        sucursal: true
+      }
+    })
+
+  }
+
+  async desactivate( id: string ) {
+
+    const user = await this.findByID( id )
+    user.R12Activ = false
+
+    return this.r12Usuario.update({
+      where: { R12Id: id },
+      data: {
+        R12Id: user.R12Id,
+        R12Ni: user.R12Ni,
+        R12Password: user.R12Password,
+        R12Nom: user.R12Nom,
+        R12Suc_id: user.R12Suc_id,
+        R12Rol: user.R12Rol,
+        R12Activ: user.R12Activ,
+        R12Creado_en: user.R12Creado_en,
+        R12Coop_id: user.R12Coop_id,
+      },
+      include: {
+        sucursal: true
+      }
+    })
+
   }
 
 }
