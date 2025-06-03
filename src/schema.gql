@@ -56,7 +56,6 @@ type Query {
   cooperativas: [Cooperativa!]!
   cooperativa(id: ID!): Cooperativa!
   productos: [Producto!]!
-  producto(id: Int!): Producto!
   categorias: [Categoria!]!
   categoria(id: ID!): Categoria!
 }
@@ -73,8 +72,8 @@ type Mutation {
   desactivateUser(id: ID!): Usuario!
   activateUser(userNI: String!): Usuario!
   createProducto(createProductoInput: CreateProductoInput!): Producto!
-  updateProducto(updateProductoInput: UpdateProductoInput!): Producto!
-  removeProducto(id: Int!): Producto!
+  activateProducto(name: String!): Producto!
+  desactivateProducto(id: ID!): Producto!
   createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
 }
 
@@ -89,12 +88,6 @@ input CreateUsuarioInput {
 input CreateProductoInput {
   R13Nom: String!
   R13Cat_id: ID!
-}
-
-input UpdateProductoInput {
-  R13Nom: String
-  R13Cat_id: ID
-  id: Int!
 }
 
 input CreateCategoriaInput {
