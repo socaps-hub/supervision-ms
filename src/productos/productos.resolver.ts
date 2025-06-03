@@ -34,16 +34,20 @@ export class ProductosResolver {
   //   return this.productosService.findOne(id);
   // }
 
-  // @Mutation(() => Producto)
-  // updateProducto(@Args('updateProductoInput') updateProductoInput: UpdateProductoInput) {
-  //   return this.productosService.update(updateProductoInput.id, updateProductoInput);
-  // }
+  @Mutation(() => Producto)
+  updateProducto(
+    @Args('updateProductoInput') updateProductoInput: UpdateProductoInput,
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.productosService.update(updateProductoInput.id, updateProductoInput, user);
+  }
 
   @Mutation(() => Producto)
   activateProducto(
-    @Args('name', { type: () => String }) name: string
+    @Args('name', { type: () => String }) name: string,
+    @GetUserGraphQL() user: Usuario
   ) {
-    return this.productosService.activate(name);
+    return this.productosService.activate(name, user);
   }
 
   @Mutation(() => Producto)

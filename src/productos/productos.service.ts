@@ -28,12 +28,7 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
 
     await this._categoriasService.findOne( R13Cat_id )
 
-    const product = await this.r13Producto.findFirst({
-      where: {
-        R13Coop_id: user.R12Coop_id,
-        R13Nom: R13Nom.toLowerCase().trim()
-      }
-    })
+    const product = await this.findByName( user, R13Nom )
 
     if ( product ) {
       
@@ -88,13 +83,53 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     return producto
   }
 
-  // update(id: number, updateProductoInput: UpdateProductoInput) {
-  //   return `This action updates a #${id} producto`;
-  // }
+  async findByName( user: Usuario , name?: string) {
+    return await this.r13Producto.findFirst({
+      where: {
+        R13Coop_id: user.R12Coop_id,
+        R13Nom: name?.toLowerCase().trim()
+      }
+    })
+  }
 
-  async activate( name: string) {
+  async update(id: string, updateProductoInput: UpdateProductoInput, user: Usuario) {
+
+    const { R13Cat_id, R13Nom } = updateProductoInput
+
+    const productDB = await this.findByID( id )
+
+    if ( R13Nom ) {
+      const product = await this.findByName( user, R13Nom )
+  
+      if (product && product.R13Id !== id) {
+        throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
+      }
+    }
+
+    return this.r13Producto.update({
+      where: { R13Id: id },
+      data: {
+        R13Id: productDB.R13Id,
+        R13Cat_id: R13Cat_id ? R13Cat_id : productDB.R13Cat_id,
+        R13Nom: R13Nom ? R13Nom : productDB.R13Nom,
+        R13Activ: productDB.R13Activ,
+        R13Coop_id: productDB.R13Coop_id,
+      },
+      include: {
+        categoria: {
+          select: {
+            R14Id: true,
+            R14Nom: true,
+            R14Activ: true
+          }
+        }
+      }
+    })
+  }
+
+  async activate( name: string, user: Usuario ) {
     const producto = await this.r13Producto.findFirst({
-      where: { R13Nom: name },
+      where: { R13Nom: name , R13Coop_id: user.R12Coop_id },
       include: {
         categoria: {
           select: {
