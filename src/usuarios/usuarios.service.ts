@@ -56,10 +56,10 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       if ( userDB ) {
 
         if ( !userDB.R12Activ ) {
-          throw new BadRequestException(`Usuario con usuario ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
+          throw new BadRequestException(`Usuario con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
         }
 
-        throw new BadRequestException(`Usuario con usuario ${ R12Ni } ya existe`)
+        throw new BadRequestException(`Usuario con clave ${ R12Ni } ya existe`)
       }
   
       return this.r12Usuario.create({
@@ -85,7 +85,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user || !user.R12Activ ) {
-      throw new NotFoundException(`Usuario con el usuario ${ userNI } no existe`)
+      throw new NotFoundException(`Usuario con clave ${ userNI } no existe`)
     }
 
     return user
@@ -103,7 +103,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user || !user.R12Activ ) {
-      throw new NotFoundException(`Usuario con el id ${ id } no existe`)
+      throw new NotFoundException(`Usuario con id ${ id } no existe`)
     }
 
     return user
@@ -119,7 +119,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user ) {
-      throw new NotFoundException(`Usuario con el usuario ${ userNI } no existe`)
+      throw new NotFoundException(`Usuario con clave ${ userNI } no existe`)
     }
 
     user.R12Activ = true
