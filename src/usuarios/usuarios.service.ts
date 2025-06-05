@@ -62,7 +62,9 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       if ( userDB ) {
 
         if ( !userDB.R12Activ ) {
-          throw new BadRequestException(`Usuario con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
+          console.log(userDB.R12Rol);
+          
+          throw new BadRequestException(`${ userDB.R12Rol.toUpperCase() } con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
         }
 
         throw new BadRequestException(`Usuario con clave ${ R12Ni } ya existe`)
