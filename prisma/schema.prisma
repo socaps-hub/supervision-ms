@@ -50,6 +50,7 @@ model R17Cooperativas {
   grupos     R02Grupo[]
   productos  R13Producto[]
   categorias R14Categoria[]
+  limitePrudencial R18LimitePrudencial[]
 }
 
 model R01Prestamo {
@@ -305,4 +306,14 @@ model R16EvaluacionResumenFase4 {
   R16CalF   Calificativo
 
   prestamo R01Prestamo @relation(fields: [R16P_num], references: [R01NUM])
+}
+
+model R18LimitePrudencial {
+  R18Id             String   @id @default(uuid()) @db.Uuid
+  R18Importe        Int
+  R18Coop_id        String   @db.Uuid
+  R18Creado_en      DateTime @default(now())
+  R18Actualizado_en DateTime @updatedAt
+
+  cooperativa R17Cooperativas @relation(fields: [R18Coop_id], references: [R17Id])
 }
