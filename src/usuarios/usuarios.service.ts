@@ -27,6 +27,9 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
     if ( role ) {
       users = await this.r12Usuario.findMany({
+        orderBy: {
+          R12Creado_en: 'desc'
+        },
         where: { R12Rol: role, R12Coop_id: user.R12Coop_id, R12Activ: true },
         include: {
           sucursal: true
@@ -37,6 +40,9 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     }
 
     users = await this.r12Usuario.findMany({
+      orderBy: {
+          R12Creado_en: 'desc'
+      },
       include: {
         sucursal: true
       }

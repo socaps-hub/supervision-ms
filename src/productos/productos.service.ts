@@ -52,6 +52,9 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
 
   async findAll(user: Usuario): Promise<Producto[]> {
     return await this.r13Producto.findMany({
+      orderBy: {
+        R13Creado_en: 'desc'
+      },
       where: {
         R13Coop_id: user.R12Coop_id,
         R13Activ: true,
