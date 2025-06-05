@@ -48,6 +48,15 @@ type Producto {
   categoria: Categoria!
 }
 
+type LimitePrudencial {
+  R18Id: String!
+  R18Importe: Int!
+  R18Coop_id: String!
+  R18Creado_en: DateTime!
+  R18Actualizado_en: DateTime!
+  cooperativa: Cooperativa!
+}
+
 type Query {
   usuarios(role: ValidRoles): [Usuario!]!
   usuario(ni: String!): Usuario!
@@ -58,6 +67,7 @@ type Query {
   productos: [Producto!]!
   categorias: [Categoria!]!
   categoria(id: ID!): Categoria!
+  findLastLimitePrudencial: LimitePrudencial!
 }
 
 enum ValidRoles {
@@ -76,6 +86,7 @@ type Mutation {
   activateProducto(name: String!): Producto!
   desactivateProducto(id: ID!): Producto!
   createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
+  createLimitePrudencial(createLimitePrudencialInput: CreateLimitePrudencialInput!): LimitePrudencial!
 }
 
 input CreateUsuarioInput {
@@ -99,4 +110,8 @@ input UpdateProductoInput {
 
 input CreateCategoriaInput {
   R14Nom: String!
+}
+
+input CreateLimitePrudencialInput {
+  R18Importe: Int!
 }

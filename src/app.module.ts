@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CooperativasModule } from './cooperativas/cooperativas.module';
 import { ProductosModule } from './productos/productos.module';
 import { CategoriasModule } from './categorias/categorias.module';
+import { LimitePrudencialModule } from './limite-prudencial/limite-prudencial.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CategoriasModule } from './categorias/categorias.module';
     CooperativasModule,
     ProductosModule,
     CategoriasModule,
+    LimitePrudencialModule,
   ],
   controllers: [],
   providers: [],
