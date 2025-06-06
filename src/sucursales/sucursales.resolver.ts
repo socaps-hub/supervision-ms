@@ -4,12 +4,9 @@ import { Sucursal } from './entities/sucursal.entity';
 import { CreateSucursaleInput } from './dto/create-sucursale.input';
 import { UpdateSucursaleInput } from './dto/update-sucursale.input';
 import { UseGuards } from '@nestjs/common';
-import { AuthGraphQLGuard } from 'src/auth/guards/auth-graphql.guard';
-import { GetUserGraphQL } from 'src/auth/decorators/user-graphql.decorator';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 
 @Resolver(() => Sucursal)
-@UseGuards( AuthGraphQLGuard )
 export class SucursalesResolver {
 
   constructor(private readonly sucursalesService: SucursalesService) {}
@@ -21,7 +18,7 @@ export class SucursalesResolver {
 
   @Query(() => [Sucursal], { name: 'sucursales' })
   findAll(
-    @GetUserGraphQL() user: Usuario
+    @Args() user: Usuario
   ) {
     console.log(user);
     
@@ -31,7 +28,7 @@ export class SucursalesResolver {
   @Query(() => Sucursal, { name: 'sucursal' })
   findOne(
     @Args('id', { type: () => ID }) id: string,
-    @GetUserGraphQL() user: Usuario
+    @Args() user: Usuario
   ) {
     return this.sucursalesService.findOne(id, user);
   }

@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { CreateSucursaleInput } from './dto/create-sucursale.input';
-import { UpdateSucursaleInput } from './dto/update-sucursale.input';
 import { Sucursal } from './entities/sucursal.entity';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 
