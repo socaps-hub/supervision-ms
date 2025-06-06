@@ -5,7 +5,8 @@ import { PrismaClient } from '@prisma/client';
 import { create } from 'domain';
 import { Usuario } from './entities/usuario.entity';
 import { bcryptAdapter } from 'src/config';
-import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
+import { CreateUsuarioArgs } from './dto/args/create-usuario.arg';
+import { ValidRoles } from 'src/common/valid-roles.enum';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -51,8 +52,9 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     return users
   }
 
-  async create(createUsuarioInput: CreateUsuarioInput, user: Usuario) {
+  async create(createUsuarioArgs: CreateUsuarioArgs) {
 
+      const { createUsuarioInput, usuario } = createUsuarioArgs
       const { R12Ni, R12Password } = createUsuarioInput
   
       const userDB = await await this.r12Usuario.findFirst({
@@ -73,7 +75,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       return this.r12Usuario.create({
         data: {
           ...createUsuarioInput,
-          R12Coop_id: user.R12Coop_id,
+          R12Coop_id: usuario.R12Coop_id,
           R12Password: bcryptAdapter.hash(R12Password)
         },
         include: {

@@ -1,7 +1,7 @@
 
 import { ArgsType, Field } from "@nestjs/graphql";
 import { IsOptional, IsString } from "class-validator";
-import { ValidRoles } from "src/auth/enums/valid-roles.enum";
+import { ValidRoles } from "src/common/valid-roles.enum";
 
 @ArgsType()
 export class ValidRolesArgs {

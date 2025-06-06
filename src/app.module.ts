@@ -5,7 +5,6 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { SucursalesModule } from './sucursales/sucursales.module';
-import { AuthModule } from './auth/auth.module';
 import { CooperativasModule } from './cooperativas/cooperativas.module';
 import { ProductosModule } from './productos/productos.module';
 import { CategoriasModule } from './categorias/categorias.module';
@@ -24,7 +23,6 @@ import { LimitePrudencialModule } from './limite-prudencial/limite-prudencial.mo
     }),
     UsuariosModule,
     SucursalesModule,
-    AuthModule,
     CooperativasModule,
     ProductosModule,
     CategoriasModule,
