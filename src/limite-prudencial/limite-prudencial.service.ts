@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { CreateLimitePrudencialInput } from './dto/create-limite-prudencial.input';
+import { CreateLimitePrudencialInput } from './dto/inputs/create-limite-prudencial.input';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { CreateLimitePrudencialArgs } from './dto/args/create-limite-prudencial.arg';
 
 @Injectable()
 export class LimitePrudencialService extends PrismaClient implements OnModuleInit {
@@ -13,12 +14,13 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
     this._logger.log('Database connected')
   }
 
-  async create(createLimitePrudencialInput: CreateLimitePrudencialInput, user: Usuario) {
+  async create(createLimitePrudencialArgs: CreateLimitePrudencialArgs) {
 
+    const { createLimitePrudencialInput, usuario } = createLimitePrudencialArgs
     const { R18Importe } = createLimitePrudencialInput
 
     const limitePrudencial = await this.r18LimitePrudencial.findFirst({
-      where: { R18Importe, R18Coop_id: user.R12Coop_id }
+      where: { R18Importe, R18Coop_id: usuario.R12Coop_id }
     })
 
     if ( limitePrudencial ) {
@@ -27,7 +29,7 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
         where: { R18Id: limitePrudencial.R18Id },
         data: {
           R18Importe,
-          R18Coop_id: user.R12Coop_id,
+          R18Coop_id: usuario.R12Coop_id,
           R18Creado_en: new Date()
         }
       })
@@ -36,7 +38,7 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
     return await this.r18LimitePrudencial.create({
       data: {
         ...createLimitePrudencialInput,
-        R18Coop_id: user.R12Coop_id
+        R18Coop_id: usuario.R12Coop_id
       },
       include: {
         cooperativa: true
