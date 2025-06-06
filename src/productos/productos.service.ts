@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { CreateProductoInput } from './dto/create-producto.input';
-import { UpdateProductoInput } from './dto/update-producto.input';
-import { Producto } from './entities/producto.entity';
 import { PrismaClient } from '@prisma/client';
+
+import { Producto } from './entities/producto.entity';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 import { CategoriasService } from 'src/categorias/categorias.service';
+import { CreateProductArgs } from './dto/args/create-product.arg';
+import { UpdateProductArgs } from './dto/args/update-product.arg';
+import { ActivateProductArgs } from './dto/args/activate-product.arg';
 
 @Injectable()
 export class ProductosService  extends PrismaClient implements OnModuleInit {
@@ -22,13 +24,14 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     super()
   }
   
-  async create( createProductoInput: CreateProductoInput, user: Usuario): Promise<Producto> {
-    
+  async create( createProductArgs: CreateProductArgs ): Promise<Producto> {
+
+    const { createProductoInput, usuario } = createProductArgs    
     const { R13Nom, R13Cat_id } = createProductoInput
 
     await this._categoriasService.findOne( R13Cat_id )
 
-    const product = await this.findByName( user, R13Nom )
+    const product = await this.findByName( usuario, R13Nom )
 
     if ( product ) {
       
@@ -42,7 +45,7 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         ...createProductoInput,
         R13Nom: R13Nom.toLowerCase(),
         R13Activ: true,
-        R13Coop_id: user.R12Coop_id,
+        R13Coop_id: usuario.R12Coop_id,
       },
       include: {
         categoria: true
@@ -95,14 +98,15 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
   }
 
-  async update(id: string, updateProductoInput: UpdateProductoInput, user: Usuario) {
+  async update(updateProductoArgs: UpdateProductArgs) {
 
-    const { R13Cat_id, R13Nom } = updateProductoInput
+    const { updateProductoInput, usuario } = updateProductoArgs
+    const { R13Cat_id, R13Nom, id } = updateProductoInput
 
     const productDB = await this.findByID( id )
 
     if ( R13Nom ) {
-      const product = await this.findByName( user, R13Nom )
+      const product = await this.findByName( usuario, R13Nom )
   
       if (product && product.R13Id !== id) {
         throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
@@ -130,9 +134,12 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
   }
 
-  async activate( name: string, user: Usuario ) {
+  async activate( activateProductArgs: ActivateProductArgs ) {
+
+    const { name, usuario } = activateProductArgs
+
     const producto = await this.r13Producto.findFirst({
-      where: { R13Nom: name , R13Coop_id: user.R12Coop_id },
+      where: { R13Nom: name , R13Coop_id: usuario.R12Coop_id },
       include: {
         categoria: {
           select: {

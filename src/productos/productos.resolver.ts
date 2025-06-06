@@ -3,28 +3,25 @@ import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 
 import { ProductosService } from './productos.service';
 import { Producto } from './entities/producto.entity';
-import { CreateProductoInput } from './dto/create-producto.input';
-import { UpdateProductoInput } from './dto/update-producto.input';
-import { AuthGraphQLGuard } from 'src/auth/guards/auth-graphql.guard';
-import { GetUserGraphQL } from 'src/auth/decorators/user-graphql.decorator';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { CreateProductArgs } from './dto/args/create-product.arg';
+import { UpdateProductArgs } from './dto/args/update-product.arg';
+import { ActivateProductArgs } from './dto/args/activate-product.arg';
 
 @Resolver(() => Producto)
-@UseGuards( AuthGraphQLGuard )
 export class ProductosResolver {
   constructor(private readonly productosService: ProductosService) {}
 
   @Mutation(() => Producto)
   createProducto(
-    @Args('createProductoInput') createProductoInput: CreateProductoInput,
-    @GetUserGraphQL() user: Usuario
+    @Args() createProductArgs: CreateProductArgs
   ) {
-    return this.productosService.create(createProductoInput, user);
+    return this.productosService.create(createProductArgs);
   }
 
   @Query(() => [Producto], { name: 'productos' })
   findAll(
-    @GetUserGraphQL() user: Usuario
+    @Args() user: Usuario
   ) {
     return this.productosService.findAll(user);
   }
@@ -36,18 +33,16 @@ export class ProductosResolver {
 
   @Mutation(() => Producto)
   updateProducto(
-    @Args('updateProductoInput') updateProductoInput: UpdateProductoInput,
-    @GetUserGraphQL() user: Usuario
+    @Args() updateProductoArgs: UpdateProductArgs
   ) {
-    return this.productosService.update(updateProductoInput.id, updateProductoInput, user);
+    return this.productosService.update(updateProductoArgs);
   }
 
   @Mutation(() => Producto)
   activateProducto(
-    @Args('name', { type: () => String }) name: string,
-    @GetUserGraphQL() user: Usuario
+    @Args() activateProductArgs: ActivateProductArgs
   ) {
-    return this.productosService.activate(name, user);
+    return this.productosService.activate(activateProductArgs);
   }
 
   @Mutation(() => Producto)
