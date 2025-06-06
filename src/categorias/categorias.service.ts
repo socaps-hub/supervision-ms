@@ -1,9 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
-import { CreateCategoriaInput } from './dto/create-categoria.input';
-import { UpdateCategoriaInput } from './dto/update-categoria.input';
 import { PrismaClient } from '@prisma/client';
-import { Usuario } from 'src/usuarios/entities/usuario.entity';
 import { Categoria } from './entities/categoria.entity';
+import { CreateCategoriaArgs } from './dto/args/create-categoria.arg';
 
 @Injectable()
 export class CategoriasService extends PrismaClient implements OnModuleInit {
@@ -15,7 +13,10 @@ export class CategoriasService extends PrismaClient implements OnModuleInit {
     this._logger.log('Database connected')
   }
 
-  async create({ R14Nom }: CreateCategoriaInput, user: Usuario): Promise<Categoria> {
+  async create(createCategoriaArgs: CreateCategoriaArgs): Promise<Categoria> {
+
+    const { createCategoriaInput, usuario } = createCategoriaArgs
+    const { R14Nom } = createCategoriaInput
 
     const categoria = await this.r14Categoria.findFirst({
       where: { R14Nom }
@@ -26,7 +27,7 @@ export class CategoriasService extends PrismaClient implements OnModuleInit {
     return await this.r14Categoria.create({
       data: {
         R14Nom,
-        R14Coop_id: user.R12Coop_id,
+        R14Coop_id: usuario.R12Coop_id,
         R14Activ: true
       }
     })
