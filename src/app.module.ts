@@ -3,12 +3,7 @@ import { ApolloDriverConfig, ApolloDriver } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
-import { UsuariosModule } from './usuarios/usuarios.module';
-import { SucursalesModule } from './sucursales/sucursales.module';
-import { CooperativasModule } from './cooperativas/cooperativas.module';
-import { ProductosModule } from './productos/productos.module';
-import { CategoriasModule } from './categorias/categorias.module';
-import { LimitePrudencialModule } from './limite-prudencial/limite-prudencial.module';
+import { SisconcreModule } from './sisconcre/sisconcre.module';
 
 @Module({
   imports: [
@@ -21,12 +16,7 @@ import { LimitePrudencialModule } from './limite-prudencial/limite-prudencial.mo
         ApolloServerPluginLandingPageLocalDefault(),
       ]
     }),
-    UsuariosModule,
-    SucursalesModule,
-    CooperativasModule,
-    ProductosModule,
-    CategoriasModule,
-    LimitePrudencialModule,
+    SisconcreModule,
   ],
   controllers: [],
   providers: [],
