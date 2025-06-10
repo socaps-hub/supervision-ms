@@ -1,9 +1,11 @@
 import { join } from 'path';
+import { Module } from '@nestjs/common';
 import { ApolloDriverConfig, ApolloDriver } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
+
 import { SisconcreModule } from './sisconcre/sisconcre.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -17,6 +19,7 @@ import { SisconcreModule } from './sisconcre/sisconcre.module';
       ]
     }),
     SisconcreModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

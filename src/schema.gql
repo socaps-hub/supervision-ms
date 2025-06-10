@@ -8,6 +8,29 @@ type Sucursal {
   R11Nom: String!
 }
 
+type Cooperativa {
+  R17Id: ID!
+  R17Nom: String!
+  R17Activ: Boolean!
+  R17Logo: String!
+  R17Creada_en: DateTime!
+  sucursales: [Sucursal!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type LimitePrudencial {
+  R18Id: String!
+  R18Importe: Int!
+  R18Coop_id: String!
+  R18Creado_en: DateTime!
+  R18Actualizado_en: DateTime!
+  cooperativa: Cooperativa!
+}
+
 type Usuario {
   R12Id: String!
   R12Ni: String!
@@ -17,20 +40,6 @@ type Usuario {
   R12Activ: Boolean!
   R12Creado_en: DateTime!
   sucursal: Sucursal!
-}
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
-type Cooperativa {
-  R17Id: ID!
-  R17Nom: String!
-  R17Activ: Boolean!
-  R17Logo: String!
-  R17Creada_en: DateTime!
-  sucursales: [Sucursal!]!
 }
 
 type Categoria {
@@ -48,25 +57,10 @@ type Producto {
   categoria: Categoria!
 }
 
-type LimitePrudencial {
-  R18Id: String!
-  R18Importe: Int!
-  R18Coop_id: String!
-  R18Creado_en: DateTime!
-  R18Actualizado_en: DateTime!
-  cooperativa: Cooperativa!
-}
-
 type Query {
   usuarios(role: ValidRoles): [Usuario!]!
   usuario(ni: String!): Usuario!
-  sucursales: [Sucursal!]!
-  sucursal(id: ID!): Sucursal!
-  cooperativas: [Cooperativa!]!
-  cooperativa(id: ID!): Cooperativa!
   productos: [Producto!]!
-  categorias: [Categoria!]!
-  categoria(id: ID!): Categoria!
   findLastLimitePrudencial: LimitePrudencial!
 }
 
@@ -85,7 +79,6 @@ type Mutation {
   updateProducto(updateProductoInput: UpdateProductoInput!): Producto!
   activateProducto(name: String!): Producto!
   desactivateProducto(id: ID!): Producto!
-  createCategoria(createCategoriaInput: CreateCategoriaInput!): Categoria!
   createLimitePrudencial(createLimitePrudencialInput: CreateLimitePrudencialInput!): LimitePrudencial!
 }
 
@@ -106,10 +99,6 @@ input UpdateProductoInput {
   R13Nom: String
   R13Cat_id: ID
   id: ID!
-}
-
-input CreateCategoriaInput {
-  R14Nom: String!
 }
 
 input CreateLimitePrudencialInput {

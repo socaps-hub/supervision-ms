@@ -1,14 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ProductosService } from './productos.service';
 import { ProductosResolver } from './productos.resolver';
-import { CategoriasModule } from '../categorias/categorias.module';
 import { UsuariosModule } from '../usuarios/usuarios.module';
+import { ProductosHandler } from './productos.handler';
+import { NatsModule } from 'src/transports/nats.module';
 
 @Module({
-  providers: [ProductosResolver, ProductosService],
   imports: [
     UsuariosModule,
-    CategoriasModule,
-  ]
+    NatsModule,
+  ],
+  controllers: [ ProductosHandler ],
+  providers: [
+    ProductosResolver, 
+    // ProductosHandler,
+    ProductosService, 
+  ],
 })
 export class ProductosModule {}

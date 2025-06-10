@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { CreateUsuarioInput } from './dto/inputs/create-usuario.input';
 import { PrismaClient } from '@prisma/client';
-
 import { Usuario } from './entities/usuario.entity';
-import { CreateUsuarioArgs } from './dto/args/create-usuario.arg';
-import { ValidRoles } from 'src/common/valid-roles.enum';
 import { bcryptAdapter } from 'src/config';
+import { ValidRoles } from 'src/common/valid-roles.enum';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -50,9 +50,8 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     return users
   }
 
-  async create(createUsuarioArgs: CreateUsuarioArgs) {
+  async create(createUsuarioInput: CreateUsuarioInput, user: Usuario) {
 
-      const { createUsuarioInput, usuario } = createUsuarioArgs
       const { R12Ni, R12Password } = createUsuarioInput
   
       const userDB = await await this.r12Usuario.findFirst({
@@ -64,16 +63,24 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
         if ( !userDB.R12Activ ) {
           console.log(userDB.R12Rol);
           
-          throw new BadRequestException(`${ userDB.R12Rol.toUpperCase() } con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
+          throw new RpcException({
+            message: `${ userDB.R12Rol.toUpperCase() } con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`,
+            status: HttpStatus.BAD_REQUEST
+          })
+          // throw new BadRequestException(`${ userDB.R12Rol.toUpperCase() } con clave ${ R12Ni } -> ${ userDB.R12Nom } esta desactivado`)
         }
 
-        throw new BadRequestException(`Usuario con clave ${ R12Ni } ya existe`)
+        throw new RpcException({
+          message: `Usuario con clave ${ R12Ni } ya existe`,
+          status: HttpStatus.BAD_REQUEST
+        })
+        // throw new BadRequestException(`Usuario con clave ${ R12Ni } ya existe`)
       }
   
       return this.r12Usuario.create({
         data: {
           ...createUsuarioInput,
-          R12Coop_id: usuario.R12Coop_id,
+          R12Coop_id: user.R12Coop_id,
           R12Password: bcryptAdapter.hash(R12Password)
         },
         include: {
@@ -93,7 +100,11 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user || !user.R12Activ ) {
-      throw new NotFoundException(`Usuario con clave ${ userNI } no existe`)
+      throw new RpcException({
+        message: `Usuario con clave ${ userNI } no existe`,
+        status: HttpStatus.NOT_FOUND
+      })
+      // throw new NotFoundException(`Usuario con clave ${ userNI } no existe`)
     }
 
     return user
@@ -111,7 +122,11 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user || !user.R12Activ ) {
-      throw new NotFoundException(`Usuario con id ${ id } no existe`)
+      throw new RpcException({
+        message: `Usuario con clave ${ id } no existe`,
+        status: HttpStatus.NOT_FOUND
+      })
+      // throw new NotFoundException(`Usuario con id ${ id } no existe`)
     }
 
     return user
@@ -127,7 +142,11 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     })
 
     if ( !user ) {
-      throw new NotFoundException(`Usuario con clave ${ userNI } no existe`)
+      throw new RpcException({
+        message: `Usuario con clave ${ userNI } no existe`,
+        status: HttpStatus.NOT_FOUND
+      })
+      // throw new NotFoundException(`Usuario con clave ${ userNI } no existe`)
     }
 
     user.R12Activ = true

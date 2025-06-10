@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Categoria } from 'src/sisconcre/categorias/entities/categoria.entity';
+import { Categoria } from 'src/common/entities/categoria.entity';
 
 @ObjectType()
 export class Producto {

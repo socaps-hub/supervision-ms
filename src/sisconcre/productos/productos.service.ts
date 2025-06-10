@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PrismaClient } from '@prisma/client';
-
 import { Producto } from './entities/producto.entity';
-import { CreateProductArgs } from './dto/args/create-product.arg';
-import { UpdateProductArgs } from './dto/args/update-product.arg';
-import { ActivateProductArgs } from './dto/args/activate-product.arg';
-import { CategoriasService } from '../categorias/categorias.service';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { CreateProductoInput } from './dto/inputs/create-producto.input';
+import { UpdateProductoInput } from './dto/inputs/update-producto.input';
+import { NATS_SERVICE } from 'src/config';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ProductosService  extends PrismaClient implements OnModuleInit {
@@ -19,25 +19,40 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
   }
 
   constructor(
-    private _categoriasService: CategoriasService
-  ) {
+    @Inject(NATS_SERVICE) private readonly _client: ClientProxy,
+  ) { 
     super()
   }
   
-  async create( createProductArgs: CreateProductArgs ): Promise<Producto> {
-
-    const { createProductoInput, usuario } = createProductArgs    
+  async create( createProductoInput: CreateProductoInput, user: Usuario): Promise<Producto> {
+    
     const { R13Nom, R13Cat_id } = createProductoInput
 
-    await this._categoriasService.findOne( R13Cat_id )
+    // await this._categoriasService.findOne( R13Cat_id )
+    const categoria = await firstValueFrom(
+      this._client.send('config.categorias.getById', { id: R13Cat_id })
+    ).catch( err => {
+      throw new RpcException(err)
+    })
+    
 
-    const product = await this.findByName( usuario, R13Nom )
+    const product = await this.findByName( user, R13Nom )
 
     if ( product ) {
       
-      if ( !product.R13Activ ) throw new BadRequestException(`El producto ${ R13Nom } esta desactivado`)
+      if ( !product.R13Activ ) {
+        throw new RpcException({
+          message: `El producto ${ R13Nom } esta desactivado`,
+          status: HttpStatus.BAD_REQUEST
+        })
+        // throw new BadRequestException(`El producto ${ R13Nom } esta desactivado`)
+      }
 
-      throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
+      throw new RpcException({
+        message: `El producto ${ R13Nom } ya existe en tu cooperativa`,
+        status: HttpStatus.BAD_REQUEST
+      })
+      // throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
     }
 
     return await this.r13Producto.create({
@@ -45,7 +60,7 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         ...createProductoInput,
         R13Nom: R13Nom.toLowerCase(),
         R13Activ: true,
-        R13Coop_id: usuario.R12Coop_id,
+        R13Coop_id: user.R12Coop_id,
       },
       include: {
         categoria: true
@@ -83,7 +98,11 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
 
     if ( !producto || !producto.R13Activ ) {
-      throw new BadRequestException(`El producto con id ${ id } no existe`)
+      throw new RpcException({
+        message: `El producto con id ${ id } no existe`,
+        status: HttpStatus.NOT_FOUND
+      })
+      // throw new BadRequestException(`El producto con id ${ id } no existe`)
     }
 
     return producto
@@ -98,18 +117,21 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
   }
 
-  async update(updateProductoArgs: UpdateProductArgs) {
+  async update(id: string, updateProductoInput: UpdateProductoInput, user: Usuario) {
 
-    const { updateProductoInput, usuario } = updateProductoArgs
-    const { R13Cat_id, R13Nom, id } = updateProductoInput
+    const { R13Cat_id, R13Nom } = updateProductoInput
 
     const productDB = await this.findByID( id )
 
     if ( R13Nom ) {
-      const product = await this.findByName( usuario, R13Nom )
+      const product = await this.findByName( user, R13Nom )
   
       if (product && product.R13Id !== id) {
-        throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
+        throw new RpcException({
+          message: `El producto ${ R13Nom } ya existe en tu cooperativa`,
+          status: HttpStatus.BAD_REQUEST
+        })
+        // throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
       }
     }
 
@@ -134,12 +156,9 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
   }
 
-  async activate( activateProductArgs: ActivateProductArgs ) {
-
-    const { name, usuario } = activateProductArgs
-
+  async activate( name: string, user: Usuario ) {
     const producto = await this.r13Producto.findFirst({
-      where: { R13Nom: name , R13Coop_id: usuario.R12Coop_id },
+      where: { R13Nom: name , R13Coop_id: user.R12Coop_id },
       include: {
         categoria: {
           select: {
@@ -152,7 +171,11 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
     })
 
     if ( !producto ) {
-      throw new BadRequestException(`El producto ${ name } no existe`)
+      throw new RpcException({
+        message: `El producto ${ name } no existe`,
+        status: HttpStatus.BAD_REQUEST
+      })
+      // throw new BadRequestException(`El producto ${ name } no existe`)
     }
     producto.R13Activ = true
 

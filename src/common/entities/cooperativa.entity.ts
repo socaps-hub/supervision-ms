@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Sucursal } from 'src/sisconcre/sucursales/entities/sucursal.entity';
+import { Sucursal } from './sucursal.entity';
 
 @ObjectType()
 export class Cooperativa {

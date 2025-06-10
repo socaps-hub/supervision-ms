@@ -1,29 +1,32 @@
-import { ParseUUIDPipe } from '@nestjs/common'; 
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-
+import { Resolver, Query, Mutation, Args, Int, ID } from '@nestjs/graphql';
 import { UsuariosService } from './usuarios.service';
 import { Usuario } from './entities/usuario.entity';
+import { CreateUsuarioInput } from './dto/inputs/create-usuario.input';
 import { ValidRolesArgs } from './dto/args/roles.arg';
-import { CreateUsuarioArgs } from './dto/args/create-usuario.arg';
+import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
+import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 
 @Resolver(() => Usuario)
+@UseGuards( AuthGraphQLGuard )
 export class UsuariosResolver {
 
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Mutation(() => Usuario)
   createUsuario(
-    @Args() createUsuarioArgs: CreateUsuarioArgs,
+    @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput,
+    @GetUserGraphQL() user: Usuario
   ) {
-    return this.usuariosService.create( createUsuarioArgs );
+    return this.usuariosService.create(createUsuarioInput, user);
   }
 
   @Query(() => [Usuario], { name: 'usuarios' })
   findAll(
     @Args() validRoles: ValidRolesArgs,
-    @Args() usuario: Usuario
+    @GetUserGraphQL() user: Usuario
   ) {
-    return this.usuariosService.findAll( validRoles.role, usuario );
+    return this.usuariosService.findAll( validRoles.role, user );
   }
 
   @Query(() => Usuario, { name: 'usuario' })

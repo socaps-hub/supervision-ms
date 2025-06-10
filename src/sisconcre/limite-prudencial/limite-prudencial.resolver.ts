@@ -1,24 +1,29 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 
 import { LimitePrudencialService } from './limite-prudencial.service';
 import { LimitePrudencial } from './entities/limite-prudencial.entity';
-import { CreateLimitePrudencialArgs } from './dto/args/create-limite-prudencial.arg';
+import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
+import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { CreateLimitePrudencialInput } from './dto/inputs/create-limite-prudencial.input';
 
 @Resolver(() => LimitePrudencial)
+@UseGuards( AuthGraphQLGuard )
 export class LimitePrudencialResolver {
   constructor(private readonly limitePrudencialService: LimitePrudencialService) {}
 
   @Mutation(() => LimitePrudencial)
   createLimitePrudencial(
-    @Args() createLimitePrudencialArgs: CreateLimitePrudencialArgs,
+    @Args('createLimitePrudencialInput') createLimitePrudencialInput: CreateLimitePrudencialInput,
+    @GetUserGraphQL() user: Usuario,
   ) {
-    return this.limitePrudencialService.create(createLimitePrudencialArgs);
+    return this.limitePrudencialService.create(createLimitePrudencialInput, user);
   }
 
   @Query(() => LimitePrudencial)
   findLastLimitePrudencial(
-    @Args() user: Usuario,
+    @GetUserGraphQL() user: Usuario,
   ) {
     return this.limitePrudencialService.findLast(user);
   }

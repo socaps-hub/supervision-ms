@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { CreateLimitePrudencialArgs } from './dto/args/create-limite-prudencial.arg';
 import { Usuario } from '../usuarios/entities/usuario.entity';
+import { CreateLimitePrudencialInput } from './dto/inputs/create-limite-prudencial.input';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class LimitePrudencialService extends PrismaClient implements OnModuleInit {
@@ -13,13 +14,12 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
     this._logger.log('Database connected')
   }
 
-  async create(createLimitePrudencialArgs: CreateLimitePrudencialArgs) {
+  async create(createLimitePrudencialInput: CreateLimitePrudencialInput, user: Usuario) {
 
-    const { createLimitePrudencialInput, usuario } = createLimitePrudencialArgs
     const { R18Importe } = createLimitePrudencialInput
 
     const limitePrudencial = await this.r18LimitePrudencial.findFirst({
-      where: { R18Importe, R18Coop_id: usuario.R12Coop_id }
+      where: { R18Importe, R18Coop_id: user.R12Coop_id }
     })
 
     if ( limitePrudencial ) {
@@ -28,8 +28,19 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
         where: { R18Id: limitePrudencial.R18Id },
         data: {
           R18Importe,
-          R18Coop_id: usuario.R12Coop_id,
+          R18Coop_id: user.R12Coop_id,
           R18Creado_en: new Date()
+        },
+        include: {
+          cooperativa: {
+            select: {
+              R17Id: true,
+              R17Nom: true,
+              R17Activ: true,
+              R17Logo: true,
+              sucursales: true,
+            }
+          },
         }
       })
     }
@@ -37,24 +48,50 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
     return await this.r18LimitePrudencial.create({
       data: {
         ...createLimitePrudencialInput,
-        R18Coop_id: usuario.R12Coop_id
+        R18Coop_id: user.R12Coop_id
       },
       include: {
-        cooperativa: true
+        cooperativa: {
+          select: {
+            R17Id: true,
+            R17Nom: true,
+            R17Activ: true,
+            R17Logo: true,
+            sucursales: true,
+          }
+        },
       }
     });
   }
 
   async findLast( user: Usuario ) {
-    return this.r18LimitePrudencial.findFirst({
+    console.log(user);
+    
+    const limitePrudencial = await this.r18LimitePrudencial.findFirst({
       where: { R18Coop_id: user.R12Coop_id },
       orderBy: {
         R18Creado_en: 'desc'
       },
       include: {
-        cooperativa: true
+        cooperativa: {
+          select: {
+            R17Id: true,
+            R17Nom: true,
+            R17Activ: true,
+            R17Logo: true,
+            sucursales: true,
+          }
+        },
       }
     })
+
+    if ( !limitePrudencial ) {
+      throw new RpcException({
+        message: 'No hay un límite prudencial en tu cooperativa'
+      })
+    }
+
+    return limitePrudencial
   }
 
   // findAll() {

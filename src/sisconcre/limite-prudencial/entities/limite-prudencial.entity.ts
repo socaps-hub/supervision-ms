@@ -1,5 +1,5 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
-import { Cooperativa } from 'src/sisconcre/cooperativas/entities/cooperativa.entity';
+import { Cooperativa } from 'src/common/entities/cooperativa.entity';
 
 @ObjectType()
 export class LimitePrudencial {
