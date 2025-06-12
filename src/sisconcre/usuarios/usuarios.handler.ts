@@ -14,9 +14,9 @@ export class UsuariosHandler {
 
     @MessagePattern('supervision.usuarios.create')
     handleCreateUsuario(
-        @Payload() data: { createUsuarioInput: CreateUsuarioInput, usuario: Usuario },
+        @Payload() data: { createUsuarioInput: CreateUsuarioInput },
     ) {
-        return this._usuariosService.create( data.createUsuarioInput, data.usuario );
+        return this._usuariosService.create( data.createUsuarioInput );
     }
 
     @MessagePattern('supervision.usuarios.getAll')

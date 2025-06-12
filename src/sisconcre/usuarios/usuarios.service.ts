@@ -50,12 +50,12 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     return users
   }
 
-  async create(createUsuarioInput: CreateUsuarioInput, user: Usuario) {
+  async create(createUsuarioInput: CreateUsuarioInput) {
 
-      const { R12Ni, R12Password } = createUsuarioInput
+      const { R12Ni, R12Password, R12Coop_id } = createUsuarioInput
   
       const userDB = await await this.r12Usuario.findFirst({
-        where: { R12Ni },
+        where: { R12Ni: R12Ni.trim() },
       })
   
       if ( userDB ) {
@@ -80,7 +80,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
       return this.r12Usuario.create({
         data: {
           ...createUsuarioInput,
-          R12Coop_id: user.R12Coop_id,
+          R12Coop_id,
           R12Password: bcryptAdapter.hash(R12Password)
         },
         include: {
@@ -123,7 +123,7 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
 
     if ( !user || !user.R12Activ ) {
       throw new RpcException({
-        message: `Usuario con clave ${ id } no existe`,
+        message: `Usuario con id ${ id } no existe`,
         status: HttpStatus.NOT_FOUND
       })
       // throw new NotFoundException(`Usuario con id ${ id } no existe`)

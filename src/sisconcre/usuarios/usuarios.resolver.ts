@@ -16,9 +16,8 @@ export class UsuariosResolver {
   @Mutation(() => Usuario)
   createUsuario(
     @Args('createUsuarioInput') createUsuarioInput: CreateUsuarioInput,
-    @GetUserGraphQL() user: Usuario
   ) {
-    return this.usuariosService.create(createUsuarioInput, user);
+    return this.usuariosService.create(createUsuarioInput);
   }
 
   @Query(() => [Usuario], { name: 'usuarios' })

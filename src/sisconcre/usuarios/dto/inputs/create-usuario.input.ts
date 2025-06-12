@@ -29,4 +29,8 @@ export class CreateUsuarioInput {
   @IsUUID()
   R12Suc_id: string
 
+  @Field(() => ID)
+  @IsUUID()
+  R12Coop_id: string
+
 }
