@@ -120,12 +120,10 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
   async update(id: string, updateProductoInput: UpdateProductoInput, user: Usuario) {
 
     const { R13Cat_id, R13Nom } = updateProductoInput
-
-    const productDB = await this.findByID( id )
-
+    
     if ( R13Nom ) {
       const product = await this.findByName( user, R13Nom )
-  
+      
       if (product && product.R13Id !== id) {
         throw new RpcException({
           message: `El producto ${ R13Nom } ya existe en tu cooperativa`,
@@ -134,7 +132,8 @@ export class ProductosService  extends PrismaClient implements OnModuleInit {
         // throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
       }
     }
-
+    
+    const productDB = await this.findByID( id )
     return this.r13Producto.update({
       where: { R13Id: id },
       data: {

@@ -6,6 +6,7 @@ import { ValidRolesArgs } from './dto/args/roles.arg';
 import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
+import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 
 @Resolver(() => Usuario)
 @UseGuards( AuthGraphQLGuard )
@@ -35,10 +36,12 @@ export class UsuariosResolver {
     return this.usuariosService.findByNI(ni, true);
   }
 
-  // @Mutation(() => Usuario)
-  // updateUsuario(@Args('updateUsuarioInput') updateUsuarioInput: UpdateUsuarioInput) {
-  //   return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
-  // }
+  @Mutation(() => Usuario)
+  updateUsuario(
+    @Args('updateUsuarioInput') updateUsuarioInput: UpdateUsuarioInput
+  ) {
+    return this.usuariosService.update(updateUsuarioInput.id, updateUsuarioInput);
+  }
 
   @Mutation(() => Usuario)
   desactivateUser(

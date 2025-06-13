@@ -5,6 +5,7 @@ import { Usuario } from './entities/usuario.entity';
 import { bcryptAdapter } from 'src/config';
 import { ValidRoles } from 'src/common/valid-roles.enum';
 import { RpcException } from '@nestjs/microservices';
+import { UpdateUsuarioInput } from './dto/inputs/update-usuario.input';
 
 @Injectable()
 export class UsuariosService extends PrismaClient implements OnModuleInit {
@@ -130,6 +131,44 @@ export class UsuariosService extends PrismaClient implements OnModuleInit {
     }
 
     return user
+  }
+
+  async update( id: string, updateUsuarioInput: UpdateUsuarioInput ) {
+
+    const { R12Suc_id, R12Ni, R12Nom } = updateUsuarioInput
+    
+    if ( R12Ni ) {
+      
+      const user = await this.findByNI( R12Ni )
+      
+      
+      if (user && user.R12Id !== id) {
+        throw new RpcException({
+          message: `El usuario con clave ${ R12Ni } ya existe en tu cooperativa`,
+          status: HttpStatus.BAD_REQUEST
+        })
+        // throw new BadRequestException(`El producto ${ R13Nom } ya existe en tu cooperativa`)
+      }
+    }
+    
+    const userDB = await this.findByID( id )    
+    return await this.r12Usuario.update({
+      where: { R12Id: id },
+      data: {
+        R12Id: userDB.R12Id,
+        R12Suc_id: R12Suc_id ? R12Suc_id : userDB.R12Suc_id,
+        R12Ni: R12Ni ? R12Ni : userDB.R12Ni,
+        R12Nom: R12Nom ? R12Nom : userDB.R12Nom,
+        R12Password: userDB.R12Password,
+        R12Rol: userDB.R12Rol,
+        R12Activ: userDB.R12Activ,
+        R12Coop_id: userDB.R12Coop_id,
+      },
+      include: {
+        sucursal: true
+      }
+    })
+
   }
 
   async activate( userNI: string ) {

@@ -73,6 +73,7 @@ enum ValidRoles {
 
 type Mutation {
   createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
+  updateUsuario(updateUsuarioInput: UpdateUsuarioInput!): Usuario!
   desactivateUser(id: ID!): Usuario!
   activateUser(userNI: String!): Usuario!
   createProducto(createProductoInput: CreateProductoInput!): Producto!
@@ -89,6 +90,16 @@ input CreateUsuarioInput {
   R12Rol: ValidRoles!
   R12Suc_id: ID!
   R12Coop_id: ID!
+}
+
+input UpdateUsuarioInput {
+  R12Ni: String
+  R12Nom: String
+  R12Password: String
+  R12Rol: ValidRoles
+  R12Suc_id: ID
+  R12Coop_id: ID
+  id: ID!
 }
 
 input CreateProductoInput {

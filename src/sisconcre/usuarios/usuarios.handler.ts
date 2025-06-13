@@ -4,6 +4,7 @@ import { MessagePattern, Payload } from "@nestjs/microservices";
 import { ValidRoles } from "src/common/valid-roles.enum";
 import { Usuario } from "../usuarios/entities/usuario.entity";
 import { CreateUsuarioInput } from "../usuarios/dto/inputs/create-usuario.input";
+import { UpdateUsuarioInput } from "./dto/inputs/update-usuario.input";
 
 @Controller()
 export class UsuariosHandler {
@@ -38,6 +39,13 @@ export class UsuariosHandler {
         @Payload('id', ParseUUIDPipe) id: string
     ) {
         return this._usuariosService.findByID(id);
+    }
+
+    @MessagePattern('supervision.usuarios.update')
+    handleUpdateUsuario(
+        @Payload() updateUsuarioInput: UpdateUsuarioInput
+    ) {
+        return this._usuariosService.update( updateUsuarioInput.id, updateUsuarioInput );
     }
     
     @MessagePattern('supervision.usuarios.desactivate')
