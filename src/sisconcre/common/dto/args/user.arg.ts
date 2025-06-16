@@ -1,5 +1,5 @@
 import { ArgsType, Field } from "@nestjs/graphql";
-import { Usuario } from "src/sisconcre/usuarios/entities/usuario.entity";
+import { Usuario } from "src/common/entities/usuario.entity";
 
 @ArgsType()
 export class UserArg {

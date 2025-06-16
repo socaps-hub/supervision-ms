@@ -1,10 +1,9 @@
 
-import { Controller, ParseUUIDPipe} from "@nestjs/common";
+import { Controller} from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { Usuario } from "../usuarios/entities/usuario.entity";
 import { LimitePrudencialService } from "../limite-prudencial/limite-prudencial.service";
-import { UserArg } from "../common/dto/args/user.arg";
 import { CreateLimitePrudencialInput } from "../limite-prudencial/dto/inputs/create-limite-prudencial.input";
+import { Usuario } from "src/common/entities/usuario.entity";
 
 @Controller()
 export class LimitePrudencialHandler {

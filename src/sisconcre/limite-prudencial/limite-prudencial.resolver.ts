@@ -5,8 +5,8 @@ import { LimitePrudencialService } from './limite-prudencial.service';
 import { LimitePrudencial } from './entities/limite-prudencial.entity';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
-import { Usuario } from '../usuarios/entities/usuario.entity';
 import { CreateLimitePrudencialInput } from './dto/inputs/create-limite-prudencial.input';
+import { Usuario } from 'src/common/entities/usuario.entity';
 
 @Resolver(() => LimitePrudencial)
 @UseGuards( AuthGraphQLGuard )

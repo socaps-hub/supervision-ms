@@ -1,5 +1,5 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
-import { Sucursal } from 'src/common/entities/sucursal.entity';
+import { Sucursal } from './sucursal.entity';
 
 @ObjectType()
 export class Usuario {

@@ -8,6 +8,21 @@ type Sucursal {
   R11Nom: String!
 }
 
+type Categoria {
+  R14Id: String!
+  R14Nom: String!
+  R14Activ: Boolean!
+}
+
+type Producto {
+  R13Id: String!
+  R13Nom: String!
+  R13Cat_id: ID!
+  R13Activ: Boolean!
+  R13Coop_id: String!
+  categoria: Categoria!
+}
+
 type Cooperativa {
   R17Id: ID!
   R17Nom: String!
@@ -15,6 +30,7 @@ type Cooperativa {
   R17Logo: String!
   R17Creada_en: DateTime!
   sucursales: [Sucursal!]!
+  productos: [Producto!]!
 }
 
 """
@@ -31,86 +47,12 @@ type LimitePrudencial {
   cooperativa: Cooperativa!
 }
 
-type Usuario {
-  R12Id: String!
-  R12Ni: String!
-  R12Nom: String!
-  R12Suc_id: String!
-  R12Rol: String!
-  R12Activ: Boolean!
-  R12Creado_en: DateTime!
-  sucursal: Sucursal!
-}
-
-type Categoria {
-  R14Id: String!
-  R14Nom: String!
-  R14Activ: Boolean!
-}
-
-type Producto {
-  R13Id: String!
-  R13Nom: String!
-  R13Cat_id: ID!
-  R13Activ: Boolean!
-  R13Coop_id: String!
-  categoria: Categoria!
-}
-
 type Query {
-  usuarios(role: ValidRoles): [Usuario!]!
-  usuario(ni: String!): Usuario!
-  productos: [Producto!]!
   findLastLimitePrudencial: LimitePrudencial!
 }
 
-enum ValidRoles {
-  admin
-  ejecutivo
-  supervisor
-  superUser
-}
-
 type Mutation {
-  createUsuario(createUsuarioInput: CreateUsuarioInput!): Usuario!
-  updateUsuario(updateUsuarioInput: UpdateUsuarioInput!): Usuario!
-  desactivateUser(id: ID!): Usuario!
-  activateUser(userNI: String!): Usuario!
-  createProducto(createProductoInput: CreateProductoInput!): Producto!
-  updateProducto(updateProductoInput: UpdateProductoInput!): Producto!
-  activateProducto(name: String!): Producto!
-  desactivateProducto(id: ID!): Producto!
   createLimitePrudencial(createLimitePrudencialInput: CreateLimitePrudencialInput!): LimitePrudencial!
-}
-
-input CreateUsuarioInput {
-  R12Ni: String!
-  R12Nom: String!
-  R12Password: String!
-  R12Rol: ValidRoles!
-  R12Suc_id: ID!
-  R12Coop_id: ID!
-}
-
-input UpdateUsuarioInput {
-  R12Ni: String
-  R12Nom: String
-  R12Password: String
-  R12Rol: ValidRoles
-  R12Suc_id: ID
-  R12Coop_id: ID
-  id: ID!
-}
-
-input CreateProductoInput {
-  R13Nom: String!
-  R13Cat_id: ID!
-}
-
-input UpdateProductoInput {
-  R13Nom: String
-  R13Cat_id: ID
-  id: ID!
 }
 
 input CreateLimitePrudencialInput {

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { LimitePrudencialService } from './limite-prudencial.service';
 import { LimitePrudencialResolver } from './limite-prudencial.resolver';
-import { UsuariosModule } from '../usuarios/usuarios.module';
 import { LimitePrudencialHandler } from './limite-prudencial.handler';
+import { NatsModule } from 'src/transports/nats.module';
 
 @Module({
   imports: [
-    UsuariosModule,
+    NatsModule,
   ],
   controllers: [
     LimitePrudencialHandler

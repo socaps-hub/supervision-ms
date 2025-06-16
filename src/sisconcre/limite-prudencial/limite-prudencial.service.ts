@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { Usuario } from '../usuarios/entities/usuario.entity';
 import { CreateLimitePrudencialInput } from './dto/inputs/create-limite-prudencial.input';
 import { RpcException } from '@nestjs/microservices';
+import { Usuario } from 'src/common/entities/usuario.entity';
 
 @Injectable()
 export class LimitePrudencialService extends PrismaClient implements OnModuleInit {

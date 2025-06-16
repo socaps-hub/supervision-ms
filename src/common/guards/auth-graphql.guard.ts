@@ -2,23 +2,25 @@ import {
     CanActivate,
     ExecutionContext,
     HttpStatus,
+    Inject,
     Injectable,
     UnauthorizedException,
   } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 import { Request } from 'express';
-import { envs } from 'src/config';
-import { UsuariosService } from 'src/sisconcre/usuarios/usuarios.service';
+import { NATS_SERVICE } from 'src/config';
+import { envs } from 'src/config/envs';
   
 @Injectable()
 export class AuthGraphQLGuard implements CanActivate {
 
     constructor(
         private readonly _jwtService: JwtService,
-        private readonly _usuariosService: UsuariosService,
+        @Inject(NATS_SERVICE) private readonly _client: ClientProxy,
+        // private readonly _usuariosService: UsuariosService,
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -39,7 +41,8 @@ export class AuthGraphQLGuard implements CanActivate {
                 }
             );
 
-            const user = await this._usuariosService.findByID( payload.R12Id )
+            // const user = await this._usuariosService.findByID( payload.R12Id )
+            const user = await this._client.send('supervision.usuarios.getByID', { id: payload.R12Id })
 
             request['user'] = user;
             
