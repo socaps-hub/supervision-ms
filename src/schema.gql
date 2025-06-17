@@ -2,11 +2,17 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Sucursal {
-  R11Id: ID!
-  R11NumSuc: String!
-  R11Nom: String!
+type Grupo {
+  R02Id: String!
+  R02Nom: String!
+  R02Creado_en: DateTime!
+  R02Actualizado_en: DateTime!
 }
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
 
 type Categoria {
   R14Id: String!
@@ -23,6 +29,23 @@ type Producto {
   categoria: Categoria!
 }
 
+type Sucursal {
+  R11Id: ID!
+  R11NumSuc: String!
+  R11Nom: String!
+}
+
+type Usuario {
+  R12Id: String!
+  R12Ni: String!
+  R12Nom: String!
+  R12Suc_id: String!
+  R12Rol: String!
+  R12Activ: Boolean!
+  R12Creado_en: DateTime!
+  sucursal: Sucursal!
+}
+
 type Cooperativa {
   R17Id: ID!
   R17Nom: String!
@@ -30,13 +53,10 @@ type Cooperativa {
   R17Logo: String!
   R17Creada_en: DateTime!
   sucursales: [Sucursal!]!
+  usuarios: [Usuario!]!
   productos: [Producto!]!
+  grupos: [Grupo!]!
 }
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type LimitePrudencial {
   R18Id: String!
@@ -49,12 +69,27 @@ type LimitePrudencial {
 
 type Query {
   findLastLimitePrudencial: LimitePrudencial!
+  grupos(coopId: ID!): [Grupo!]!
 }
 
 type Mutation {
   createLimitePrudencial(createLimitePrudencialInput: CreateLimitePrudencialInput!): LimitePrudencial!
+  createGrupo(createGrupoInput: CreateGrupoInput!): Grupo!
+  updateGrupo(updateGrupoInput: UpdateGrupoInput!): Grupo!
+  removeGrupo(id: ID!): Grupo!
 }
 
 input CreateLimitePrudencialInput {
   R18Importe: Int!
+}
+
+input CreateGrupoInput {
+  R02Nom: String!
+  R02Coop_id: ID!
+}
+
+input UpdateGrupoInput {
+  R02Nom: String
+  R02Coop_id: ID
+  id: ID!
 }

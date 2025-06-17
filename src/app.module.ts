@@ -6,6 +6,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 
 import { SisconcreModule } from './sisconcre/sisconcre.module';
 import { CommonModule } from './common/common.module';
+import { EstructuraModule } from './estructura/estructura.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CommonModule } from './common/common.module';
     }),
     SisconcreModule,
     CommonModule,
+    EstructuraModule,
   ],
   controllers: [],
   providers: [],
