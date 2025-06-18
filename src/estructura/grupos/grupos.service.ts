@@ -129,7 +129,6 @@ export class GruposService extends PrismaClient implements OnModuleInit {
       })
 
       if ( grupo && grupo.R02Id !== id ) {
-        console.log({id1: grupo.R02Id, id});
         
         throw new RpcException({
           message: `El grupo ${ R02Nom } ya existe en la cooperativa`,
