@@ -1,4 +1,5 @@
 import { ObjectType, Field, GraphQLISODateTime } from '@nestjs/graphql';
+import { Rubro } from 'src/estructura/rubros/entities/rubro.entity';
 
 @ObjectType()
 export class Grupo {
@@ -21,6 +22,7 @@ export class Grupo {
   // @Field( () => Cooperativa )
   // cooperativa: Cooperativa
 
-  // rubros: 
+  @Field( () => [Rubro], { nullable: true })
+  rubros?: Rubro[]
 
 }
