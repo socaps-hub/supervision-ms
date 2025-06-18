@@ -56,6 +56,7 @@ export class RubrosService extends PrismaClient implements OnModuleInit {
       },
       include: {
         grupo: true,
+        elementos: true,
       }
     });
   }
@@ -63,7 +64,7 @@ export class RubrosService extends PrismaClient implements OnModuleInit {
   async findById(id: string): Promise<Rubro> {
     const rubro = await this.r03Rubro.findFirst({
       where: { R03Id: id },
-      include: { grupo: true },
+      include: { grupo: true, elementos: true },
     });
 
     if (!rubro) {

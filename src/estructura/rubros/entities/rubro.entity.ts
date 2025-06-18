@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { GraphQLISODateTime } from '@nestjs/graphql';
+import { Elemento } from 'src/estructura/elementos/entities/elemento.entity';
 import { Grupo } from 'src/estructura/grupos/entities/grupo.entity';
 
 @ObjectType()
@@ -22,4 +23,7 @@ export class Rubro {
 
   @Field(() => Grupo, { nullable: true }) // ⚠️ nullable en caso de que no esté cargado
   grupo?: Grupo;
+
+  @Field(() => [Elemento], { nullable: true }) // ⚠️ nullable en caso de que no esté cargado
+  elementos?: Elemento[];
 }

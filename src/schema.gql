@@ -2,6 +2,21 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Elemento {
+  R04Id: ID!
+  R04R_id: ID!
+  R04Nom: String!
+  R04Imp: String!
+  R04Creado_en: DateTime
+  R04Actualizado_en: DateTime
+  rubro: Rubro
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Rubro {
   R03Id: ID!
   R03G_id: ID!
@@ -9,12 +24,8 @@ type Rubro {
   R03Creado_en: DateTime
   R03Actualizado_en: DateTime
   grupo: Grupo
+  elementos: [Elemento!]
 }
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type Grupo {
   R02Id: String!
@@ -75,16 +86,6 @@ type LimitePrudencial {
   R18Creado_en: DateTime!
   R18Actualizado_en: DateTime!
   cooperativa: Cooperativa!
-}
-
-type Elemento {
-  R04Id: ID!
-  R04R_id: ID!
-  R04Nom: String!
-  R04Imp: String!
-  R04Creado_en: DateTime
-  R04Actualizado_en: DateTime
-  rubro: Rubro
 }
 
 type Query {
