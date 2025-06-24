@@ -69,31 +69,21 @@ export class GruposService extends PrismaClient implements OnModuleInit {
       where: {
         R02Coop_id: coopId
       },
-      orderBy: {
-        R02Creado_en: 'desc'
-      },
-      // include: {
-      //   cooperativa: {
-      //     select: {
-      //       R17Id: true,
-      //       R17Nom: true,
-      //       R17Activ: true,
-      //       R17Logo: true,
-      //       R17Creada_en: true,
-      //       sucursales: true,
-      //       productos: {
-      //         select: {
-      //           R13Id: true,
-      //           R13Nom: true,
-      //           R13Cat_id: true,
-      //           R13Activ: true,
-      //           R13Coop_id: true,
-      //           categoria: true,
-      //         }
-      //       },
-      //     }
-      //   }
-      // }
+      // orderBy: {
+      //   R02Creado_en: ''
+      // },
+      include: {
+        rubros: {
+          select: {
+            R03Id: true,
+            R03Nom: true,
+            R03G_id: true,
+            R03Creado_en: true,
+            R03Actualizado_en: true,
+            elementos: true
+          }
+        },
+      }
     })
 
     console.log('Handler llamado', grupos);

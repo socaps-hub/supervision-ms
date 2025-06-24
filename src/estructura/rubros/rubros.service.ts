@@ -46,9 +46,9 @@ export class RubrosService extends PrismaClient implements OnModuleInit {
 
   async findAll(coopId: string): Promise<Rubro[]> {
     return this.r03Rubro.findMany({
-      orderBy: {
-        R03Creado_en: 'desc'
-      },
+      // orderBy: {
+      //   R03Creado_en: 'desc'
+      // },
       where: {
         grupo: {
           R02Coop_id: coopId, // Asegúrate que el grupo tiene esta relación en Prisma
