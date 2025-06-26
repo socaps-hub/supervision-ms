@@ -88,6 +88,38 @@ type LimitePrudencial {
   cooperativa: Cooperativa!
 }
 
+type Prestamo {
+  R01NUM: ID!
+  R01Suc_id: ID!
+  R01Nso: String!
+  R01Nom: String!
+  R01Cat_id: ID!
+  R01Pro_id: ID!
+  R01Imp: Float!
+  R01Dir: String!
+  R01SP_id: ID!
+  R01Ejvo_id: ID!
+  R01Fsol: String!
+  R01FRec: String!
+  R01FRev: String!
+  R01FMov: String!
+  R01ObsA: String
+  R01ObsM: String
+  R01ObsB: String
+  R01ObsT: String
+  R01Est: String!
+  R01Activ: Boolean!
+  R01Coop_id: ID!
+  R01Creado_en: DateTime!
+  R01Actualizado_en: DateTime!
+  sucursal: Sucursal
+  supervisor: Usuario
+  ejecutivo: Usuario
+  producto: Producto
+  categoria: Categoria
+  cooperativa: Cooperativa
+}
+
 type Query {
   findLastLimitePrudencial: LimitePrudencial!
   grupos(coopId: ID!): [Grupo!]!
@@ -95,6 +127,8 @@ type Query {
   rubro(id: ID!): Rubro!
   elementosPorRubro(rubroId: ID!): [Elemento!]!
   elemento(id: ID!): Elemento!
+  prestamos: [Prestamo!]!
+  prestamo(id: String!): Prestamo!
 }
 
 type Mutation {
@@ -108,6 +142,9 @@ type Mutation {
   createElemento(createElementoInput: CreateElementoInput!): Elemento!
   updateElemento(updateElementoInput: UpdateElementoInput!): Elemento!
   removeElemento(id: ID!): Elemento!
+  createPrestamo(createPrestamoInput: CreatePrestamoInput!): Prestamo!
+  updatePrestamo(updatePrestamoInput: UpdatePrestamoInput!): Prestamo!
+  removePrestamo(id: String!): Prestamo!
 }
 
 input CreateLimitePrudencialInput {
@@ -152,5 +189,54 @@ input UpdateElementoInput {
   R04R_id: ID
   R04Nom: String
   R04Imp: Impacto
+  id: ID!
+}
+
+input CreatePrestamoInput {
+  R01NUM: ID!
+  R01Suc_id: ID!
+  R01Nso: String!
+  R01Nom: String!
+  R01Cat_id: ID!
+  R01Pro_id: ID!
+  R01Imp: Float!
+  R01Dir: String!
+  R01SP_id: ID!
+  R01Ejvo_id: ID!
+  R01Fsol: String!
+  R01FRec: String!
+  R01FRev: String!
+  R01FMov: String!
+  R01ObsA: String
+  R01ObsM: String
+  R01ObsB: String
+  R01ObsT: String
+  R01Est: String!
+  R01Activ: Boolean!
+  R01Coop_id: ID!
+}
+
+input UpdatePrestamoInput {
+  R01NUM: ID
+  R01Suc_id: ID
+  R01Nso: String
+  R01Nom: String
+  R01Cat_id: ID
+  R01Pro_id: ID
+  R01Imp: Float
+  R01Dir: String
+  R01SP_id: ID
+  R01Ejvo_id: ID
+  R01Fsol: String
+  R01FRec: String
+  R01FRev: String
+  R01FMov: String
+  R01ObsA: String
+  R01ObsM: String
+  R01ObsB: String
+  R01ObsT: String
+  R01Est: String
+  R01Activ: Boolean
+  R01Coop_id: ID
   id: ID!
 }
