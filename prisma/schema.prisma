@@ -139,7 +139,7 @@ model R05EvaluacionFase1 {
   R05E_id   String      @db.Uuid
   R05Res    ResFaseI    @default(NA)
   R05Ev_por String      @db.Uuid
-  R05Ev_en  DateTime    @default(now())
+  R05Ev_en  String      
 
   elemento  R04Elemento @relation(fields: [R05E_id], references: [R04Id])
   evaluador R12Usuario  @relation(fields: [R05Ev_por], references: [R12Id])
