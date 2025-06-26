@@ -23,6 +23,14 @@ export class EvaluacionesFase1Resolver {
     return this.evaluacionesService.create(input, user);
   }
 
+  @Mutation(() => Boolean)
+  createEvaluacionesFase1(
+    @Args('inputs', { type: () => [CreateEvaluacionFase1Input] }) inputs: CreateEvaluacionFase1Input[],
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.evaluacionesService.createMany(inputs, user);
+  }
+
   @Query(() => [EvaluacionFase1], { name: 'evaluacionesFase1' })
   async findAllEvaluacionesFase1(
     @Args('prestamoId', { type: () => ID }) prestamoId: string,

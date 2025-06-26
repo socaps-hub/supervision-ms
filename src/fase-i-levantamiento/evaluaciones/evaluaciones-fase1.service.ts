@@ -36,6 +36,30 @@ export class EvaluacionesFase1Service extends PrismaClient implements OnModuleIn
     }
   }
 
+  async createMany(inputs: CreateEvaluacionFase1Input[], usuario: Usuario): Promise<boolean> {
+    try {
+      const evaluaciones = inputs.map((input) => ({
+        ...input,
+        R05Id: crypto.randomUUID(),
+        R05Ev_por: usuario.R12Id,
+        R05Ev_en: new Date().toISOString(),
+      }));
+
+      await this.r05EvaluacionFase1.createMany({
+        data: evaluaciones,
+      });
+
+      return true;
+
+    } catch (error) {
+      console.error('❌ Error al crear evaluaciones Fase I:', error);
+      throw new RpcException({
+        message: 'No se pudieron guardar las evaluaciones',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
+
   async findAll(prestamoId: string, user: Usuario): Promise<EvaluacionFase1[]> {
     return await this.r05EvaluacionFase1.findMany({
       where: { R05P_num: prestamoId, R05Ev_por: user.R12Id },

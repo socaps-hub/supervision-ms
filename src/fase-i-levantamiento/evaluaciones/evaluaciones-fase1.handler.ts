@@ -19,6 +19,13 @@ export class EvaluacionesFase1Handler {
     return this.evaluacionesService.create(data.input, data.user);
   }
 
+  @MessagePattern('supervision.evaluaciones-fase1.createMany')
+  handleCreateMany(
+    @Payload() data: { inputs: CreateEvaluacionFase1Input[], user: Usuario }
+  ) {
+    return this.evaluacionesService.createMany(data.inputs, data.user);
+  }
+
   @MessagePattern('supervision.evaluaciones-fase1.getAll')
   handleGetAll(
     @Payload() data: { prestamoId: string, user: Usuario }

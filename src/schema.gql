@@ -88,6 +88,46 @@ type LimitePrudencial {
   cooperativa: Cooperativa!
 }
 
+type EvaluacionFase1 {
+  R05Id: ID!
+  R05P_num: String!
+  R05E_id: String!
+  R05Res: ResFaseI!
+  R05Ev_por: String!
+  R05Ev_en: String!
+  elemento: Elemento
+  evaluador: Usuario
+  prestamo: Prestamo
+}
+
+enum ResFaseI {
+  C
+  I
+  NA
+}
+
+type EvaluacionResumenFase1 {
+  R06P_num: ID!
+  R06Ha: Int!
+  R06Hm: Int!
+  R06Hb: Int!
+  R06Rc: Int!
+  R06Cal: Calificativo!
+  R06Res: Resolucion!
+  prestamo: Prestamo
+}
+
+enum Calificativo {
+  CORRECTO
+  ACEPTABLE
+  DEFICIENTE
+}
+
+enum Resolucion {
+  PASA_COMITE
+  DEVUELTA
+}
+
 type Prestamo {
   R01NUM: ID!
   R01Suc_id: ID!
@@ -118,24 +158,8 @@ type Prestamo {
   producto: Producto
   categoria: Categoria
   cooperativa: Cooperativa
-}
-
-type EvaluacionFase1 {
-  R05Id: ID!
-  R05P_num: String!
-  R05E_id: String!
-  R05Res: ResFaseI!
-  R05Ev_por: String!
-  R05Ev_en: String!
-  elemento: Elemento
-  evaluador: Usuario
-  prestamo: Prestamo
-}
-
-enum ResFaseI {
-  C
-  I
-  NA
+  evaluacionesF1: [EvaluacionFase1!]
+  resumenF1: EvaluacionResumenFase1
 }
 
 type Query {
@@ -148,6 +172,8 @@ type Query {
   prestamos: [Prestamo!]!
   prestamo(id: String!): Prestamo!
   evaluacionesFase1(prestamoId: ID!): [EvaluacionFase1!]!
+  resumenesFase1: [EvaluacionResumenFase1!]!
+  resumenFase1ByPrestamo(R06P_num: String!): EvaluacionResumenFase1!
 }
 
 type Mutation {
@@ -165,7 +191,10 @@ type Mutation {
   updatePrestamo(updatePrestamoInput: UpdatePrestamoInput!): Prestamo!
   removePrestamo(id: String!): Prestamo!
   createEvaluacionFase1(createEvaluacionFase1Input: CreateEvaluacionFase1Input!): EvaluacionFase1!
+  createEvaluacionesFase1(inputs: [CreateEvaluacionFase1Input!]!): Boolean!
   updateEvaluacionFase1(updateEvaluacionFase1Input: UpdateEvaluacionFase1Input!): EvaluacionFase1!
+  createResumenFase1(createResumenFase1Input: CreateResumenFase1Input!): EvaluacionResumenFase1!
+  updateResumenFase1(R06P_num: String!, updateResumenFase1Input: UpdateResumenFase1Input!): EvaluacionResumenFase1!
 }
 
 input CreateLimitePrudencialInput {
@@ -272,5 +301,26 @@ input UpdateEvaluacionFase1Input {
   R05P_num: ID
   R05E_id: ID
   R05Res: ResFaseI
+  id: ID!
+}
+
+input CreateResumenFase1Input {
+  R06P_num: String!
+  R06Ha: Int!
+  R06Hm: Int!
+  R06Hb: Int!
+  R06Rc: Int!
+  R06Cal: Calificativo!
+  R06Res: Resolucion!
+}
+
+input UpdateResumenFase1Input {
+  R06P_num: String
+  R06Ha: Int
+  R06Hm: Int
+  R06Hb: Int
+  R06Rc: Int
+  R06Cal: Calificativo
+  R06Res: Resolucion
   id: ID!
 }

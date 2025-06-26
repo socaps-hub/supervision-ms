@@ -1,7 +1,15 @@
 import { R01Prestamo } from '@prisma/client';
 import { Prestamo } from '../entities/solicitud.entity';
+import { EvaluacionFase1 } from 'src/fase-i-levantamiento/evaluaciones/entities/evaluacion-fase1.entity';
+import { EvaluacionResumenFase1 } from 'src/fase-i-levantamiento/evaluaciones/resumen/entities/resumen-fase1.entity';
 
-export function mapR01ToPrestamo(data: R01Prestamo): Prestamo {
+type PrestamoWithRelaciones = R01Prestamo & {
+  evaluacionesF1?: EvaluacionFase1[];
+  resumenF1?: EvaluacionResumenFase1 | null;
+  // Agrega evaluacionesF2, resumenF2, etc. si los necesitas
+};
+
+export function mapR01ToPrestamo(data: PrestamoWithRelaciones): Prestamo {
   return {
     R01NUM: data.R01NUM,
     R01Suc_id: data.R01Suc_id,
@@ -9,7 +17,7 @@ export function mapR01ToPrestamo(data: R01Prestamo): Prestamo {
     R01Nom: data.R01Nom,
     R01Cat_id: data.R01Cat_id,
     R01Pro_id: data.R01Pro_id,
-    R01Imp: data.R01Imp.toNumber(), // conversión de Decimal a number
+    R01Imp: data.R01Imp, // conversión de Decimal a number
     R01Dir: data.R01Dir,
     R01SP_id: data.R01SP_id,
     R01Ejvo_id: data.R01Ejvo_id,
@@ -26,5 +34,9 @@ export function mapR01ToPrestamo(data: R01Prestamo): Prestamo {
     R01Coop_id: data.R01Coop_id,
     R01Creado_en: data.R01Creado_en,
     R01Actualizado_en: data.R01Actualizado_en,
+
+    // Evaluaciones / Resumen
+    evaluacionesF1: data.evaluacionesF1 || [],
+    resumenF1: data.resumenF1 ? data.resumenF1 : undefined,
   };
 }

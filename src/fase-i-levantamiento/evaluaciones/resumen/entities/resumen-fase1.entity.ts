@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { Calificativo, Resolucion } from '../enums/evaluacion.enum';
+import { Calificativo as Cal, Resolucion as Res } from '@prisma/client';
+import { Calificativo, Resolucion } from '../../enums/evaluacion.enum';
 import { Prestamo } from 'src/fase-i-levantamiento/solicitudes/entities/solicitud.entity';
 
 @ObjectType()
@@ -20,10 +21,10 @@ export class EvaluacionResumenFase1 {
   R06Rc: number;
 
   @Field(() => Calificativo)
-  R06Cal: Calificativo;
+  R06Cal: Cal;
 
   @Field(() => Resolucion)
-  R06Res: Resolucion;
+  R06Res: Res;
 
   @Field(() => Prestamo, { nullable: true })
   prestamo?: Prestamo;

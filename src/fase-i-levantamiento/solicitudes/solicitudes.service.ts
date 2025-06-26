@@ -1,50 +1,67 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { Injectable, Logger, HttpStatus, OnModuleInit, Inject } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 import { PrismaClient, R01Prestamo } from '@prisma/client';
 
 import { CreatePrestamoInput } from './dto/create-solicitud.input';
 import { UpdatePrestamoInput } from './dto/update-solicitud.input';
 import { Usuario } from 'src/common/entities/usuario.entity';
-import { plainToInstance } from 'class-transformer';
+import { NATS_SERVICE } from 'src/config';
 
 @Injectable()
-export class SolicitudesService extends PrismaClient {
+export class SolicitudesService extends PrismaClient implements OnModuleInit {
   private readonly _logger = new Logger('SolicitudesService');
 
-  constructor() {
-    super();
-    this.$connect();
-    this._logger.log('Base de datos conectada en SolicitudesService');
+  // constructor(
+  //   @Inject(NATS_SERVICE) private readonly _client: ClientProxy,
+  // ) {
+  //   super();
+  // }
+
+  async onModuleInit() {
+    await this.$connect();
+    this._logger.log('Database connected')
   }
 
   async create(data: CreatePrestamoInput, user: Usuario): Promise<R01Prestamo> {
 
     const exists = await this.r01Prestamo.findUnique({
       where: { R01NUM: data.R01NUM, R01Coop_id: user.R12Coop_id },
+      include: {
+        sucursal: true
+      }
     });
 
     if (exists) {
+      const sucursal = exists.sucursal.R11Nom
+      const socio = exists.R01Nom
+      const cag = exists.R01Nso
+      const message = `El préstamo con número ${data.R01NUM} ya existe en ${ sucursal } a nombre de ${ socio } con CAG ${ cag }`
       throw new RpcException({
-        message: `El préstamo con número ${data.R01NUM} ya existe`,
+        message,
         status: HttpStatus.BAD_REQUEST,
       });
     }
 
     return await this.r01Prestamo.create({
-      data
+      data,
+      include: {
+        sucursal: true
+      }
     });
   }
 
   async findAll( user: Usuario ): Promise<R01Prestamo[]> {
     return await this.r01Prestamo.findMany({
-      where: { R01Activ: true, R01Coop_id: user.R12Coop_id },
+      where: { R01Activ: true, R01Suc_id: user.R12Suc_id, R01Coop_id: user.R12Coop_id },
       include: {
         categoria: true,
         producto: true,
         sucursal: true,
         supervisor: true,
         ejecutivo: true,
+        evaluacionesF1: true,
+        resumenF1: true,
       },
     });
   }

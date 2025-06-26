@@ -60,7 +60,7 @@ model R01Prestamo {
   R01Nom            String
   R01Cat_id         String   @db.Uuid
   R01Pro_id         String   @db.Uuid
-  R01Imp            Decimal  @db.Decimal
+  R01Imp            Float    
   R01Dir            String   @db.Char(2)
   R01SP_id          String   @db.Uuid
   R01Ejvo_id        String   @db.Uuid

@@ -5,6 +5,8 @@ import { Cooperativa } from 'src/common/entities/cooperativa.entity';
 import { Producto } from 'src/common/entities/producto.entity';
 import { Sucursal } from 'src/common/entities/sucursal.entity';
 import { Usuario } from 'src/common/entities/usuario.entity';
+import { EvaluacionFase1 } from 'src/fase-i-levantamiento/evaluaciones/entities/evaluacion-fase1.entity';
+import { EvaluacionResumenFase1 } from 'src/fase-i-levantamiento/evaluaciones/resumen/entities/resumen-fase1.entity';
 
 @ObjectType()
 export class Prestamo {
@@ -52,16 +54,16 @@ export class Prestamo {
   R01FMov: string;
 
   @Field(() => String, { nullable: true })
-  R01ObsA?: string;
+  R01ObsA?: string|null;
 
   @Field(() => String, { nullable: true })
-  R01ObsM?: string;
+  R01ObsM?: string|null;
 
   @Field(() => String, { nullable: true })
-  R01ObsB?: string;
+  R01ObsB?: string|null;
 
   @Field(() => String, { nullable: true })
-  R01ObsT?: string;
+  R01ObsT?: string|null;
 
   @Field(() => String)
   R01Est: string;
@@ -98,5 +100,10 @@ export class Prestamo {
   @Field(() => Cooperativa, { nullable: true })
   cooperativa?: Cooperativa;
 
-  // Puedes incluir campos virtuales para resumen/evaluaciones si quieres resolverlos directamente
+  // Evaluaciones / Resumen
+  @Field(() => [EvaluacionFase1], { nullable: true })
+  evaluacionesF1?: EvaluacionFase1[];
+
+  @Field(() => EvaluacionResumenFase1, { nullable: true })
+  resumenF1?: EvaluacionResumenFase1;
 }
