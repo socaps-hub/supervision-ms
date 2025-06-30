@@ -162,6 +162,11 @@ type Prestamo {
   resumenF1: EvaluacionResumenFase1
 }
 
+type BooleanResponse {
+  success: Boolean!
+  message: String
+}
+
 type Query {
   findLastLimitePrudencial: LimitePrudencial!
   grupos(coopId: ID!): [Grupo!]!
@@ -189,7 +194,8 @@ type Mutation {
   removeElemento(id: ID!): Elemento!
   createPrestamo(createPrestamoInput: CreatePrestamoInput!): Prestamo!
   updatePrestamo(updatePrestamoInput: UpdatePrestamoInput!): Prestamo!
-  removePrestamo(id: String!): Prestamo!
+  updateAllPrestamo(updateAllPrestamoArgs: UpdateAllPrestamoArgs!): BooleanResponse!
+  removePrestamo(R01NUM: String!): Prestamo!
   createEvaluacionFase1(createEvaluacionFase1Input: CreateEvaluacionFase1Input!): EvaluacionFase1!
   createEvaluacionesFase1(inputs: [CreateEvaluacionFase1Input!]!): Boolean!
   updateEvaluacionFase1(updateEvaluacionFase1Input: UpdateEvaluacionFase1Input!): EvaluacionFase1!
@@ -291,17 +297,17 @@ input UpdatePrestamoInput {
   id: ID!
 }
 
+input UpdateAllPrestamoArgs {
+  currentId: ID!
+  prestamo: UpdatePrestamoInput!
+  evaluaciones: [CreateEvaluacionFase1Input!]!
+  resumen: CreateResumenFase1Input!
+}
+
 input CreateEvaluacionFase1Input {
   R05P_num: ID!
   R05E_id: ID!
   R05Res: ResFaseI!
-}
-
-input UpdateEvaluacionFase1Input {
-  R05P_num: ID
-  R05E_id: ID
-  R05Res: ResFaseI
-  id: ID!
 }
 
 input CreateResumenFase1Input {
@@ -312,6 +318,13 @@ input CreateResumenFase1Input {
   R06Rc: Int!
   R06Cal: Calificativo!
   R06Res: Resolucion!
+}
+
+input UpdateEvaluacionFase1Input {
+  R05P_num: ID
+  R05E_id: ID
+  R05Res: ResFaseI
+  id: ID!
 }
 
 input UpdateResumenFase1Input {

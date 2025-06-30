@@ -85,9 +85,6 @@ export class GruposService extends PrismaClient implements OnModuleInit {
         },
       }
     })
-
-    console.log('Handler llamado', grupos);
-    
     
     return grupos
   }

@@ -5,6 +5,8 @@ import { SolicitudesService } from './solicitudes.service';
 import { CreatePrestamoInput } from './dto/create-solicitud.input';
 import { UpdatePrestamoInput } from './dto/update-solicitud.input';
 import { Usuario } from 'src/common/entities/usuario.entity';
+import { CreateEvaluacionFase1Input } from '../evaluaciones/dto/create-evaluacion-fase1.input';
+import { CreateResumenFase1Input } from '../evaluaciones/resumen/dto/create-resumen-fase1.input';
 
 @Controller()
 export class SolicitudesHandler {
@@ -39,6 +41,26 @@ export class SolicitudesHandler {
     @Payload() data: { updatePrestamoInput: UpdatePrestamoInput, user: Usuario }
   ) {
     return this.solicitudesService.update(data.updatePrestamoInput.id, data.updatePrestamoInput, data.user);
+  }
+
+  @MessagePattern('supervision.solicitudes.updateAll')
+  async handleActualizarCompleto(
+    @Payload() payload: {
+      currentId: string,
+      prestamo: UpdatePrestamoInput;
+      evaluaciones: CreateEvaluacionFase1Input[];
+      resumen: CreateResumenFase1Input;
+      user: Usuario;
+    }
+  ) {
+    
+    return await this.solicitudesService.updateAll({
+      currentId: payload.currentId,
+      prestamo: payload.prestamo, 
+      evaluaciones: payload.evaluaciones,
+      resumen: payload.resumen
+    },
+    payload.user);
   }
 
   @MessagePattern('supervision.solicitudes.remove')
