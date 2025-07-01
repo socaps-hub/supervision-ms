@@ -65,6 +65,9 @@ export class Prestamo {
   @Field(() => String, { nullable: true })
   R01ObsT?: string|null;
 
+  @Field(() => String, { nullable: true })
+  R01Notas?: string|null;
+
   @Field(() => String)
   R01Est: string;
 

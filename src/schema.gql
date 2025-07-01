@@ -147,6 +147,7 @@ type Prestamo {
   R01ObsM: String
   R01ObsB: String
   R01ObsT: String
+  R01Notas: String
   R01Est: String!
   R01Activ: Boolean!
   R01Coop_id: ID!
@@ -267,6 +268,7 @@ input CreatePrestamoInput {
   R01ObsM: String
   R01ObsB: String
   R01ObsT: String
+  R01Notas: String
   R01Est: String!
   R01Activ: Boolean!
   R01Coop_id: ID!
@@ -291,6 +293,7 @@ input UpdatePrestamoInput {
   R01ObsM: String
   R01ObsB: String
   R01ObsT: String
+  R01Notas: String
   R01Est: String
   R01Activ: Boolean
   R01Coop_id: ID

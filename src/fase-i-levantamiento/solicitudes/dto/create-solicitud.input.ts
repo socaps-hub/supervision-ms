@@ -85,6 +85,11 @@ export class CreatePrestamoInput {
   @IsOptional()
   R01ObsT?: string;
 
+  @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
+  R01Notas?: string;
+
   @Field()
   @IsString()
   R01Est: string;
