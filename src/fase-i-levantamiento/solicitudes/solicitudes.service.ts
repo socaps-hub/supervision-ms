@@ -184,10 +184,6 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
           },
           include: { prestamo: true }
         });
-        console.log(currentId, user.R12Coop_id);
-        
-        console.log({existing});
-        
 
         if (!existing ) {
           throw new Error('No autorizado para modificar el resumen de esta solicitud');          
