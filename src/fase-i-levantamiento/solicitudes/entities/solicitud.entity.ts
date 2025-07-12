@@ -7,6 +7,8 @@ import { Sucursal } from 'src/common/entities/sucursal.entity';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { EvaluacionFase1 } from 'src/fase-i-levantamiento/evaluaciones/entities/evaluacion-fase1.entity';
 import { EvaluacionResumenFase1 } from 'src/fase-i-levantamiento/evaluaciones/resumen/entities/resumen-fase1.entity';
+import { EvaluacionFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/entities/evaluacion-fase2.entity';
+import { EvaluacionResumenFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/resumen-fase2/entities/evaluacion-resumen-fase2.entity';
 
 @ObjectType()
 export class Prestamo {
@@ -109,4 +111,10 @@ export class Prestamo {
 
   @Field(() => EvaluacionResumenFase1, { nullable: true })
   resumenF1?: EvaluacionResumenFase1;
+
+  @Field(() => [EvaluacionFase2], { nullable: true })
+  evaluacionesF2?: EvaluacionFase2[];
+
+  @Field(() => EvaluacionResumenFase2, { nullable: true })
+  resumenF2?: EvaluacionResumenFase2;
 }

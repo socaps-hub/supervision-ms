@@ -10,6 +10,7 @@ import { CreateEvaluacionFase1Input } from '../evaluaciones/dto/create-evaluacio
 import { CreateResumenFase1Input } from '../evaluaciones/resumen/dto/create-resumen-fase1.input';
 import { UpdateAllPrestamoArgs } from './dto/args/update-all-prestamo.arg';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { ValidEstados } from './enums/valid-estados.enum';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -65,10 +66,51 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         ejecutivo: true,
         evaluacionesF1: true,
         resumenF1: true,
+        evaluacionesF2: true,
+        resumenF2: true
       },
       orderBy: {
         R01Creado_en: 'desc'
       }
+    });
+  }
+
+  async findByEstado(estado: ValidEstados, user: Usuario): Promise<R01Prestamo[]> {
+    const estadosValidos = [
+      'Con seguimiento',
+      'Sin seguimiento',
+      'Con desembolso',
+      'Con global',
+    ];
+
+    if (!estadosValidos.includes(estado)) {
+      throw new RpcException({
+        message: `Estado ${estado} no es válido.`,
+        status: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    return await this.r01Prestamo.findMany({
+      where: {
+        R01Activ: true,
+        R01Suc_id: user.R12Suc_id,
+        R01Coop_id: user.R12Coop_id,
+        R01Est: estado,
+      },
+      include: {
+        categoria: true,
+        producto: true,
+        sucursal: true,
+        supervisor: true,
+        ejecutivo: true,
+        evaluacionesF1: true,
+        resumenF1: true,
+        evaluacionesF2: true,
+        resumenF2: true,
+      },
+      orderBy: {
+        R01Creado_en: 'desc',
+      },
     });
   }
 
@@ -83,6 +125,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         ejecutivo: true,
         evaluacionesF1: true,
         resumenF1: true,
+        evaluacionesF2: true,
+        resumenF2: true
       },
     });
 

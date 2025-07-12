@@ -8,6 +8,7 @@ import { SisconcreModule } from './sisconcre/sisconcre.module';
 import { CommonModule } from './common/common.module';
 import { EstructuraModule } from './estructura/estructura.module';
 import { FaseILevantamientoModule } from './fase-i-levantamiento/fase-i-levantamiento.module';
+import { FaseIiSeguimientoModule } from './fase-ii-seguimiento/fase-ii-seguimiento.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { FaseILevantamientoModule } from './fase-i-levantamiento/fase-i-levantam
     CommonModule,
     EstructuraModule,
     FaseILevantamientoModule,
+    FaseIiSeguimientoModule,
   ],
   controllers: [],
   providers: [],

@@ -7,6 +7,7 @@ import { UpdatePrestamoInput } from './dto/update-solicitud.input';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { CreateEvaluacionFase1Input } from '../evaluaciones/dto/create-evaluacion-fase1.input';
 import { CreateResumenFase1Input } from '../evaluaciones/resumen/dto/create-resumen-fase1.input';
+import { ValidEstados } from './enums/valid-estados.enum';
 
 @Controller()
 export class SolicitudesHandler {
@@ -34,6 +35,13 @@ export class SolicitudesHandler {
     @Payload() data: { id: string, user: Usuario }
   ) {
     return this.solicitudesService.findById(data.id, data.user);
+  }
+
+  @MessagePattern('supervision.solicitudes.getByEstado')
+  handleGetByEstado(
+    @Payload() data: { estado: ValidEstados; user: Usuario }
+  ) {
+    return this.solicitudesService.findByEstado(data.estado, data.user);
   }
 
   @MessagePattern('supervision.solicitudes.update')

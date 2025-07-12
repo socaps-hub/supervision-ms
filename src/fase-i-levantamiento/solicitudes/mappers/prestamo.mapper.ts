@@ -2,10 +2,14 @@ import { R01Prestamo } from '@prisma/client';
 import { Prestamo } from '../entities/solicitud.entity';
 import { EvaluacionFase1 } from 'src/fase-i-levantamiento/evaluaciones/entities/evaluacion-fase1.entity';
 import { EvaluacionResumenFase1 } from 'src/fase-i-levantamiento/evaluaciones/resumen/entities/resumen-fase1.entity';
+import { EvaluacionFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/entities/evaluacion-fase2.entity';
+import { EvaluacionResumenFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/resumen-fase2/entities/evaluacion-resumen-fase2.entity';
 
 type PrestamoWithRelaciones = R01Prestamo & {
   evaluacionesF1?: EvaluacionFase1[];
   resumenF1?: EvaluacionResumenFase1 | null;
+  evaluacionesF2?: EvaluacionFase2[];
+  resumenF2?: EvaluacionResumenFase2 | null;
   // Agrega evaluacionesF2, resumenF2, etc. si los necesitas
 };
 
@@ -39,5 +43,7 @@ export function mapR01ToPrestamo(data: PrestamoWithRelaciones): Prestamo {
     // Evaluaciones / Resumen
     evaluacionesF1: data.evaluacionesF1 || [],
     resumenF1: data.resumenF1 ? data.resumenF1 : undefined,
+    evaluacionesF2: data.evaluacionesF2 || [],
+    resumenF2: data.resumenF2 ? data.resumenF2 : undefined,
   };
 }
