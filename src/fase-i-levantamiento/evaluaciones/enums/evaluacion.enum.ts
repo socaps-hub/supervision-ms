@@ -10,7 +10,8 @@ export enum ResFaseI {
 export enum Calificativo {
   CORRECTO = 'CORRECTO',
   ACEPTABLE = 'ACEPTABLE',
-  DEFICIENTE = 'DEFICIENTE'
+  DEFICIENTE = 'DEFICIENTE',
+  PENDIENTE = 'PENDIENTE'
 }
 
 export enum Resolucion {

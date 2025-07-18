@@ -9,6 +9,7 @@ import { CommonModule } from './common/common.module';
 import { EstructuraModule } from './estructura/estructura.module';
 import { FaseILevantamientoModule } from './fase-i-levantamiento/fase-i-levantamiento.module';
 import { FaseIiSeguimientoModule } from './fase-ii-seguimiento/fase-ii-seguimiento.module';
+import { FaseIiiDesembolsoModule } from './fase-iii-desembolso/fase-iii-desembolso.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { FaseIiSeguimientoModule } from './fase-ii-seguimiento/fase-ii-seguimien
     EstructuraModule,
     FaseILevantamientoModule,
     FaseIiSeguimientoModule,
+    FaseIiiDesembolsoModule,
   ],
   controllers: [],
   providers: [],

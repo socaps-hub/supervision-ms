@@ -99,8 +99,6 @@ export class ResumenFase2Service extends PrismaClient implements OnModuleInit {
 
     async deleteByPrestamo(prestamoId: string, user: Usuario): Promise<boolean> {
         try {
-            console.log(prestamoId);
-            
             await this.r08EvaluacionResumenFase2.delete({
                 where: { R08P_num: prestamoId, prestamo: { R01Coop_id: user.R12Coop_id } }
             });

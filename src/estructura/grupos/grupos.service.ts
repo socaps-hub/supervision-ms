@@ -5,6 +5,7 @@ import { CreateGrupoInput } from './dto/create-grupo.input';
 import { UpdateGrupoInput } from './dto/update-grupo.input';
 import { Grupo } from './entities/grupo.entity';
 import { RpcException } from '@nestjs/microservices';
+import { Usuario } from 'src/common/entities/usuario.entity';
 
 @Injectable()
 export class GruposService extends PrismaClient implements OnModuleInit {
@@ -67,7 +68,36 @@ export class GruposService extends PrismaClient implements OnModuleInit {
 
     const grupos = await this.r02Grupo.findMany({
       where: {
-        R02Coop_id: coopId
+        R02Coop_id: coopId,
+        R02Nom: {
+          not: 'Desembolso'
+        }
+      },
+      // orderBy: {
+      //   R02Creado_en: ''
+      // },
+      include: {
+        rubros: {
+          select: {
+            R03Id: true,
+            R03Nom: true,
+            R03G_id: true,
+            R03Creado_en: true,
+            R03Actualizado_en: true,
+            elementos: true
+          }
+        },
+      }
+    })
+    
+    return grupos
+  }
+
+  async findAllAdminGroups( coopId: string ): Promise<Grupo[]> {
+
+    const grupos = await this.r02Grupo.findMany({
+      where: {
+        R02Coop_id: coopId,
       },
       // orderBy: {
       //   R02Creado_en: ''
@@ -92,12 +122,40 @@ export class GruposService extends PrismaClient implements OnModuleInit {
   async findById(id: string): Promise<Grupo> {
 
     const grupo = await this.r02Grupo.findFirst({
-      where: { R02Id: id }
+      where: { R02Id: id },
     })
 
     if ( !grupo ) {
       throw new RpcException({
         message: `El grupo con id ${ id } no existe`,
+        status: HttpStatus.NOT_FOUND
+      })
+    }
+
+    return grupo;
+  }
+
+  async findByName( name: string, user: Usuario ): Promise<Grupo> {
+
+    const grupo = await this.r02Grupo.findFirst({
+      where: { R02Nom: name, R02Coop_id: user.R12Coop_id },
+      include: {
+        rubros: {
+          select: {
+            R03Id: true,
+            R03Nom: true,
+            R03G_id: true,
+            R03Creado_en: true,
+            R03Actualizado_en: true,
+            elementos: true
+          }
+        },
+      }
+    })
+
+    if ( !grupo ) {
+      throw new RpcException({
+        message: `El grupo con nombre ${ name } no existe`,
         status: HttpStatus.NOT_FOUND
       })
     }

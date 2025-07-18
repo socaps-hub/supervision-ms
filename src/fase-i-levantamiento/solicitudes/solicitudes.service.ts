@@ -107,6 +107,12 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         resumenF1: true,
         evaluacionesF2: true,
         resumenF2: true,
+        evaluacionesF3: true,
+        resumenF3: {
+          include: {
+            evaluador: true
+          }
+        }
       },
       orderBy: {
         R01Creado_en: 'desc',
@@ -126,7 +132,13 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         evaluacionesF1: true,
         resumenF1: true,
         evaluacionesF2: true,
-        resumenF2: true
+        resumenF2: true,
+        evaluacionesF3: true,
+        resumenF3: {
+          include: {
+            evaluador: true
+          }
+        }
       },
     });
 
