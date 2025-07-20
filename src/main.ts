@@ -28,6 +28,9 @@ async function bootstrap() {
     })
   );
 
+  
+  console.log('Starting Supervision Microservice...');
+
   await app.startAllMicroservices()
   await app.init()
   console.log('✅ Microservicio conectado a NATS (Supervision-MS)');
