@@ -10,6 +10,7 @@ import { EstructuraModule } from './estructura/estructura.module';
 import { FaseILevantamientoModule } from './fase-i-levantamiento/fase-i-levantamiento.module';
 import { FaseIiSeguimientoModule } from './fase-ii-seguimiento/fase-ii-seguimiento.module';
 import { FaseIiiDesembolsoModule } from './fase-iii-desembolso/fase-iii-desembolso.module';
+import { FaseIvSegGlobalModule } from './fase-iv-seg-global/fase-iv-seg-global.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { FaseIiiDesembolsoModule } from './fase-iii-desembolso/fase-iii-desembol
     FaseILevantamientoModule,
     FaseIiSeguimientoModule,
     FaseIiiDesembolsoModule,
+    FaseIvSegGlobalModule,
   ],
   controllers: [],
   providers: [],
