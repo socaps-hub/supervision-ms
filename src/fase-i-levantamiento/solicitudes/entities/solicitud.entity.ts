@@ -11,6 +11,8 @@ import { EvaluacionFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/enti
 import { EvaluacionResumenFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/resumen-fase2/entities/evaluacion-resumen-fase2.entity';
 import { EvaluacionFase3 } from 'src/fase-iii-desembolso/evaluaciones-fase3/entities/evaluacion-fase3.entity';
 import { EvaluacionResumenFase3 } from 'src/fase-iii-desembolso/evaluaciones-fase3/resumen-fase3/entities/resumen-fase3.entity';
+import { EvaluacionFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/entities/evaluacion-fase4.entity';
+import { EvaluacionResumenFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/resumen-fase4/entities/resumen-fase4.entity';
 
 @ObjectType()
 export class Prestamo {
@@ -125,4 +127,10 @@ export class Prestamo {
 
   @Field(() => EvaluacionResumenFase3, { nullable: true })
   resumenF3?: EvaluacionResumenFase3;
+
+  @Field(() => [EvaluacionFase4], { nullable: true })
+  evaluacionesF4?: EvaluacionFase4[];
+
+  @Field(() => EvaluacionResumenFase4, { nullable: true })
+  resumenF4?: EvaluacionResumenFase4;
 }

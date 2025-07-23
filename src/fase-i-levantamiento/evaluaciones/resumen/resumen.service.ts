@@ -35,7 +35,10 @@ export class ResumenFase1Service extends PrismaClient implements OnModuleInit {
     }
 
     return await this.r06EvaluacionResumenFase1.create({
-      data
+      data: {
+        ...data,
+        R06Ev_por: user.R12Id, // Asignar el ID del evaluador
+      }
     });
   }
 
@@ -48,7 +51,8 @@ export class ResumenFase1Service extends PrismaClient implements OnModuleInit {
         }
       },
       include: {
-        prestamo: true
+        prestamo: true,
+        evaluador: true,
       }
     });
   }
@@ -62,7 +66,8 @@ export class ResumenFase1Service extends PrismaClient implements OnModuleInit {
         }
       },
       include: {
-        prestamo: true
+        prestamo: true,
+        evaluador: true,
       }
     });
 

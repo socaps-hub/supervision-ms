@@ -104,11 +104,26 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         supervisor: true,
         ejecutivo: true,
         evaluacionesF1: true,
-        resumenF1: true,
+        resumenF1: {
+          include: {
+            evaluador: true
+          }
+        },
         evaluacionesF2: true,
-        resumenF2: true,
+        resumenF2: {
+          include: {
+            evaluador: true
+          }
+        },
         evaluacionesF3: true,
         resumenF3: {
+          include: {
+            evaluador: true,
+            supervisor: true
+          }
+        },
+        evaluacionesF4: true,
+        resumenF4: {
           include: {
             evaluador: true
           }
@@ -130,13 +145,22 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         supervisor: true,
         ejecutivo: true,
         evaluacionesF1: true,
-        resumenF1: true,
+        resumenF1: {
+          include: {
+            evaluador: true
+          }
+        },
         evaluacionesF2: true,
-        resumenF2: true,
+        resumenF2: {
+          include: {
+            evaluador: true
+          }
+        },
         evaluacionesF3: true,
         resumenF3: {
           include: {
-            evaluador: true
+            evaluador: true,
+            supervisor: true
           }
         }
       },
@@ -255,7 +279,10 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
           });
         } else {
           await tx.r06EvaluacionResumenFase1.create({
-            data: resumen,
+            data: {
+              ...resumen,
+              R06Ev_por: user.R12Id,
+            },
           });
         }
       });

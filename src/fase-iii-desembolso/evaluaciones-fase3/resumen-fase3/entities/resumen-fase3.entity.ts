@@ -31,10 +31,16 @@ export class EvaluacionResumenFase3 {
   @Field(() => ID)
   R10Ev_por: string
 
+  @Field(() => ID)
+  R10Sup: string
+
   @Field(() => Prestamo, { nullable: true })
   prestamo?: Prestamo;
 
   @Field(() => Usuario, { nullable: true })
   evaluador?: Usuario;
+
+  @Field(() => Usuario, { nullable: true })
+  supervisor?: Usuario;
   
 }

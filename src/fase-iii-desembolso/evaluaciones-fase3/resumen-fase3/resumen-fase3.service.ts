@@ -37,6 +37,7 @@ export class ResumenFase3Service extends PrismaClient implements OnModuleInit {
         return await this.r10EvaluacionResumenFase3.create({
             data: {
                 R10FDes: new Date().toISOString(),
+                R10Sup: user.R12Id,
                 ...data
             }
         });
@@ -52,7 +53,8 @@ export class ResumenFase3Service extends PrismaClient implements OnModuleInit {
             },
             include: {
                 prestamo: true,
-                evaluador: true
+                evaluador: true,
+                supervisor: true,
             },
         });
     }
@@ -67,7 +69,8 @@ export class ResumenFase3Service extends PrismaClient implements OnModuleInit {
             },
             include: {
                 prestamo: true,
-                evaluador: true
+                evaluador: true,
+                supervisor: true,
             },
         });
 

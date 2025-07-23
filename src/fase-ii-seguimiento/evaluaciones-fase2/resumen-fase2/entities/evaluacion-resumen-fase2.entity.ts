@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { Calificativo as Cal, Resolucion as Res } from '@prisma/client';
+import { Usuario } from 'src/common/entities/usuario.entity';
 import { Calificativo, Resolucion } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
 import { Prestamo } from 'src/fase-i-levantamiento/solicitudes/entities/solicitud.entity';
 
@@ -35,6 +36,12 @@ export class EvaluacionResumenFase2 {
   @Field(() => String)
   R08FSeg: string;
 
+  @Field(() => ID)
+  R08Ev_por: string;
+
   @Field(() => Prestamo, { nullable: true })
   prestamo?: Prestamo;
+
+  @Field(() => Usuario, { nullable: true })
+  evaluador?: Usuario;
 }

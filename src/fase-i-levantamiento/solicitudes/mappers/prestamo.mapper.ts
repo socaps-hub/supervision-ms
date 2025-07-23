@@ -6,6 +6,8 @@ import { EvaluacionFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/enti
 import { EvaluacionResumenFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/resumen-fase2/entities/evaluacion-resumen-fase2.entity';
 import { EvaluacionFase3 } from 'src/fase-iii-desembolso/evaluaciones-fase3/entities/evaluacion-fase3.entity';
 import { EvaluacionResumenFase3 } from 'src/fase-iii-desembolso/evaluaciones-fase3/resumen-fase3/entities/resumen-fase3.entity';
+import { EvaluacionFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/entities/evaluacion-fase4.entity';
+import { EvaluacionResumenFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/resumen-fase4/entities/resumen-fase4.entity';
 
 type PrestamoWithRelaciones = R01Prestamo & {
   evaluacionesF1?: EvaluacionFase1[];
@@ -14,6 +16,8 @@ type PrestamoWithRelaciones = R01Prestamo & {
   resumenF2?: EvaluacionResumenFase2 | null;
   evaluacionesF3?: EvaluacionFase3[];
   resumenF3?: EvaluacionResumenFase3 | null;
+  evaluacionesF4?: EvaluacionFase4[];
+  resumenF4?: EvaluacionResumenFase4 | null;
   // Agrega evaluacionesF2, resumenF2, etc. si los necesitas
 };
 
@@ -51,5 +55,7 @@ export function mapR01ToPrestamo(data: PrestamoWithRelaciones): Prestamo {
     resumenF2: data.resumenF2 ? data.resumenF2 : undefined,
     evaluacionesF3: data.evaluacionesF3 || [],
     resumenF3: data.resumenF3 ? data.resumenF3 : undefined,
+    evaluacionesF4: data.evaluacionesF4 || [],
+    resumenF4: data.resumenF4 ? data.resumenF4 : undefined,
   };
 }
