@@ -11,6 +11,7 @@ import { CreateResumenFase1Input } from '../evaluaciones/resumen/dto/create-resu
 import { UpdateAllPrestamoArgs } from './dto/args/update-all-prestamo.arg';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { ValidEstados } from './enums/valid-estados.enum';
+import { EvaluacionFase4ExtendidaDto } from 'src/fase-iv-seg-global/evaluaciones-fase4/dto/evaluacion-fase4-extendida.dto';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -162,6 +163,24 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             evaluador: true,
             supervisor: true
           }
+        },
+        evaluacionesF4: {
+          include: {
+            elemento: {
+              include: { 
+                rubro: {
+                  include: {
+                    grupo: true
+                  }
+                }
+              },
+            },
+          }
+        },
+        resumenF4: {
+          include: {
+            evaluador: true,
+          }
         }
       },
     });
@@ -172,6 +191,24 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         status: HttpStatus.NOT_FOUND,
       });
     }
+
+    // Enriquecer evaluacionesF4 con resF1 y resF3
+    prestamo.evaluacionesF4 = await Promise.all(
+      prestamo.evaluacionesF4.map(async evaluacion => {
+        const resF1 = await this.r05EvaluacionFase1.findFirst({
+          where: { R05E_id: evaluacion.R15E_id, R05P_num: id }
+        });
+        const resF3 = await this.r09EvaluacionFase3.findFirst({
+          where: { R09E_id: evaluacion.R15E_id, R09P_num: id }
+        });
+
+        return {
+          ...evaluacion,
+          resF1: resF1?.R05Res || null,
+          resF3: resF3?.R09Res || null,
+        };
+      })
+    );
 
     return prestamo;
   }

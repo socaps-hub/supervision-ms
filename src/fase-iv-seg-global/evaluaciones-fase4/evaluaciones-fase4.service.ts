@@ -133,7 +133,9 @@ export class EvaluacionesFase4Service extends PrismaClient implements OnModuleIn
         }
     },
       include: {
-        elemento: true,
+        elemento: {
+          include: { rubro: true },
+        },
         prestamo: true,
       },
     });
