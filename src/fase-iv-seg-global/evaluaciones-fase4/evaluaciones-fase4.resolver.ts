@@ -34,6 +34,13 @@ export class EvaluacionesFase4Resolver {
     return this.service.createMany(inputs, user);
   }
 
+  @Mutation(() => BooleanResponse)
+  async pasoMasivoAFase4(
+    @GetUserGraphQL() user: Usuario,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.service.pasoMasivoAFase4(user);
+  }
+
   @Query(() => [EvaluacionFase4])
   async evaluacionesFase4ByPrestamo(
     @Args('prestamoId', { type: () => ID }) prestamoId: string,

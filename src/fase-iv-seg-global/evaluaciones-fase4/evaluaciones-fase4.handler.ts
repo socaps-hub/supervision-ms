@@ -46,4 +46,11 @@ export class EvaluacionesFase4Handler {
     ) {
         return this.service.deleteByPrestamo(prestamoId, user);
     }
+
+    @MessagePattern('supervision.evaluacion-fase4.pasoMasivoAFase4')
+    async handlePasoMasivoAFase4(
+        @Payload() user: Usuario
+    ) {
+        return this.service.pasoMasivoAFase4( user );
+    }
 }

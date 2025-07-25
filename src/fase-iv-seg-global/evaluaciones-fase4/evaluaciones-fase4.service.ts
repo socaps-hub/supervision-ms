@@ -9,6 +9,8 @@ import { UpdateEvaluacionFase4Input } from './dto/inputs/update-evaluacion-fase4
 import { CreateEvaluacionResumenFase4Input } from './resumen-fase4/dto/inputs/create-evaluacion-resumen-fase4.input';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { SaveEvaluacionesFase4Args } from './dto/args/save-evaluaciones-fase4.args';
+import { Calificativo } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
+import { ResFaseII } from 'src/fase-ii-seguimiento/evaluaciones-fase2/enums/evaluacion-fase2.enum';
 
 @Injectable()
 export class EvaluacionesFase4Service extends PrismaClient implements OnModuleInit {
@@ -123,6 +125,84 @@ export class EvaluacionesFase4Service extends PrismaClient implements OnModuleIn
       });
     }
   }
+
+  async pasoMasivoAFase4(user: Usuario): Promise<{ success: boolean; message: string }> {
+    const prestamos = await this.r01Prestamo.findMany({
+      where: {
+        R01Coop_id: user.R12Coop_id,
+        R01Est: "Con desembolso",
+        resumenF2: { R08Cal: Calificativo.CORRECTO },
+        resumenF3: { R10Cal: Calificativo.CORRECTO },
+        resumenF4: null // aún no tienen seguimiento global
+      },
+      include: {
+        evaluacionesF2: true,
+        evaluacionesF3: true,
+        resumenF2: true,
+        resumenF3: true
+      }
+    });
+
+    if (!prestamos.length) {
+      return { success: false, message: 'No hay préstamos elegibles para pasar a Seguimiento Global' };
+    }
+
+    for (const prestamo of prestamos) {
+      const evaluaciones: CreateEvaluacionFase4Input[] = [];
+
+      for (const ev of prestamo.evaluacionesF2) {
+        evaluaciones.push({
+          R15P_num: prestamo.R01NUM,
+          R15E_id: ev.R07E_id,
+          R15Res: ev.R07Res,
+        });
+      }
+
+      for (const ev of prestamo.evaluacionesF3) {
+        evaluaciones.push({
+          R15P_num: prestamo.R01NUM,
+          R15E_id: ev.R09E_id,
+          
+          R15Res: ev.R09Res as ResFaseII,
+        });
+      }
+
+      const resumen: CreateEvaluacionResumenFase4Input = {
+        R16P_num: prestamo.R01NUM,
+        R16SolvA: prestamo.resumenF2?.R08SolvA ?? 0,
+        R16SolvM: prestamo.resumenF2?.R08SolvM ?? 0,
+        R16SolvB: prestamo.resumenF2?.R08SolvB ?? 0,
+        R16SolvT: prestamo.resumenF2?.R08SolvT ?? 0,
+        R16SegCal: prestamo.resumenF2?.R08Cal ?? 'CORRECTO',
+        R16DesCal: prestamo.resumenF3?.R10Cal ?? 'CORRECTO',
+        R16CalF: 'CORRECTO',
+        R16HaSolv: prestamo.resumenF3?.R10Ha ?? 0,
+        R16PenCu: prestamo.resumenF3?.R10Pendientes ?? 0,
+        R16RcF: prestamo.resumenF3?.R10Rc ?? 0,
+        R16Ev_por: user.R12Id, // o el ID del usuario que ejecuta
+        R16Obs: 'Registro masivo automático',
+      };
+
+      await this.r15EvaluacionFase4.createMany({ data: evaluaciones });
+      await this.r16EvaluacionResumenFase4.create({
+        data: {
+          ...resumen,
+          R16FGlo: new Date().toISOString(),
+          R16Ev_por: user.R12Id,
+        },
+      });
+
+      await this.r01Prestamo.update({
+        where: { R01NUM: prestamo.R01NUM },
+        data: { R01Est: 'Con global' }
+      });
+    }
+
+    const prestamoOrPrestamos = prestamos.length === 1 ? 'préstamo pasó' : 'prestamos pasaron'
+
+    return { success: true, message: `${prestamos.length} ${ prestamoOrPrestamos } a Seguimiento Global automáticamente.` };
+  }
+
 
   async findAll(prestamoId: string, user: Usuario): Promise<EvaluacionFase4[]> {
     return await this.r15EvaluacionFase4.findMany({
