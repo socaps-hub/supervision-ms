@@ -49,7 +49,10 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     }
 
     return await this.r01Prestamo.create({
-      data,
+      data: {
+        ...data,
+        R01Nom: data.R01Nom.toUpperCase()
+      },
       include: {
         sucursal: true
       }
@@ -230,6 +233,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
       where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
       data: {
         R01NUM,
+        R01Nom: rest.R01Nom?.toUpperCase(),
         ...rest,
       },
     });
@@ -268,7 +272,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
           data: {
             R01NUM,
             R01Nso,
-            R01Nom,
+            R01Nom: R01Nom?.toUpperCase(),
             ...rest
           },
         });
