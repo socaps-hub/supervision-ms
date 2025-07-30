@@ -6,6 +6,8 @@ import { UpdateGrupoInput } from './dto/update-grupo.input';
 import { Grupo } from './entities/grupo.entity';
 import { RpcException } from '@nestjs/microservices';
 import { Usuario } from 'src/common/entities/usuario.entity';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { CreateManyGruposFromExcelDto } from './dto/create-many-grupos-from-excel.dto';
 
 @Injectable()
 export class GruposService extends PrismaClient implements OnModuleInit {
@@ -197,4 +199,55 @@ export class GruposService extends PrismaClient implements OnModuleInit {
       where: { R02Id: id }
     })
   }
+
+  async createManyFromExcel( data: CreateManyGruposFromExcelDto[], coopId: string ): Promise<BooleanResponse> {
+    const gruposToCreate: any[] = [];
+
+    try {
+      for (const item of data) {
+        const nombre = item.Nombre?.trim();
+        if (!nombre) continue;
+
+        // Verificar si el grupo ya existe en la cooperativa por nombre
+        const grupoExistente = await this.r02Grupo.findFirst({
+          where: {
+            R02Nom: nombre,
+            R02Coop_id: coopId,
+          },
+        });
+
+        if (grupoExistente) continue;
+
+        gruposToCreate.push({
+          R02Nom: nombre,
+          R02Coop_id: coopId,
+        });
+      }
+
+      if (!gruposToCreate.length) {
+        return {
+          success: false,
+          message: 'No se encontraron grupos nuevos para agregar. Tal vez ya existen o están repetidos.',
+        };
+      }
+
+      const result = await this.r02Grupo.createMany({
+        data: gruposToCreate,
+        skipDuplicates: true,
+      });
+
+      return {
+        success: true,
+        message: `${result.count} grupos creados exitosamente.`,
+      };
+
+    } catch (err) {
+      console.error(err);
+      return {
+        success: false,
+        message: 'Error en la importación de grupos.',
+      };
+    }
+  }
+
 }

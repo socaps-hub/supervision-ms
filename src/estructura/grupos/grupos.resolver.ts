@@ -7,6 +7,8 @@ import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { Usuario } from 'src/common/entities/usuario.entity';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { CreateManyGruposFromExcelArgs } from './dto/args/create-many-grupos-from-excel.arg';
 
 @Resolver(() => Grupo)
 @UseGuards( AuthGraphQLGuard )
@@ -54,5 +56,12 @@ export class GruposResolver {
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
   ) {
     return this.gruposService.remove(id);
+  }
+
+  @Mutation(() => BooleanResponse)
+  createManyGruposFromExcel(
+    @Args('createManyGruposFromExcelArgs') createManyGruposFromExcelArgs: CreateManyGruposFromExcelArgs,
+  ) {
+    return this.gruposService.createManyFromExcel(createManyGruposFromExcelArgs.data, createManyGruposFromExcelArgs.coopId);
   }
 }

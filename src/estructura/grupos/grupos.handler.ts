@@ -5,6 +5,7 @@ import { GruposService } from "./grupos.service";
 import { CreateGrupoInput } from "./dto/create-grupo.input";
 import { UpdateGrupoInput } from "./dto/update-grupo.input";
 import { Usuario } from "src/common/entities/usuario.entity";
+import { CreateManyGruposFromExcelDto } from "./dto/create-many-grupos-from-excel.dto";
 
 @Controller()
 export class GruposHandler {
@@ -54,6 +55,12 @@ export class GruposHandler {
     ) {
         return this._service.remove( id )
     }
-    
+
+    @MessagePattern('supervision.grupos.createManyFromExcel')
+    handleCreateManyFromExcel(
+        @Payload() { data, coopId }: { data: CreateManyGruposFromExcelDto[], coopId: string }
+    ) {
+        return this._service.createManyFromExcel( data, coopId )
+    }    
 
 }
