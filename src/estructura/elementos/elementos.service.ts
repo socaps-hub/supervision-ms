@@ -4,6 +4,8 @@ import { RpcException } from '@nestjs/microservices';
 import { CreateElementoInput } from './dto/create-elemento.input';
 import { UpdateElementoInput } from './dto/update-elemento.input';
 import { Elemento } from './entities/elemento.entity';
+import { CreateManyElementoFromExcelDto } from './dto/create-many-elementos-from-excel.dto';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 
 @Injectable()
 export class ElementosService extends PrismaClient implements OnModuleInit {
@@ -37,6 +39,66 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
       }
     });
   }
+
+  async createManyFromExcel(
+    data: CreateManyElementoFromExcelDto[],
+    rubroId: string
+  ): Promise<BooleanResponse> {
+    const elementosToCreate: any[] = [];
+
+    try {
+      for (const item of data) {
+        const nombre = item.Nombre?.trim();
+        const impacto = item.Impacto?.trim().toUpperCase();
+
+        if (!nombre || !['ALTO', 'MEDIO', 'BAJO'].includes(impacto)) continue;
+
+        // Verificar si el elemento ya existe en este rubro
+        const existente = await this.r04Elemento.findFirst({
+          where: {
+            R04R_id: rubroId,
+            R04Nom: {
+              equals: nombre,
+              mode: 'insensitive',
+            },
+          },
+        });
+
+        if (existente) continue;
+
+        elementosToCreate.push({
+          R04R_id: rubroId,
+          R04Nom: nombre,
+          R04Imp: impacto,
+        });
+      }
+
+      if (!elementosToCreate.length) {
+        return {
+          success: false,
+          message:
+            'No se encontraron elementos nuevos para agregar. Tal vez estén repetidos, incompletos o con impacto inválido.',
+        };
+      }
+
+      const result = await this.r04Elemento.createMany({
+        data: elementosToCreate,
+        skipDuplicates: true,
+      });
+
+      return {
+        success: true,
+        message: `${result.count} elementos creados exitosamente.`,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: 'Error en la importación de elementos.',
+      };
+    }
+  }
+
 
   async findAll(rubroId: string): Promise<Elemento[]> {
     return this.r04Elemento.findMany({

@@ -5,6 +5,8 @@ import { UpdateElementoInput } from './dto/update-elemento.input';
 import { ElementosService } from './elementos.service';
 import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { CreateManyElementosFromExcelArgs } from './dto/args/create-many-elementos-from-excel.arg';
 
 @Resolver(() => Elemento)
 @UseGuards(AuthGraphQLGuard)
@@ -46,5 +48,12 @@ export class ElementosResolver {
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
   ) {
     return this.elementosService.remove(id);
+  }
+
+  @Mutation(() => BooleanResponse)
+  createManyElementosFromExcel(
+    @Args('createManyElementosFromExcelArgs') createManyElementosFromExcelArgs: CreateManyElementosFromExcelArgs,
+  ) {
+    return this.elementosService.createManyFromExcel(createManyElementosFromExcelArgs.data, createManyElementosFromExcelArgs.rubroId);
   }
 }

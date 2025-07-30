@@ -4,6 +4,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ElementosService } from './elementos.service';
 import { CreateElementoInput } from './dto/create-elemento.input';
 import { UpdateElementoInput } from './dto/update-elemento.input';
+import { CreateManyElementoFromExcelDto } from './dto/create-many-elementos-from-excel.dto';
 
 @Controller()
 export class ElementosHandler {
@@ -45,5 +46,12 @@ export class ElementosHandler {
     @Payload('id', ParseUUIDPipe) id: string
   ) {
     return this.elementosService.remove(id);
+  }
+
+  @MessagePattern('supervision.elementos.createManyFromExcel')
+  handleCreateManyFromExcel(
+    @Payload() { data, rubroId }: { data: CreateManyElementoFromExcelDto[],  rubroId: string }
+  ) {
+    return this.elementosService.createManyFromExcel( data, rubroId )
   }
 }
