@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { RubrosService } from './rubros.service';
 import { CreateRubroInput } from './dto/create-rubro.input';
 import { UpdateRubroInput } from './dto/update-rubro.input';
+import { CreateManyRubrosFromExcelDto } from './dto/create-many-rubros-from-excel.dto';
 
 @Controller()
 export class RubrosHandler {
@@ -44,6 +45,13 @@ export class RubrosHandler {
     @Payload('id', ParseUUIDPipe) id: string
   ) {
     return this.rubrosService.remove(id);
+  }
+
+  @MessagePattern('supervision.rubros.createManyFromExcel')
+  handleCreateManyFromExcel(
+    @Payload() { data, coopId }: { data: CreateManyRubrosFromExcelDto[], coopId: string }
+  ) {
+    return this.rubrosService.createManyFromExcel( data, coopId )
   }
 
 }

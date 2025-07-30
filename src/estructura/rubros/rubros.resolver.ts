@@ -5,6 +5,8 @@ import { CreateRubroInput } from './dto/create-rubro.input';
 import { UpdateRubroInput } from './dto/update-rubro.input';
 import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
+import { CreateManyRubrosFromExcelArgs } from './dto/args/create-many-rubros-from-excel.arg';
 
 @Resolver(() => Rubro)
 @UseGuards( AuthGraphQLGuard )
@@ -44,5 +46,12 @@ export class RubrosResolver {
     @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
   ) {
     return this.rubrosService.remove(id);
+  }
+
+  @Mutation(() => BooleanResponse)
+  createManyRubrosFromExcel(
+    @Args('createManyRubrosFromExcelArgs') createManyRubrosFromExcelArgs: CreateManyRubrosFromExcelArgs,
+  ) {
+    return this.rubrosService.createManyFromExcel(createManyRubrosFromExcelArgs.data, createManyRubrosFromExcelArgs.coopId);
   }
 }

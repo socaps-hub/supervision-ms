@@ -5,6 +5,8 @@ import { CreateRubroInput } from './dto/create-rubro.input';
 import { UpdateRubroInput } from './dto/update-rubro.input';
 import { Rubro } from './entities/rubro.entity';
 import { RpcException } from '@nestjs/microservices';
+import { CreateManyRubrosFromExcelDto } from './dto/create-many-rubros-from-excel.dto';
+import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 
 @Injectable()
 export class RubrosService extends PrismaClient implements OnModuleInit {
@@ -42,6 +44,77 @@ export class RubrosService extends PrismaClient implements OnModuleInit {
     });
 
     return rubro;
+  }
+
+  async createManyFromExcel(
+    data: CreateManyRubrosFromExcelDto[],
+    coopId: string,
+  ): Promise<BooleanResponse> {
+    const rubrosToCreate: any[] = [];
+
+    try {
+      for (const item of data) {
+        const nombre = item.Nombre?.trim();
+        const grupoNombre = item.Grupo?.trim();
+
+        if (!nombre || !grupoNombre) continue;
+
+        // Buscar grupo por nombre (case-insensitive)
+        const grupo = await this.r02Grupo.findFirst({
+          where: {
+            R02Coop_id: coopId,
+            R02Nom: {
+              equals: grupoNombre,
+              mode: 'insensitive',
+            },
+          },
+        });
+
+        if (!grupo) continue;
+
+        // Verificar si ya existe el rubro en ese grupo
+        const rubroExistente = await this.r03Rubro.findFirst({
+          where: {
+            R03G_id: grupo.R02Id,
+            R03Nom: {
+              equals: nombre,
+              mode: 'insensitive',
+            },
+          },
+        });
+
+        if (rubroExistente) continue;
+
+        rubrosToCreate.push({
+          R03Nom: nombre,
+          R03G_id: grupo.R02Id,
+        });
+      }
+
+      if (!rubrosToCreate.length) {
+        return {
+          success: false,
+          message:
+            'No se encontraron rubros nuevos para agregar. Verifica que los grupos existan y que los rubros no estén duplicados.',
+        };
+      }
+
+      const result = await this.r03Rubro.createMany({
+        data: rubrosToCreate,
+        skipDuplicates: true,
+      });
+
+      return {
+        success: true,
+        message: `${result.count} rubros creados exitosamente.`,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        message: 'Error en la importación de rubros.',
+      };
+    }
   }
 
   async findAll(coopId: string): Promise<Rubro[]> {
