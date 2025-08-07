@@ -4,6 +4,7 @@ import { FiltroFechasInput } from 'src/sisconcre/common/dto/filtro-fechas.input'
 import { ReporteSegmentadoFase1Response, ReporteSegmentadoSucursal } from '../dto/fase1/reporte-segmentado-f1.output';
 import { DetalleAnomaliasF1Response, DetalleRubroPorSucursal, ElementosIncorrectosPorSucursal } from '../dto/fase1/detalle-anomalias-f1.output';
 import { ResFaseI } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
+import { AnomaliasResumenResponseF1, GrupoResumenGlobal, SucursalResumen } from '../dto/fase1/detalle-anomalias-integral-f1.output';
 
 @Injectable()
 export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
@@ -47,23 +48,23 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
             const sucursalNombre = solicitud.sucursal?.R11Nom ?? 'Desconocida';
 
             if (!agrupadas.has(sucursalNombre)) {
-            agrupadas.set(sucursalNombre, {
-                sucursal: sucursalNombre,
-                total: 0,
-                devueltas: 0,
-                porcentajeDevueltas: 0,
-                anomaliasDevueltas: 0,
-                comite: 0,
-                porcentajeComite: 0,
-                correctas: 0,
-                porcentajeCorrectas: 0,
-                aceptables: 0,
-                porcentajeAceptables: 0,
-                deficientes: 0,
-                porcentajeDeficientes: 0,
-                anomaliasComite: 0,
-                totalAnomalias: 0,
-            });
+                agrupadas.set(sucursalNombre, {
+                    sucursal: sucursalNombre,
+                    total: 0,
+                    devueltas: 0,
+                    porcentajeDevueltas: 0,
+                    anomaliasDevueltas: 0,
+                    comite: 0,
+                    porcentajeComite: 0,
+                    correctas: 0,
+                    porcentajeCorrectas: 0,
+                    aceptables: 0,
+                    porcentajeAceptables: 0,
+                    deficientes: 0,
+                    porcentajeDeficientes: 0,
+                    anomaliasComite: 0,
+                    totalAnomalias: 0,
+                });
             }
 
             const item = agrupadas.get(sucursalNombre)!;
@@ -77,30 +78,30 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
             totalAnomalias += anomaliasTotales;
 
             if (res === Resolucion.DEVUELTA) {
-            item.devueltas++;
-            item.anomaliasDevueltas += anomaliasTotales;
-            totalAnomaliasDevueltas += anomaliasTotales;
+                item.devueltas++;
+                item.anomaliasDevueltas += anomaliasTotales;
+                totalAnomaliasDevueltas += anomaliasTotales;
             }
 
             if (res === Resolucion.PASA_COMITE) {
-            item.comite++;
-            item.anomaliasComite += anomaliasTotales;
-            item.totalAnomalias += anomaliasTotales;
-            totalAnomaliasComite += anomaliasTotales;
+                item.comite++;
+                item.anomaliasComite += anomaliasTotales;
+                item.totalAnomalias += anomaliasTotales;
+                totalAnomaliasComite += anomaliasTotales;
 
-            if (cal === Calificativo.CORRECTO) {
-                item.correctas++;
-                totalCorrectas++;
-            } else if (cal === Calificativo.ACEPTABLE) {
-                item.aceptables++;
-                totalAceptables++;
-            } else if (cal === Calificativo.DEFICIENTE) {
-                item.deficientes++;
-                totalDeficientes++;
-            }
+                if (cal === Calificativo.CORRECTO) {
+                    item.correctas++;
+                    totalCorrectas++;
+                } else if (cal === Calificativo.ACEPTABLE) {
+                    item.aceptables++;
+                    totalAceptables++;
+                } else if (cal === Calificativo.DEFICIENTE) {
+                    item.deficientes++;
+                    totalDeficientes++;
+                }
 
             } else {
-            item.totalAnomalias += anomaliasTotales;
+                item.totalAnomalias += anomaliasTotales;
             }
         }
 
@@ -312,6 +313,126 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
             totalSolicitudes: solicitudes.length,
             totalIncorrectosGlobal,
             sucursales: Array.from(sucursalesMap.values()),
+        };
+    }
+
+    async getDetalleAnomaliasIntegralPorGrupos( input: FiltroFechasInput ): Promise<AnomaliasResumenResponseF1> {
+
+        const { fechaInicio, fechaFinal } = input
+
+        const prestamos = await this.r01Prestamo.findMany({
+            where: {
+                R01FRec: {
+                    gte: new Date(fechaInicio).toISOString(),
+                    lte: new Date(fechaFinal).toISOString(),
+                },
+                R01Est: 'Sin seguimiento',
+                R01Activ: true,
+                resumenF1: {
+                    R06Res: Resolucion.PASA_COMITE
+                }
+            },
+            include: {
+                sucursal: true,
+                evaluacionesF1: {
+                    include: {
+                        elemento: {
+                            include: {
+                                rubro: {
+                                    include: {
+                                        grupo: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const sucursalMap = new Map<string, SucursalResumen>();
+        const gruposGlobal = new Map<string, number>();
+
+        let totalSolicitudesGlobal = 0;
+        let totalHallazgosGlobal = 0;
+
+        for (const prestamo of prestamos) {
+            const sucursal = prestamo.sucursal.R11Nom;
+
+            if (!sucursalMap.has(sucursal)) {
+                sucursalMap.set(sucursal, {
+                    sucursal,
+                    totalSolicitudes: 0,
+                    totalHallazgos: 0,
+                    promedioErroresPorSolicitud: 0,
+                    grupos: []
+                });
+            }
+
+            const resumen = sucursalMap.get(sucursal)!;
+            resumen.totalSolicitudes += 1;
+            totalSolicitudesGlobal += 1;
+
+            const conteoPorGrupo = new Map<string, number>();
+
+            for (const evaluacion of prestamo.evaluacionesF1) {
+                if (evaluacion.R05Res === 'I') {
+                    const grupo = evaluacion.elemento.rubro.grupo.R02Nom;
+                    if (grupo === 'Desembolso') continue;
+
+                    conteoPorGrupo.set(grupo, (conteoPorGrupo.get(grupo) ?? 0) + 1);
+                    resumen.totalHallazgos += 1;
+                    totalHallazgosGlobal += 1;
+                }
+            }
+
+            // Guardar en sucursal
+            for (const [grupo, total] of conteoPorGrupo.entries()) {
+                const yaExiste = resumen.grupos.find(g => g.grupo === grupo);
+                if (yaExiste) {
+                    yaExiste.total += total;
+                } else {
+                    resumen.grupos.push({ grupo, total, porcentaje: 0 });
+                }
+
+                gruposGlobal.set(grupo, (gruposGlobal.get(grupo) ?? 0) + total);
+            }
+        }
+
+        // Calcular porcentajes por sucursal
+        for (const resumen of sucursalMap.values()) {
+            for (const grupo of resumen.grupos) {
+                grupo.porcentaje = resumen.totalHallazgos > 0
+                    ? Math.round((grupo.total / resumen.totalHallazgos) * 100)
+                    : 0;
+            }
+
+            resumen.promedioErroresPorSolicitud = resumen.totalSolicitudes > 0
+                ? parseFloat((resumen.totalHallazgos / resumen.totalSolicitudes).toFixed(2))
+                : 0;
+        }
+
+        // Grupos globales
+        const gruposTotales: GrupoResumenGlobal[] = Array.from(gruposGlobal.entries()).map(
+            ([grupo, total]) => ({
+                grupo,
+                total,
+                porcentaje: totalHallazgosGlobal > 0
+                    ? Math.round((total / totalHallazgosGlobal) * 100)
+                    : 0
+            })
+        );
+
+        return {
+            sucursales: Array.from(sucursalMap.values()),
+            totales: {
+                totalSolicitudes: totalSolicitudesGlobal,
+                totalHallazgos: totalHallazgosGlobal,
+                promedioErroresPorSolicitud: totalSolicitudesGlobal > 0
+                    ? parseFloat((totalHallazgosGlobal / totalSolicitudesGlobal).toFixed(2))
+                    : 0,
+                grupos: gruposTotales
+            }
         };
     }
 

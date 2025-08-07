@@ -24,4 +24,11 @@ export class ReportesHandler {
         return this._service.getDetalleAnomaliasF1( input )
     }
 
+    @MessagePattern('reportes.fase1.detalleAnomaliasIntegralF1')
+    handleGetDetalleAnomaliasIntegralF1(
+        @Payload() { input }: { input: FiltroFechasInput }
+    ) { 
+        return this._service.getDetalleAnomaliasIntegralProGruposF1( input )
+    }
+
 }

@@ -6,6 +6,7 @@ import { FiltroFechasInput } from '../common/dto/filtro-fechas.input';
 import { ReporteSegmentadoFase1Response } from './dto/fase1/reporte-segmentado-f1.output';
 import { AuthGraphQLGuard } from 'src/common/guards/auth-graphql.guard';
 import { DetalleAnomaliasF1Response } from './dto/fase1/detalle-anomalias-f1.output';
+import { AnomaliasResumenResponseF1 } from './dto/fase1/detalle-anomalias-integral-f1.output';
 
 @Resolver()
 @UseGuards( AuthGraphQLGuard )
@@ -25,6 +26,13 @@ export class ReportesResolver {
     @Args('input') input: FiltroFechasInput,
   ): Promise<DetalleAnomaliasF1Response> {
     return this.reportesService.getDetalleAnomaliasF1(input);
+  }
+
+  @Query(() => AnomaliasResumenResponseF1)
+  async detalleAnomaliasIntegralF1(
+    @Args('input') input: FiltroFechasInput,
+  ): Promise<AnomaliasResumenResponseF1> {
+    return this.reportesService.getDetalleAnomaliasIntegralProGruposF1(input);
   }
 
 }
