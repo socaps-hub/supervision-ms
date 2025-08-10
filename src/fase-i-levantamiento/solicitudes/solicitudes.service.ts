@@ -59,9 +59,21 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async findAll( user: Usuario ): Promise<R01Prestamo[]> {
+  async findAll( user: Usuario, filterBySucursal: boolean = true ): Promise<R01Prestamo[]> {
+
+    // Base del filtro: siempre filtra por cooperativa y activo
+    const where: any = {
+      R01Activ: true,
+      R01Coop_id: user.R12Coop_id,
+    };
+
+    // Si la bandera está activa, también filtra por sucursal
+    if (filterBySucursal) {
+      where.R01Suc_id = user.R12Suc_id;
+    }
+
     return await this.r01Prestamo.findMany({
-      where: { R01Activ: true, R01Suc_id: user.R12Suc_id, R01Coop_id: user.R12Coop_id },
+      where,
       include: {
         categoria: true,
         producto: true,
@@ -69,7 +81,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         supervisor: true,
         ejecutivo: true,
         evaluacionesF1: true,
-        resumenF1: true,
+        resumenF1: {
+          include: {
+            evaluador: true
+          }
+        },
         evaluacionesF2: true,
         resumenF2: true
       },

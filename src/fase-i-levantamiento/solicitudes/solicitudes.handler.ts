@@ -25,9 +25,9 @@ export class SolicitudesHandler {
 
   @MessagePattern('supervision.solicitudes.getAll')
   handleGetAll(
-    @Payload('user') user: Usuario
+    @Payload() { user, filterBySucursal }: { user: Usuario, filterBySucursal: boolean }
   ) {
-    return this.solicitudesService.findAll(user);
+    return this.solicitudesService.findAll(user, filterBySucursal);
   }
 
   @MessagePattern('supervision.solicitudes.getById')

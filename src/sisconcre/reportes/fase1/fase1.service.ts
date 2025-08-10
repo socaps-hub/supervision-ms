@@ -5,6 +5,9 @@ import { ReporteSegmentadoFase1Response, ReporteSegmentadoSucursal } from '../dt
 import { DetalleAnomaliasF1Response, DetalleRubroPorSucursal, ElementosIncorrectosPorSucursal } from '../dto/fase1/detalle-anomalias-f1.output';
 import { ResFaseI } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
 import { AnomaliasResumenResponseF1, GrupoResumenGlobal, SucursalResumen } from '../dto/fase1/detalle-anomalias-integral-f1.output';
+import { DetalleAnomaliasEjecutivoF1Response, EjecutivoDetalle, TotalesColumnasDetalle } from '../dto/fase1/detalle-anomalias-f1-ejecutivo.output';
+import { Usuario } from 'src/common/entities/usuario.entity';
+import { AnomaliasEjecutivoResumen, DetalleAnomaliasIntegralEjecutivosResponseF1 } from '../dto/fase1/detalle-anomalias-integral-f1-ejecutivos.output';
 
 @Injectable()
 export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
@@ -16,7 +19,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         this._logger.log('Database connected')
     }
 
-    async getReporteSegmentadoF1(input: FiltroFechasInput): Promise<ReporteSegmentadoFase1Response> {
+    async getReporteSegmentadoF1(input: FiltroFechasInput, user: Usuario): Promise<ReporteSegmentadoFase1Response> {
         const { fechaInicio, fechaFinal } = input;
 
         const solicitudes = await this.r01Prestamo.findMany({
@@ -25,6 +28,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     gte: new Date(fechaInicio).toISOString(),
                     lte: new Date(fechaFinal).toISOString(),
                 },
+                R01Coop_id: user.R12Coop_id,
                 R01Est: 'Sin seguimiento',
             },
             include: {
@@ -139,11 +143,14 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         };
     }
 
-    async getDetalleAnomalias(input: FiltroFechasInput): Promise<DetalleAnomaliasF1Response> {
+    async getDetalleAnomalias(input: FiltroFechasInput, user: Usuario): Promise<DetalleAnomaliasF1Response> {
         const { fechaInicio, fechaFinal } = input;
 
         // 🧩 Obtener todos los rubros y elementos registrados
         const rubros = await this.r03Rubro.findMany({
+            where: {
+                grupo: { R02Coop_id: user.R12Coop_id }
+            },
             include: {
                 elementos: {
                     select: {
@@ -151,6 +158,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                         R04Imp: true,
                     },
                 },
+                grupo: true,
             },
         });
 
@@ -174,6 +182,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     gte: new Date(fechaInicio).toISOString(),
                     lte: new Date(fechaFinal).toISOString(),
                 },
+                R01Coop_id: user.R12Coop_id,
                 resumenF1: {
                     R06Res: Resolucion.PASA_COMITE,
                 },
@@ -316,9 +325,8 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         };
     }
 
-    async getDetalleAnomaliasIntegralPorGrupos( input: FiltroFechasInput ): Promise<AnomaliasResumenResponseF1> {
-
-        const { fechaInicio, fechaFinal } = input
+    async getDetalleAnomaliasIntegralPorGrupos(input: FiltroFechasInput, user: Usuario): Promise<AnomaliasResumenResponseF1> {
+        const { fechaInicio, fechaFinal } = input;
 
         const prestamos = await this.r01Prestamo.findMany({
             where: {
@@ -326,6 +334,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     gte: new Date(fechaInicio).toISOString(),
                     lte: new Date(fechaFinal).toISOString(),
                 },
+                R01Coop_id: user.R12Coop_id,
                 R01Est: 'Sin seguimiento',
                 R01Activ: true,
                 resumenF1: {
@@ -356,6 +365,19 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         let totalSolicitudesGlobal = 0;
         let totalHallazgosGlobal = 0;
 
+        // 1️⃣ Obtener lista global de todos los grupos (sin "Desembolso")
+        const todosLosGruposSet = new Set<string>();
+        for (const prestamo of prestamos) {
+            for (const evaluacion of prestamo.evaluacionesF1) {
+                const grupo = evaluacion.elemento.rubro.grupo.R02Nom;
+                if (grupo !== 'Desembolso') {
+                    todosLosGruposSet.add(grupo);
+                }
+            }
+        }
+        const todosLosGrupos = Array.from(todosLosGruposSet).sort();
+
+        // 2️⃣ Recorrer prestamos
         for (const prestamo of prestamos) {
             const sucursal = prestamo.sucursal.R11Nom;
 
@@ -365,7 +387,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     totalSolicitudes: 0,
                     totalHallazgos: 0,
                     promedioErroresPorSolicitud: 0,
-                    grupos: []
+                    grupos: todosLosGrupos.map(g => ({ grupo: g, total: 0, porcentaje: 0 })) // inicializar con ceros
                 });
             }
 
@@ -373,55 +395,43 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
             resumen.totalSolicitudes += 1;
             totalSolicitudesGlobal += 1;
 
-            const conteoPorGrupo = new Map<string, number>();
-
             for (const evaluacion of prestamo.evaluacionesF1) {
                 if (evaluacion.R05Res === 'I') {
                     const grupo = evaluacion.elemento.rubro.grupo.R02Nom;
                     if (grupo === 'Desembolso') continue;
 
-                    conteoPorGrupo.set(grupo, (conteoPorGrupo.get(grupo) ?? 0) + 1);
+                    // Actualizar sucursal
+                    const grupoObj = resumen.grupos.find(g => g.grupo === grupo)!;
+                    grupoObj.total += 1;
+
+                    // Totales globales
+                    gruposGlobal.set(grupo, (gruposGlobal.get(grupo) ?? 0) + 1);
                     resumen.totalHallazgos += 1;
                     totalHallazgosGlobal += 1;
                 }
             }
-
-            // Guardar en sucursal
-            for (const [grupo, total] of conteoPorGrupo.entries()) {
-                const yaExiste = resumen.grupos.find(g => g.grupo === grupo);
-                if (yaExiste) {
-                    yaExiste.total += total;
-                } else {
-                    resumen.grupos.push({ grupo, total, porcentaje: 0 });
-                }
-
-                gruposGlobal.set(grupo, (gruposGlobal.get(grupo) ?? 0) + total);
-            }
         }
 
-        // Calcular porcentajes por sucursal
+        // 3️⃣ Calcular porcentajes por sucursal
         for (const resumen of sucursalMap.values()) {
             for (const grupo of resumen.grupos) {
                 grupo.porcentaje = resumen.totalHallazgos > 0
                     ? Math.round((grupo.total / resumen.totalHallazgos) * 100)
                     : 0;
             }
-
             resumen.promedioErroresPorSolicitud = resumen.totalSolicitudes > 0
                 ? parseFloat((resumen.totalHallazgos / resumen.totalSolicitudes).toFixed(2))
                 : 0;
         }
 
-        // Grupos globales
-        const gruposTotales: GrupoResumenGlobal[] = Array.from(gruposGlobal.entries()).map(
-            ([grupo, total]) => ({
-                grupo,
-                total,
-                porcentaje: totalHallazgosGlobal > 0
-                    ? Math.round((total / totalHallazgosGlobal) * 100)
-                    : 0
-            })
-        );
+        // 4️⃣ Calcular totales globales con todos los grupos
+        const gruposTotales: GrupoResumenGlobal[] = todosLosGrupos.map(grupo => ({
+            grupo,
+            total: gruposGlobal.get(grupo) ?? 0,
+            porcentaje: totalHallazgosGlobal > 0
+                ? Math.round(((gruposGlobal.get(grupo) ?? 0) / totalHallazgosGlobal) * 100)
+                : 0
+        }));
 
         return {
             sucursales: Array.from(sucursalMap.values()),
@@ -433,6 +443,324 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     : 0,
                 grupos: gruposTotales
             }
+        };
+    }
+
+
+    async getDetalleAnomaliasPorEjecutivo(
+        input: FiltroFechasInput,
+        user: Usuario
+    ): Promise<DetalleAnomaliasEjecutivoF1Response> {
+        const { fechaInicio, fechaFinal } = input;
+
+        // 🧩 Obtener todos los rubros y elementos registrados
+        const rubros = await this.r03Rubro.findMany({
+            where: { grupo: { R02Coop_id: user.R12Coop_id } },
+            include: {
+                elementos: {
+                    select: { R04Nom: true, R04Imp: true },
+                },
+                grupo: true,
+            },
+        });
+
+        // 🧩 Inicializar mapa de rubros base
+        const rubrosBaseMap = new Map<string, Map<string, string>>(); // rubro -> (elemento -> impacto)
+
+        for (const r of rubros) {
+            if (!rubrosBaseMap.has(r.R03Nom)) {
+                rubrosBaseMap.set(r.R03Nom, new Map());
+            }
+            for (const e of r.elementos) {
+                rubrosBaseMap.get(r.R03Nom)!.set(e.R04Nom, e.R04Imp);
+            }
+        }
+
+        // 🧩 Obtener préstamos con errores (evaluaciones "I")
+        const solicitudes = await this.r01Prestamo.findMany({
+            where: {
+                R01Est: 'Sin seguimiento',
+                R01FRec: {
+                    gte: new Date(fechaInicio).toISOString(),
+                    lte: new Date(fechaFinal).toISOString(),
+                },
+                R01Coop_id: user.R12Coop_id,
+                resumenF1: { R06Res: Resolucion.PASA_COMITE },
+            },
+            include: {
+                sucursal: true,
+                ejecutivo: {
+                    select: { R12Id: true, R12Ni: true, R12Nom: true },
+                },
+                evaluacionesF1: {
+                    where: { R05Res: 'I' },
+                    include: {
+                        elemento: {
+                            select: {
+                                R04Nom: true,
+                                R04Imp: true,
+                                rubro: { select: { R03Nom: true } },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        // 🧩 Agregar rubros/elementos faltantes
+        for (const solicitud of solicitudes) {
+            for (const ev of solicitud.evaluacionesF1) {
+                const rubroNombre = ev.elemento?.rubro?.R03Nom;
+                const elementoNombre = ev.elemento?.R04Nom;
+                const impacto = ev.elemento?.R04Imp ?? 'BAJO';
+
+                if (!rubroNombre || !elementoNombre) continue;
+
+                if (!rubrosBaseMap.has(rubroNombre)) {
+                    rubrosBaseMap.set(rubroNombre, new Map());
+                }
+                const elementos = rubrosBaseMap.get(rubroNombre)!;
+                if (!elementos.has(elementoNombre)) {
+                    elementos.set(elementoNombre, impacto);
+                }
+            }
+        }
+
+        // 🧩 Construcción de rubros base como arreglo
+        const rubrosBase = Array.from(rubrosBaseMap.entries()).map(([rubro, elementosMap]) => ({
+            rubro,
+            elementos: Array.from(elementosMap.entries()).map(([elemento, impacto]) => ({
+                elemento,
+                impacto,
+            })),
+        }));
+
+        // 🧠 Mapa final por ejecutivo
+        let totalErroresGlobales = 0;
+        const ejecutivosMap = new Map<string, EjecutivoDetalle>();
+
+        for (const solicitud of solicitudes) {
+            const usuarioId = solicitud.ejecutivo?.R12Id;
+            if (!usuarioId) continue;
+
+            if (!ejecutivosMap.has(usuarioId)) {
+                ejecutivosMap.set(usuarioId, {
+                    usuario: solicitud.ejecutivo.R12Ni,
+                    nombre: solicitud.ejecutivo.R12Nom,
+                    sucursal: solicitud.sucursal?.R11Nom ?? 'Desconocida',
+                    totalSolicitudes: 0,
+                    rubros: [],
+                    totalErrores: 0,
+                });
+            }
+
+            const ejecutivo = ejecutivosMap.get(usuarioId)!;
+            ejecutivo.totalSolicitudes++;
+
+            // Inicializa rubros si es la primera vez
+            if (ejecutivo.rubros.length === 0) {
+                ejecutivo.rubros = rubrosBase.map(rb => ({
+                    rubro: rb.rubro,
+                    elementos: rb.elementos.map(e => ({
+                        elemento: e.elemento,
+                        impacto: e.impacto,
+                        total: 0,
+                    })),
+                }));
+            }
+
+            // Acumular errores en rubros
+            for (const ev of solicitud.evaluacionesF1) {
+                const rubroNombre = ev.elemento?.rubro?.R03Nom;
+                const elementoNombre = ev.elemento?.R04Nom;
+
+                if (!rubroNombre || !elementoNombre) continue;
+
+                const rubro = ejecutivo.rubros.find(r => r.rubro === rubroNombre);
+                if (!rubro) continue;
+
+                const elemento = rubro.elementos.find(e => e.elemento === elementoNombre);
+                if (!elemento) continue;
+
+                elemento.total++;
+                ejecutivo.totalErrores++;
+                totalErroresGlobales++;
+            }
+        }
+
+        // 🧩 Construcción de totales globales por rubro
+        const totalesMap = new Map<string, Map<string, { total: number; impacto: string }>>();
+
+        for (const ejecutivo of ejecutivosMap.values()) {
+            for (const rubro of ejecutivo.rubros) {
+                if (!totalesMap.has(rubro.rubro)) {
+                    totalesMap.set(rubro.rubro, new Map());
+                }
+                const elMap = totalesMap.get(rubro.rubro)!;
+
+                for (const el of rubro.elementos) {
+                    if (!elMap.has(el.elemento)) {
+                        elMap.set(el.elemento, { total: 0, impacto: el.impacto });
+                    }
+                    elMap.set(el.elemento, {
+                        total: elMap.get(el.elemento)!.total + el.total,
+                        impacto: el.impacto,
+                    });
+                }
+            }
+        }
+
+        const totales: TotalesColumnasDetalle = {
+            rubros: Array.from(totalesMap.entries()).map(([rubro, elMap]) => ({
+                rubro,
+                elementos: Array.from(elMap.entries()).map(([elemento, data]) => ({
+                    elemento,
+                    impacto: data.impacto,
+                    total: data.total,
+                })),
+            })),
+            totalErroresGlobales,
+        };
+
+        return {
+            ejecutivos: Array.from(ejecutivosMap.values()),
+            totales,
+        };
+    }
+
+    async getDetalleAnomaliasIntegralPorEjecutivos(
+        input: FiltroFechasInput,
+        user: Usuario
+    ): Promise<DetalleAnomaliasIntegralEjecutivosResponseF1> {
+
+        const { fechaInicio, fechaFinal } = input;
+
+        const prestamos = await this.r01Prestamo.findMany({
+            where: {
+                R01FRec: {
+                    gte: new Date(fechaInicio).toISOString(),
+                    lte: new Date(fechaFinal).toISOString(),
+                },
+                R01Coop_id: user.R12Coop_id,
+                R01Est: 'Sin seguimiento',
+                R01Activ: true,
+                resumenF1: {
+                    R06Res: Resolucion.PASA_COMITE,
+                },
+            },
+            include: {
+                ejecutivo: {
+                    include: {
+                        sucursal: true, // para el nombre de sucursal del ejecutivo
+                    },
+                },
+                sucursal: true, // por si no hay sucursal en ejecutivo, usamos la del préstamo
+                evaluacionesF1: {
+                    include: {
+                        elemento: {
+                            include: {
+                                rubro: {
+                                    include: {
+                                        grupo: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        const ejecutivoMap = new Map<string, AnomaliasEjecutivoResumen>();
+        const gruposGlobal = new Map<string, number>();
+
+        let totalSolicitudesGlobal = 0;
+        let totalHallazgosGlobal = 0;
+
+        // 1️⃣ Obtener lista global de todos los grupos (sin "Desembolso")
+        const todosLosGruposSet = new Set<string>();
+        for (const prestamo of prestamos) {
+            for (const evaluacion of prestamo.evaluacionesF1 ?? []) {
+                const grupo = evaluacion.elemento?.rubro?.grupo?.R02Nom;
+                if (grupo && grupo !== 'Desembolso') {
+                    todosLosGruposSet.add(grupo);
+                }
+            }
+        }
+        const todosLosGrupos = Array.from(todosLosGruposSet).sort();
+
+        // 2️⃣ Recorrer prestamos y agrupar por ejecutivo, inicializando todos los grupos con 0
+        for (const prestamo of prestamos) {
+            const usuario = prestamo.ejecutivo?.R12Ni ?? 'SIN_USUARIO';
+            const nombre = prestamo.ejecutivo?.R12Nom ?? 'Sin nombre';
+            // preferimos la sucursal del ejecutivo, si no existe usamos la del préstamo
+            const sucursal = prestamo.ejecutivo?.sucursal?.R11Nom ?? prestamo.sucursal?.R11Nom ?? 'Sin sucursal';
+
+            if (!ejecutivoMap.has(usuario)) {
+                ejecutivoMap.set(usuario, {
+                    usuario,
+                    nombre,
+                    sucursal,
+                    totalSolicitudes: 0,
+                    totalHallazgos: 0,
+                    promedioErroresPorSolicitud: 0,
+                    grupos: todosLosGrupos.map(g => ({ grupo: g, total: 0, porcentaje: 0 })),
+                });
+            }
+
+            const resumen = ejecutivoMap.get(usuario)!;
+            resumen.totalSolicitudes += 1;
+            totalSolicitudesGlobal += 1;
+
+            // contar por grupo dentro del préstamo
+            for (const evaluacion of prestamo.evaluacionesF1 ?? []) {
+                if (evaluacion.R05Res === 'I') {
+                    const grupo = evaluacion.elemento?.rubro?.grupo?.R02Nom;
+                    if (!grupo || grupo === 'Desembolso') continue;
+
+                    // actualizar el grupo dentro del ejecutivo (ya inicializado)
+                    const grupoObj = resumen.grupos.find(g => g.grupo === grupo)!;
+                    grupoObj.total += 1;
+
+                    // actualizar globales
+                    gruposGlobal.set(grupo, (gruposGlobal.get(grupo) ?? 0) + 1);
+                    resumen.totalHallazgos += 1;
+                    totalHallazgosGlobal += 1;
+                }
+            }
+        }
+
+        // 3️⃣ Calcular porcentajes por ejecutivo y promedio errores/solicitud
+        for (const resumen of ejecutivoMap.values()) {
+            for (const grupo of resumen.grupos) {
+                grupo.porcentaje = resumen.totalHallazgos > 0
+                    ? Math.round((grupo.total / resumen.totalHallazgos) * 100)
+                    : 0;
+            }
+            resumen.promedioErroresPorSolicitud = resumen.totalSolicitudes > 0
+                ? parseFloat((resumen.totalHallazgos / resumen.totalSolicitudes).toFixed(2))
+                : 0;
+        }
+
+        // 4️⃣ Construir grupos globales asegurando todos los grupos (incluso con 0)
+        const gruposTotales: GrupoResumenGlobal[] = todosLosGrupos.map(grupo => ({
+            grupo,
+            total: gruposGlobal.get(grupo) ?? 0,
+            porcentaje: totalHallazgosGlobal > 0
+                ? Math.round(((gruposGlobal.get(grupo) ?? 0) / totalHallazgosGlobal) * 100)
+                : 0,
+        }));
+
+        return {
+            ejecutivos: Array.from(ejecutivoMap.values()),
+            totales: {
+                totalSolicitudes: totalSolicitudesGlobal,
+                totalHallazgos: totalHallazgosGlobal,
+                promedioErroresPorSolicitud: totalSolicitudesGlobal > 0
+                    ? parseFloat((totalHallazgosGlobal / totalSolicitudesGlobal).toFixed(2))
+                    : 0,
+                grupos: gruposTotales,
+            },
         };
     }
 
