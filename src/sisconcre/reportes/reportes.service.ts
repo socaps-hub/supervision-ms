@@ -7,12 +7,15 @@ import { AnomaliasResumenResponseF1 } from './dto/fase1/detalle-anomalias-integr
 import { DetalleAnomaliasEjecutivoF1Response } from './dto/fase1/detalle-anomalias-f1-ejecutivo.output';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { DetalleAnomaliasIntegralEjecutivosResponseF1 } from './dto/fase1/detalle-anomalias-integral-f1-ejecutivos.output';
+import { ReporteFase2Response } from './dto/fase2/resultados-seguimiento.dto';
+import { ReporteFase2Service } from './fase2/fase2.service';
 
 @Injectable()
 export class ReportesService {
 
     constructor(
-        private readonly _reporteFase1Service: ReporteFase1Service
+        private readonly _reporteFase1Service: ReporteFase1Service,
+        private readonly _reporteFase2Service: ReporteFase2Service,
     ) {}
 
     async getReporteSegmentadoF1(input: FiltroFechasInput, user: Usuario): Promise<ReporteSegmentadoFase1Response> {
@@ -33,6 +36,10 @@ export class ReportesService {
 
     async getDetalleAnomaliasIntegralPorEjecutivoF1(input: FiltroFechasInput, user: Usuario): Promise<DetalleAnomaliasIntegralEjecutivosResponseF1> {
         return await this._reporteFase1Service.getDetalleAnomaliasIntegralPorEjecutivos( input, user )
+    }
+
+    async getResultadosSeguimientoF2(input: FiltroFechasInput, user: Usuario): Promise<ReporteFase2Response> {
+        return await this._reporteFase2Service.getResultadosSeguimiento( input, user )
     }
 
 }

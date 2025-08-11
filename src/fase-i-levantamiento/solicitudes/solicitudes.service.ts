@@ -95,7 +95,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async findByEstado(estado: ValidEstados, user: Usuario): Promise<R01Prestamo[]> {
+  async findByEstado(estado: ValidEstados, user: Usuario, filterBySucursal: boolean = true): Promise<R01Prestamo[]> {
     const estadosValidos = [
       'Con seguimiento',
       'Sin seguimiento',
@@ -110,13 +110,20 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
       });
     }
 
+    // Base del filtro: siempre filtra por cooperativa y activo
+    const where: any = {
+      R01Activ: true,
+      R01Coop_id: user.R12Coop_id,
+      R01Est: estado,
+    };
+
+    // Si la bandera está activa, también filtra por sucursal
+    if (filterBySucursal) {
+      where.R01Suc_id = user.R12Suc_id;
+    }
+
     return await this.r01Prestamo.findMany({
-      where: {
-        R01Activ: true,
-        R01Suc_id: user.R12Suc_id,
-        R01Coop_id: user.R12Coop_id,
-        R01Est: estado,
-      },
+      where,
       include: {
         categoria: true,
         producto: true,

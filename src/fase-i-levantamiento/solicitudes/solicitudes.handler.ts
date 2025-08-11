@@ -39,9 +39,9 @@ export class SolicitudesHandler {
 
   @MessagePattern('supervision.solicitudes.getByEstado')
   handleGetByEstado(
-    @Payload() data: { estado: ValidEstados; user: Usuario }
+    @Payload() data: { estado: ValidEstados; user: Usuario, filterBySucursal: boolean }
   ) {
-    return this.solicitudesService.findByEstado(data.estado, data.user);
+    return this.solicitudesService.findByEstado(data.estado, data.user, data.filterBySucursal);
   }
 
   @MessagePattern('supervision.solicitudes.update')

@@ -52,10 +52,10 @@ export class SolicitudesResolver {
 
   @Query(() => [Prestamo])
   async prestamosByEstado(
-    @Args() validEstados: ValidEstadosArgs,
+    @Args() args: ValidEstadosArgs,
     @GetUserGraphQL() user: Usuario,
   ): Promise<Prestamo[]> {
-    const lista = await this.solicitudesService.findByEstado(validEstados.estado, user)
+    const lista = await this.solicitudesService.findByEstado(args.estado, user, args.filterBySucursal)
     return lista.map(mapR01ToPrestamo);
   }
 

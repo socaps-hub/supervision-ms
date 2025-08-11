@@ -46,4 +46,12 @@ export class ReportesHandler {
         return this._service.getDetalleAnomaliasIntegralPorEjecutivoF1( input, user )
     }
 
+    // * REPORTES FASE 2
+    @MessagePattern('reportes.fase2.resultadosSeguimientoF2')
+    handleGetResultadosSeguimientoF2(
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
+    ) { 
+        return this._service.getResultadosSeguimientoF2( input, user )
+    }
+
 }

@@ -11,6 +11,7 @@ import { DetalleAnomaliasEjecutivoF1Response } from './dto/fase1/detalle-anomali
 import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { DetalleAnomaliasIntegralEjecutivosResponseF1 } from './dto/fase1/detalle-anomalias-integral-f1-ejecutivos.output';
+import { ReporteFase2Response } from './dto/fase2/resultados-seguimiento.dto';
 
 @Resolver()
 @UseGuards( AuthGraphQLGuard )
@@ -56,6 +57,15 @@ export class ReportesResolver {
     @GetUserGraphQL() user: Usuario
   ): Promise<DetalleAnomaliasIntegralEjecutivosResponseF1> {
     return this.reportesService.getDetalleAnomaliasIntegralPorEjecutivoF1(input, user);
+  }
+
+  // * REPORTES FASE 2
+  @Query(() => ReporteFase2Response)
+  async resultadoSeguimientoF2(
+    @Args('input') input: FiltroFechasInput,
+    @GetUserGraphQL() user: Usuario
+  ): Promise<ReporteFase2Response> {
+    return this.reportesService.getResultadosSeguimientoF2(input, user);
   }
 
 }
