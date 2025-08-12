@@ -35,12 +35,12 @@ export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
 
         const solicitudesF2 = await this.r08EvaluacionResumenFase2.findMany({
             where: {
-                R08FSeg: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
-                },
                 prestamo: {
                     R01Coop_id: user.R12Coop_id,
+                    R01FRec: {
+                        gte: new Date(fechaInicio).toISOString(),
+                        lte: new Date(fechaFinal).toISOString(),
+                    },
                 },
             },
             include: {
