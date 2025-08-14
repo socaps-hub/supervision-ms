@@ -69,4 +69,12 @@ export class ReportesHandler {
         return this._service.getDetalleAnomaliasF3( input, user )
     }
 
+    // * REPORTES FASE 4
+    @MessagePattern('reportes.fase4.reporteGlobalF4')
+    handleGetReporteGlobalF4(
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
+    ) { 
+        return this._service.getReporteGlobalF4( input, user )
+    }
+
 }
