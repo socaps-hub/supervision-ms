@@ -54,4 +54,19 @@ export class ReportesHandler {
         return this._service.getResultadosSeguimientoF2( input, user )
     }
 
+    // * REPORTES FASE 3
+    @MessagePattern('reportes.fase3.revisionDesembolsosF3')
+    handleGetRevisionDesembolsos(
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
+    ) { 
+        return this._service.getRevisionDesembolsosF3( input, user )
+    }
+
+    @MessagePattern('reportes.fase3.detalleAnomaliasF3')
+    handleGetDetalleAnomaliasF3(
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
+    ) { 
+        return this._service.getDetalleAnomaliasF3( input, user )
+    }
+
 }
