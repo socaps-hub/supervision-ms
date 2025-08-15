@@ -29,7 +29,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     lte: new Date(fechaFinal).toISOString(),
                 },
                 R01Coop_id: user.R12Coop_id,
-                R01Est: 'Sin seguimiento',
+                // R01Est: 'Sin seguimiento',
             },
             include: {
                 sucursal: true,
