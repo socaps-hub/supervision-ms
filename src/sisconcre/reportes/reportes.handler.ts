@@ -3,6 +3,7 @@ import { ReportesService } from "./reportes.service";
 import { MessagePattern, Payload } from "@nestjs/microservices";
 import { FiltroFechasInput } from "../common/dto/filtro-fechas.input";
 import { Usuario } from "src/common/entities/usuario.entity";
+import { HistoricoFiltroInput } from "./dto/historicos/inputs/filtro-historico-reporte.input";
 
 @Controller()
 export class ReportesHandler {
@@ -75,6 +76,14 @@ export class ReportesHandler {
         @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
     ) { 
         return this._service.getReporteGlobalF4( input, user )
+    }
+
+    // * HISTORICOS
+    @MessagePattern('reportes.historicos')
+    handleGetHistoricos(
+        @Payload() { input, user }: { input: HistoricoFiltroInput, user: Usuario }
+    ) {
+        return this._service.getHistoricos(input, user);
     }
 
 }

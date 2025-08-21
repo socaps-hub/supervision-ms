@@ -15,6 +15,9 @@ import { ReporteFase3Service } from './fase3/fase3.service';
 import { DetalleAnomaliasF3Response } from './dto/fase3/anomalias-desembolso.dto';
 import { ReporteFase4Service } from './fase4/fase4.service';
 import { ReporteFase4Response } from './dto/fase4/reporte-global.dto';
+import { HistoricoService } from './historicos/historico.service';
+import { HistoricoResponseDto } from './dto/historicos/historico-response.dto';
+import { HistoricoFiltroInput } from './dto/historicos/inputs/filtro-historico-reporte.input';
 
 @Injectable()
 export class ReportesService {
@@ -24,6 +27,7 @@ export class ReportesService {
         private readonly _reporteFase2Service: ReporteFase2Service,
         private readonly _reporteFase3Service: ReporteFase3Service,
         private readonly _reporteFase4Service: ReporteFase4Service,
+        private readonly _historicoService: HistoricoService,
     ) {}
 
     async getReporteSegmentadoF1(input: FiltroFechasInput, user: Usuario): Promise<ReporteSegmentadoFase1Response> {
@@ -63,6 +67,11 @@ export class ReportesService {
     // * FASE 4
     async getReporteGlobalF4(input: FiltroFechasInput, user: Usuario): Promise<ReporteFase4Response> {
         return await this._reporteFase4Service.getReporteGlobalF4( input, user )
+    }
+
+    // * HISTORICOS
+    async getHistoricos(input: HistoricoFiltroInput, user: Usuario): Promise<HistoricoResponseDto> {
+        return await this._historicoService.generarReporteHistorico(input, user);
     }
 
 }
