@@ -22,16 +22,16 @@ export class Cooperativa {
   @Field( () => Date )
   R17Creada_en: Date
 
-  @Field( () => [Sucursal])
-  sucursales: Sucursal[]
+  @Field( () => [Sucursal], { nullable: true })
+  sucursales?: Sucursal[]
   
-  @Field( () => [Usuario])
-  usuarios: Usuario[]
+  @Field( () => [Usuario], { nullable: true })
+  usuarios?: Usuario[]
   
-  @Field( () => [Producto])
-  productos: Producto[]
+  @Field( () => [Producto], { nullable: true })
+  productos?: Producto[]
 
-  @Field( () => [Grupo] )
-  grupos: Grupo[]
+  @Field( () => [Grupo], { nullable: true } )
+  grupos?: Grupo[]
 
 }
