@@ -177,7 +177,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         // 🧩 Traer solicitudes con evaluaciones "I"
         const solicitudes = await this.r01Prestamo.findMany({
             where: {
-                R01Est: 'Sin seguimiento',
+                // R01Est: 'Sin seguimiento',
                 R01FRec: {
                     gte: new Date(fechaInicio).toISOString(),
                     lte: new Date(fechaFinal).toISOString(),
@@ -335,7 +335,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     lte: new Date(fechaFinal).toISOString(),
                 },
                 R01Coop_id: user.R12Coop_id,
-                R01Est: 'Sin seguimiento',
+                // R01Est: 'Sin seguimiento',
                 R01Activ: true,
                 resumenF1: {
                     R06Res: Resolucion.PASA_COMITE
@@ -479,7 +479,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         // 🧩 Obtener préstamos con errores (evaluaciones "I")
         const solicitudes = await this.r01Prestamo.findMany({
             where: {
-                R01Est: 'Sin seguimiento',
+                // R01Est: 'Sin seguimiento',
                 R01FRec: {
                     gte: new Date(fechaInicio).toISOString(),
                     lte: new Date(fechaFinal).toISOString(),
@@ -642,7 +642,7 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
                     lte: new Date(fechaFinal).toISOString(),
                 },
                 R01Coop_id: user.R12Coop_id,
-                R01Est: 'Sin seguimiento',
+                // R01Est: 'Sin seguimiento',
                 R01Activ: true,
                 resumenF1: {
                     R06Res: Resolucion.PASA_COMITE,
