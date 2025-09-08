@@ -1,7 +1,7 @@
 import { Injectable, Logger, HttpStatus, OnModuleInit, Inject } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 
-import { PrismaClient, R01Prestamo } from '@prisma/client';
+import { Prisma, PrismaClient, R01Prestamo } from '@prisma/client';
 
 import { CreatePrestamoInput } from './dto/create-solicitud.input';
 import { UpdatePrestamoInput } from './dto/update-solicitud.input';
@@ -80,13 +80,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         sucursal: true,
         supervisor: true,
         ejecutivo: true,
-        evaluacionesF1: true,
         resumenF1: {
           include: {
             evaluador: true
           }
         },
-        evaluacionesF2: true,
         resumenF2: true
       },
       orderBy: {
@@ -130,26 +128,22 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         sucursal: true,
         supervisor: true,
         ejecutivo: true,
-        evaluacionesF1: true,
         resumenF1: {
           include: {
             evaluador: true
           }
         },
-        evaluacionesF2: true,
         resumenF2: {
           include: {
             evaluador: true
           }
         },
-        evaluacionesF3: true,
         resumenF3: {
           include: {
             evaluador: true,
             supervisor: true
           }
         },
-        evaluacionesF4: true,
         resumenF4: {
           include: {
             evaluador: true
