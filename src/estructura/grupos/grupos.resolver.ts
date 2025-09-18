@@ -9,6 +9,7 @@ import { GetUserGraphQL } from 'src/common/decorators/user-graphql.decorator';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { CreateManyGruposFromExcelArgs } from './dto/args/create-many-grupos-from-excel.arg';
+import { GrupoTipo } from './enums/grupo-type-enum';
 
 @Resolver(() => Grupo)
 @UseGuards( AuthGraphQLGuard )
@@ -24,14 +25,15 @@ export class GruposResolver {
 
   @Query(() => [Grupo], { name: 'grupos' })
   findAll(
-    @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string
+    @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string,
+    @Args('type', { type: () => GrupoTipo, nullable: true, defaultValue: GrupoTipo.SISCONCRE }) type: GrupoTipo
   ) {
-    return this.gruposService.findAll( coopId );
+    return this.gruposService.findAll( coopId, type );
   }
 
   @Query(() => [Grupo], { name: 'adminGroups' })
   findAllAdminGroups(
-    @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string
+    @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string,
   ) {
     return this.gruposService.findAllAdminGroups( coopId );
   }

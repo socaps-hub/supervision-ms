@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { GrupoTipo, PrismaClient } from '@prisma/client';
 
 import { CreateGrupoInput } from './dto/create-grupo.input';
 import { UpdateGrupoInput } from './dto/update-grupo.input';
@@ -21,11 +21,12 @@ export class GruposService extends PrismaClient implements OnModuleInit {
 
   async create(createGrupoInput: CreateGrupoInput): Promise<Grupo> {
 
-    const { R02Nom, R02Coop_id } = createGrupoInput
+    const { R02Nom, R02Coop_id, R02Tipo } = createGrupoInput
 
     const grupo = await this.r02Grupo.findFirst({
       where: {
-        R02Nom: R02Nom.trim(),
+        R02Nom: { equals: R02Nom.trim(), mode: "insensitive" },
+        R02Tipo,
         R02Coop_id,
       }
     })
@@ -41,36 +42,15 @@ export class GruposService extends PrismaClient implements OnModuleInit {
       data: {
         ...createGrupoInput
       },
-      // include: {
-      //   cooperativa: {
-      //     select: {
-      //       R17Id: true,
-      //       R17Nom: true,
-      //       R17Activ: true,
-      //       R17Logo: true,
-      //       R17Creada_en: true,
-      //       sucursales: true,
-      //       productos: {
-      //         select: {
-      //           R13Id: true,
-      //           R13Nom: true,
-      //           R13Cat_id: true,
-      //           R13Activ: true,
-      //           R13Coop_id: true,
-      //           categoria: true,
-      //         }
-      //       },
-      //     }
-      //   }
-      // }
     })
   }
 
-  async findAll( coopId: string ): Promise<Grupo[]> {
+  async findAll( coopId: string, type: 'SISCONCRE' | 'SISCONCAP' = 'SISCONCRE' ): Promise<Grupo[]> {
 
     const grupos = await this.r02Grupo.findMany({
       where: {
         R02Coop_id: coopId,
+        R02Tipo: type,
         R02Nom: {
           not: 'Desembolso'
         }
@@ -100,6 +80,7 @@ export class GruposService extends PrismaClient implements OnModuleInit {
     const grupos = await this.r02Grupo.findMany({
       where: {
         R02Coop_id: coopId,
+        // R02Tipo: type,
       },
       // orderBy: {
       //   R02Creado_en: ''
@@ -140,7 +121,9 @@ export class GruposService extends PrismaClient implements OnModuleInit {
   async findByName( name: string, user: Usuario ): Promise<Grupo> {
 
     const grupo = await this.r02Grupo.findFirst({
-      where: { R02Nom: name, R02Coop_id: user.R12Coop_id },
+      where: { 
+        R02Nom: name, 
+        R02Coop_id: user.R12Coop_id },
       include: {
         rubros: {
           select: {
@@ -172,7 +155,10 @@ export class GruposService extends PrismaClient implements OnModuleInit {
 
     if ( R02Nom ) {
       const grupo = await this.r02Grupo.findFirst({
-        where: { R02Nom: R02Nom.trim(), R02Coop_id }
+        where: { 
+          R02Nom: { equals: R02Nom.trim(), mode: "insensitive" }, 
+          R02Coop_id 
+        }
       })
 
       if ( grupo && grupo.R02Id !== id ) {
@@ -206,12 +192,14 @@ export class GruposService extends PrismaClient implements OnModuleInit {
     try {
       for (const item of data) {
         const nombre = item.Nombre?.trim();
-        if (!nombre) continue;
+        const type = item.Tipo?.trim().toUpperCase();
+        if (!nombre || !type) continue;
 
         // Verificar si el grupo ya existe en la cooperativa por nombre
         const grupoExistente = await this.r02Grupo.findFirst({
           where: {
             R02Nom: nombre,
+            R02Tipo: type as GrupoTipo,
             R02Coop_id: coopId,
           },
         });
@@ -220,6 +208,7 @@ export class GruposService extends PrismaClient implements OnModuleInit {
 
         gruposToCreate.push({
           R02Nom: nombre,
+          R02Tipo: type,
           R02Coop_id: coopId,
         });
       }

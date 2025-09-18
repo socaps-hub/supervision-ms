@@ -11,6 +11,7 @@ import { FaseILevantamientoModule } from './fase-i-levantamiento/fase-i-levantam
 import { FaseIiSeguimientoModule } from './fase-ii-seguimiento/fase-ii-seguimiento.module';
 import { FaseIiiDesembolsoModule } from './fase-iii-desembolso/fase-iii-desembolso.module';
 import { FaseIvSegGlobalModule } from './fase-iv-seg-global/fase-iv-seg-global.module';
+import { SisconcapModule } from './sisconcap/sisconcap.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { FaseIvSegGlobalModule } from './fase-iv-seg-global/fase-iv-seg-global.m
     FaseIiSeguimientoModule,
     FaseIiiDesembolsoModule,
     FaseIvSegGlobalModule,
+    SisconcapModule,
   ],
   controllers: [],
   providers: [],

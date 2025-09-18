@@ -6,6 +6,7 @@ import { CreateGrupoInput } from "./dto/create-grupo.input";
 import { UpdateGrupoInput } from "./dto/update-grupo.input";
 import { Usuario } from "src/common/entities/usuario.entity";
 import { CreateManyGruposFromExcelDto } from "./dto/create-many-grupos-from-excel.dto";
+import { GrupoTipo } from "./enums/grupo-type-enum";
 
 @Controller()
 export class GruposHandler {
@@ -23,9 +24,9 @@ export class GruposHandler {
     
     @MessagePattern('supervision.grupos.getAll')
     handleGetAll(
-        @Payload('coopId', ParseUUIDPipe) coopId: string
+        @Payload() { coopId, type }: { coopId: string, type: GrupoTipo }
     ) {
-        return this._service.findAll( coopId )
+        return this._service.findAll( coopId, type )
     }
 
     @MessagePattern('supervision.grupos.getAdminGroups')
