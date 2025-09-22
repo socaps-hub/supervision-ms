@@ -6,6 +6,8 @@ import { MovimientoEnum } from '../enums/movimiento.enum';
 import { SisconcapEvaluacionFase1 } from 'src/sisconcap/fase1-registro/evaluacion-fase1/entities/sisconcap-evaluacion-fase1.entity';
 import { SisconcapEvaluacionResumenFase1 } from 'src/sisconcap/fase1-registro/resumen-fase1/entities/sisconcap-resumen-fase1.entity';
 import { Sucursal } from 'src/common/entities/sucursal.entity';
+import { SisconcapEvaluacionFase2 } from 'src/sisconcap/fase2-seguimiento/evaluacion-fase2/entities/sisconcap-evaluacion-fase2.entity';
+import { SisconcapEvaluacionResumenFase2 } from 'src/sisconcap/fase2-seguimiento/resumen-fase2/entities/sisconcap-resumen-fase2.entity';
 
 @ObjectType()
 export class Movimiento {
@@ -58,4 +60,10 @@ export class Movimiento {
 
     @Field(() => SisconcapEvaluacionResumenFase1, { nullable: true })
     evaluacionResumenFase1?: SisconcapEvaluacionResumenFase1;
+
+    @Field(() => [SisconcapEvaluacionFase2], { nullable: true })
+    evaluacionFase2?: SisconcapEvaluacionFase2[];
+
+    @Field(() => SisconcapEvaluacionResumenFase2, { nullable: true })
+    evaluacionResumenFase2?: SisconcapEvaluacionResumenFase2;
 }

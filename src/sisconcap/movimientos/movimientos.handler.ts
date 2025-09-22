@@ -5,6 +5,8 @@ import { CreateFase1Input } from "./dto/inputs/create-fase1.input";
 import { Usuario } from "src/common/entities/usuario.entity";
 import { BooleanResponse } from "src/common/dto/boolean-response.object";
 import { UpdateMovimientoArgs } from "./dto/inputs/update-movimiento.input";
+import { CreateFase2Input } from "./dto/inputs/create-fase2.input";
+import { ValidEstados } from "src/fase-i-levantamiento/solicitudes/enums/valid-estados.enum";
 
 @Controller()
 export class MovimientosHandler {
@@ -42,6 +44,13 @@ export class MovimientosHandler {
         }
     }
 
+    @MessagePattern('supervision.movimientos.createOrUpdateFase2')
+    async handleCreateOrUpdateFase2(
+        @Payload() { input, user }: { input: CreateFase2Input, user: Usuario }
+    ) {
+        return await this._movimientosService.createOrUpdateFase2( input, user );
+    }  
+
     @MessagePattern('supervision.movimientos.getByFolio')
     handleGetByFolio(
         @Payload() { folio, user }: { folio: number, user: Usuario }
@@ -54,6 +63,13 @@ export class MovimientosHandler {
         @Payload() { user, filterBySucursal }: { user: Usuario, filterBySucursal: boolean }
     ) {
         return this._movimientosService.findAll( user, filterBySucursal )
+    }
+
+    @MessagePattern('supervision.movimientos.getByEstado')
+    handleGetByEstado(
+        @Payload() data: { estado: ValidEstados; user: Usuario, filterBySucursal: boolean }
+    ) {
+        return this._movimientosService.findByEstado(data.estado, data.user, data.filterBySucursal);
     }
 
     @MessagePattern('supervision.movimientos.updateFase1')

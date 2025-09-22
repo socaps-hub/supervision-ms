@@ -8,6 +8,8 @@ import { Usuario } from 'src/common/entities/usuario.entity';
 import { Movimiento } from './entities/movimiento.entity';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { UpdateMovimientoArgs } from './dto/inputs/update-movimiento.input';
+import { CreateFase2Input } from './dto/inputs/create-fase2.input';
+import { ValidEstados } from 'src/fase-i-levantamiento/solicitudes/enums/valid-estados.enum';
 
 @Injectable()
 export class MovimientosService extends PrismaClient implements OnModuleInit {
@@ -75,6 +77,68 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         }
     }
 
+    async createOrUpdateFase2(
+        input: CreateFase2Input,
+        user: Usuario
+    ): Promise<{ success: boolean; message?: string }> {
+        const { folio, evaluaciones, resumen } = input;
+
+        try {
+        await this.$transaction(async (tx) => {
+            // 1. Eliminar evaluaciones y resumen previos
+            await tx.r22EvaluacionFase2Sisconcap.deleteMany({
+                where: { R22Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            await tx.r23EvaluacionResumenFase2.deleteMany({
+                where: { R23Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            if (!evaluaciones || evaluaciones.length === 0) {
+                throw new Error("Debe registrar al menos una evaluación en Fase 2");
+            }
+
+            // 2. Insertar nuevas evaluaciones
+            await tx.r22EvaluacionFase2Sisconcap.createMany({
+                data: evaluaciones.map((ev) => ({
+                    R22Id: crypto.randomUUID(),
+                    R22Folio: folio,
+                    R22E_id: ev.R22E_id,
+                    R22Res: ev.R22Res,
+                })),
+            });
+
+            // 3. Insertar resumen con fecha generada automáticamente
+            await tx.r23EvaluacionResumenFase2.create({
+                data: {
+                    R23Folio: folio,
+                    R23Solv: resumen.R23Solv,
+                    R23PSolv: resumen.R23PSolv,
+                    R23Rc: resumen.R23Rc,
+                    R23Obs: resumen.R23Obs?.trim() || '',
+                    R23Cal: resumen.R23Cal,
+                    R23FSeg: resumen.R23FSeg,
+                    R23SP_id: user.R12Id,
+                },            
+            });
+
+            // 4. Actualizar Estado del movimiento a "Con seguimiento"
+            await tx.r19Movimientos.update({
+                where: { R19Folio: folio, R19Coop_id: user.R12Coop_id },
+                data: {
+                    R19Est: "Con seguimiento",
+                }
+            })
+        });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error("[createOrUpdateFase2] Error:", error);
+            // return { success: false, message: error.message || "Error en Fase 2" };
+            return { success: false, message: error instanceof Error ? error.message : "Error en Fase 2" };
+        }
+    }
+
     async findAll( user: Usuario, filterBySucursal: boolean = true ): Promise<Movimiento[]> {
 
         // Base del filtro: siempre filtra por cooperativa
@@ -109,6 +173,59 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         }))
     }
 
+    async findByEstado(estado: ValidEstados, user: Usuario, filterBySucursal: boolean = true): Promise<Movimiento[]> {
+        const estadosValidos = [
+            'Con seguimiento',
+            'Sin seguimiento',
+            'Con global',
+        ];
+
+        if (!estadosValidos.includes(estado)) {
+            throw new RpcException({
+                message: `Estado ${estado} no es válido.`,
+                status: HttpStatus.BAD_REQUEST,
+            });
+        }
+
+        // Base del filtro: siempre filtra por cooperativa y activo
+        const where: any = {
+            R19Coop_id: user.R12Coop_id,
+            R19Est: estado,
+        };
+
+        // Si la bandera está activa, también filtra por sucursal
+        if (filterBySucursal) {
+            where.R19Suc_id = user.R12Suc_id;
+        }
+
+        const movimientos = await this.r19Movimientos.findMany({
+            where,
+            include: {
+                sucursal: true,
+                evaluacionResumenFase1: {
+                    include: {
+                        supervisor: true,
+                        ejecutivo: true,
+                    }
+                },
+                evaluacionResumenFase2: {
+                    include: {
+                        supervisor: true,
+                    }
+                },
+            },
+            orderBy: {
+                R19Creado_en: 'desc',
+            },
+        });
+
+        return movimientos.map( mov => ({
+            ...mov,
+            evaluacionResumenFase1: mov.evaluacionResumenFase1 ?? undefined,
+            evaluacionResumenFase2: mov.evaluacionResumenFase2 ?? undefined,
+        }))
+    }
+
     async findByFolio(folio: number, user: Usuario): Promise<Movimiento> {
         const movimiento = await this.r19Movimientos.findUnique({
             where: {
@@ -117,9 +234,15 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             },
             include: {
                 evaluacionFase1: true,
+                evaluacionFase2: true,
                 evaluacionResumenFase1: {
                     include: {
                         ejecutivo: true,
+                        supervisor: true,
+                    }
+                },
+                evaluacionResumenFase2: {
+                    include: {
                         supervisor: true,
                     }
                 }
@@ -137,6 +260,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         return {
             ...movimiento,
             evaluacionResumenFase1: movimiento.evaluacionResumenFase1 ?? undefined,
+            evaluacionResumenFase2: movimiento.evaluacionResumenFase2 ?? undefined,
         }
     }
 
