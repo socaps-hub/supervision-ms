@@ -15,7 +15,7 @@ import { CreateFase3Input } from './dto/inputs/create-fase3.input';
 @Injectable()
 export class MovimientosService extends PrismaClient implements OnModuleInit {
 
-    private readonly logger = new Logger('MovimientosService');
+    private readonly logger = new Logger('MovimientosService')
 
     async onModuleInit() {
         await this.$connect();
