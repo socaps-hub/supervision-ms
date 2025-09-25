@@ -191,6 +191,43 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     R19Est: "Con seguimiento",
                 }
             })
+
+            // 4. Si el calificativo de fase 1 es CORRECTO -> clonar evaluaciones a fase 2 y 3
+            if (resumen.R23Cal === Calificativo.CORRECTO) {
+                // Preparar evaluaciones de fase 3 a partir de las de fase 1
+                const evaluacionesFase3 = evaluaciones.map((ev) => ({
+                    R24Folio: folio,
+                    R24E_id: ev.R22E_id,
+                    R24Res: ev.R22Res as ResFaseII,
+                }));
+
+                // Crear evaluaciones fase 3
+                await tx.r24EvaluacionFase3Sisconcap.createMany({
+                    data: evaluacionesFase3,
+                });
+
+                // Crear resumen fase 3
+                await tx.r25EvaluacionResumenFase3.create({
+                    data: {
+                        R25Folio: folio,
+                        R25Solv: resumen.R23Solv,
+                        R25PSolv: resumen.R23PSolv,
+                        R25Rc: resumen.R23Rc,
+                        R25Obs: resumen.R23Obs || 'PASO AUTOMÁTICO',
+                        R25Cal: Calificativo.CORRECTO,
+                        R25FSegG: new Date().toISOString(),
+                        R25SP_id: user.R12Id,
+                    },
+                });
+
+                await tx.r19Movimientos.update({
+                    where: { R19Folio: folio, R19Coop_id: user.R12Coop_id },
+                    data: {
+                        R19Est: "Con global",
+                    }
+                })
+            }
+
         });
 
             return { success: true };
