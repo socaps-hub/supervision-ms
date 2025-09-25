@@ -103,4 +103,12 @@ export class MovimientosResolver {
     return await this.movimientosService.remove(folio, user)
   }  
 
+  @Mutation(() => BooleanResponse)
+  async cancelFase3AndFase2(
+    @Args('folio', ParseIntPipe) folio: number,
+    @GetUserGraphQL() user: Usuario,
+  ): Promise<BooleanResponse> {
+    return await this.movimientosService.cancelFase3AndFase2( folio, user )
+  }
+
 }

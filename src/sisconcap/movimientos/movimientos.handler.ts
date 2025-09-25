@@ -94,4 +94,11 @@ export class MovimientosHandler {
         return this._movimientosService.remove( folio, user );
     }    
 
+    @MessagePattern('supervision.movimientos.cancelFase3AndFase2')
+    async handleCancelFase3AndFase2(
+        @Payload() { folio, user }: { folio: number, user: Usuario }
+    ) {
+        return await this._movimientosService.cancelFase3AndFase2( folio, user );
+    }  
+
 }

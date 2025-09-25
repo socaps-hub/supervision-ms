@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { PrismaClient } from '@prisma/client';
+import { Calificativo, PrismaClient, ResFaseII } from '@prisma/client';
 import { CreateSisconcapEvaluacionResumenFase1Input } from '../fase1-registro/resumen-fase1/dto/inputs/create-sisconcap-resumen-fase1.input';
 import { CreateMovimientoInput } from './dto/inputs/create-movimiento.input';
 import { CreateSisconcapEvaluacionFase1Input } from '../fase1-registro/evaluacion-fase1/dto/inputs/create-sisconcap-evaluacion-fase1.input';
@@ -59,6 +59,67 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                         R21Folio: movimiento.R19Folio,
                     },
                 });
+
+                // 4. Si el calificativo de fase 1 es CORRECTO -> clonar evaluaciones a fase 2 y 3
+                if (resumenInput.R21Cal === Calificativo.CORRECTO) {
+                    // Preparar evaluaciones de fase 2 y 3 a partir de las de fase 1
+                    const evaluacionesFase2 = evaluaciones.map((ev) => ({
+                        R22Folio: movimiento.R19Folio,
+                        R22E_id: ev.R20E_id,
+                        R22Res: ev.R20Res as ResFaseII,
+                    }));
+
+                    const evaluacionesFase3 = evaluaciones.map((ev) => ({
+                        R24Folio: movimiento.R19Folio,
+                        R24E_id: ev.R20E_id,
+                        R24Res: ev.R20Res as ResFaseII,
+                    }));
+
+                    // Crear evaluaciones fase 2
+                    await tx.r22EvaluacionFase2Sisconcap.createMany({
+                        data: evaluacionesFase2,
+                    });
+
+                    // Crear resumen fase 2
+                    await tx.r23EvaluacionResumenFase2.create({
+                        data: {
+                            R23Folio: movimiento.R19Folio,
+                            R23Solv: 0,
+                            R23PSolv: 0,
+                            R23Rc: resumenInput.R21Rc,
+                            R23Obs: resumenInput.R21Obs || 'PASO AUTOMÁTICO',
+                            R23Cal: Calificativo.CORRECTO,
+                            R23FSeg: new Date().toISOString(),
+                            R23SP_id: user.R12Id,
+                        },
+                    });
+
+                    // Crear evaluaciones fase 3
+                    await tx.r24EvaluacionFase3Sisconcap.createMany({
+                        data: evaluacionesFase3,
+                    });
+
+                    // Crear resumen fase 3
+                    await tx.r25EvaluacionResumenFase3.create({
+                        data: {
+                            R25Folio: movimiento.R19Folio,
+                            R25Solv: 0,
+                            R25PSolv: 0,
+                            R25Rc: resumenInput.R21Rc,
+                            R25Obs: resumenInput.R21Obs || 'PASO AUTOMÁTICO',
+                            R25Cal: Calificativo.CORRECTO,
+                            R25FSegG: new Date().toISOString(),
+                            R25SP_id: user.R12Id,
+                        },
+                    });
+
+                    await tx.r19Movimientos.update({
+                        where: { R19Folio: movimiento.R19Folio, R19Coop_id: user.R12Coop_id },
+                        data: {
+                            R19Est: "Con global",
+                        }
+                    })
+                }
 
                 return {
                     movimiento,
@@ -401,6 +462,67 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     },
                 });
 
+                // 6. Evaluar si el Calificativo es CORRECTO, para pasarlo a fase 3 automaticamente
+                if (resumen?.R21Cal === Calificativo.CORRECTO) {
+                    // Preparar evaluaciones de fase 2 y 3 a partir de las de fase 1
+                    const evaluacionesFase2 = evaluaciones?.map((ev) => ({
+                        R22Folio: folio,
+                        R22E_id: ev.R20E_id,
+                        R22Res: ev.R20Res as ResFaseII,
+                    }));
+
+                    const evaluacionesFase3 = evaluaciones?.map((ev) => ({
+                        R24Folio: folio,
+                        R24E_id: ev.R20E_id,
+                        R24Res: ev.R20Res as ResFaseII,
+                    }));
+
+                    // Crear evaluaciones fase 2
+                    await tx.r22EvaluacionFase2Sisconcap.createMany({
+                        data: evaluacionesFase2 || [],
+                    });
+
+                    // Crear resumen fase 2
+                    await tx.r23EvaluacionResumenFase2.create({
+                        data: {
+                            R23Folio: folio,
+                            R23Solv: 0,
+                            R23PSolv: 0,
+                            R23Rc: resumen.R21Rc,
+                            R23Obs: resumen.R21Obs || 'PASO AUTOMÁTICO',
+                            R23Cal: Calificativo.CORRECTO,
+                            R23FSeg: new Date().toISOString(),
+                            R23SP_id: user.R12Id,
+                        },
+                    });
+
+                    // Crear evaluaciones fase 3
+                    await tx.r24EvaluacionFase3Sisconcap.createMany({
+                        data: evaluacionesFase3 || [],
+                    });
+
+                    // Crear resumen fase 3
+                    await tx.r25EvaluacionResumenFase3.create({
+                        data: {
+                            R25Folio: folio,
+                            R25Solv: 0,
+                            R25PSolv: 0,
+                            R25Rc: resumen.R21Rc,
+                            R25Obs: resumen.R21Obs || 'PASO AUTOMÁTICO',
+                            R25Cal: Calificativo.CORRECTO,
+                            R25FSegG: new Date().toISOString(),
+                            R25SP_id: user.R12Id,
+                        },
+                    });
+
+                    await tx.r19Movimientos.update({
+                        where: { R19Folio: folio, R19Coop_id: user.R12Coop_id },
+                        data: {
+                            R19Est: "Con global",
+                        }
+                    })
+                }
+
             });
 
             return { success: true };
@@ -417,6 +539,42 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         await this.findByFolio(folio, user)
 
         return await this.r19Movimientos.delete({ where: { R19Folio: folio } })
+    }
+
+    async cancelFase3AndFase2(folio: number, user: Usuario) {
+        try {
+        return await this.$transaction(async (tx) => {
+            // Eliminar Fase 3
+            await tx.r24EvaluacionFase3Sisconcap.deleteMany({
+                where: { R24Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            await tx.r25EvaluacionResumenFase3.deleteMany({
+                where: { R25Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            // Eliminar Fase 2
+            await tx.r22EvaluacionFase2Sisconcap.deleteMany({
+                where: { R22Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            await tx.r23EvaluacionResumenFase2.deleteMany({
+                where: { R23Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            await tx.r19Movimientos.update({
+                where: { R19Folio: folio, R19Coop_id: user.R12Coop_id },
+                data: {
+                    R19Est: "Sin seguimiento",
+                }
+            })
+
+            return { success: true };
+        });
+        } catch (error) {
+            this.logger.error(`Error eliminando evaluaciones del folio ${folio}:`, error);
+            return { success: false, message: error instanceof Error ? error.message : "Error al tratar de cancelar fase 3 y fase 2" };
+        }
     }
 
 }
