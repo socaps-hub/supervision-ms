@@ -8,6 +8,8 @@ import { SisconcapEvaluacionResumenFase1 } from 'src/sisconcap/fase1-registro/re
 import { Sucursal } from 'src/common/entities/sucursal.entity';
 import { SisconcapEvaluacionFase2 } from 'src/sisconcap/fase2-seguimiento/evaluacion-fase2/entities/sisconcap-evaluacion-fase2.entity';
 import { SisconcapEvaluacionResumenFase2 } from 'src/sisconcap/fase2-seguimiento/resumen-fase2/entities/sisconcap-resumen-fase2.entity';
+import { SisconcapEvaluacionFase3 } from 'src/sisconcap/fase3-seguimiento-final/evaluacion-fase3/entities/sisconcap-evaluacion-fase3.entity';
+import { SisconcapEvaluacionResumenFase3 } from 'src/sisconcap/fase3-seguimiento-final/resumen-fase3/entities/sisconcap-resumen-fase3.entity';
 
 @ObjectType()
 export class Movimiento {
@@ -66,4 +68,10 @@ export class Movimiento {
 
     @Field(() => SisconcapEvaluacionResumenFase2, { nullable: true })
     evaluacionResumenFase2?: SisconcapEvaluacionResumenFase2;
+
+    @Field(() => [SisconcapEvaluacionFase3], { nullable: true })
+    evaluacionFase3?: SisconcapEvaluacionFase3[];
+
+    @Field(() => SisconcapEvaluacionResumenFase3, { nullable: true })
+    evaluacionResumenFase3?: SisconcapEvaluacionResumenFase3;
 }

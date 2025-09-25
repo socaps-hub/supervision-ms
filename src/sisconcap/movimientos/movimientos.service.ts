@@ -10,6 +10,7 @@ import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { UpdateMovimientoArgs } from './dto/inputs/update-movimiento.input';
 import { CreateFase2Input } from './dto/inputs/create-fase2.input';
 import { ValidEstados } from 'src/fase-i-levantamiento/solicitudes/enums/valid-estados.enum';
+import { CreateFase3Input } from './dto/inputs/create-fase3.input';
 
 @Injectable()
 export class MovimientosService extends PrismaClient implements OnModuleInit {
@@ -139,6 +140,67 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         }
     }
 
+    async createOrUpdateFase3(
+        input: CreateFase3Input,
+        user: Usuario
+    ): Promise<{ success: boolean; message?: string }> {
+        const { folio, evaluaciones, resumen } = input;
+
+        try {
+        await this.$transaction(async (tx) => {
+            // 1. Eliminar evaluaciones y resumen previos
+            await tx.r24EvaluacionFase3Sisconcap.deleteMany({
+                where: { R24Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            await tx.r25EvaluacionResumenFase3.deleteMany({
+                where: { R25Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
+            });
+
+            if (!evaluaciones || evaluaciones.length === 0) {
+                throw new Error("Debe registrar al menos una evaluación en Fase 2");
+            }
+
+            // 2. Insertar nuevas evaluaciones
+            await tx.r24EvaluacionFase3Sisconcap.createMany({
+                data: evaluaciones.map((ev) => ({
+                    R24Id: crypto.randomUUID(),
+                    R24Folio: folio,
+                    R24E_id: ev.R24E_id,
+                    R24Res: ev.R24Res,
+                })),
+            });
+
+            // 3. Insertar resumen con fecha generada automáticamente
+            await tx.r25EvaluacionResumenFase3.create({
+                data: {
+                    R25Folio: folio,
+                    R25Solv: resumen.R25Solv,
+                    R25PSolv: resumen.R25PSolv,
+                    R25Rc: resumen.R25Rc,
+                    R25Obs: resumen.R25Obs?.trim() || '',
+                    R25Cal: resumen.R25Cal,
+                    R25FSegG: resumen.R25FSegG,
+                    R25SP_id: user.R12Id,
+                },            
+            });
+
+            // 4. Actualizar Estado del movimiento a "Con seguimiento"
+            await tx.r19Movimientos.update({
+                where: { R19Folio: folio, R19Coop_id: user.R12Coop_id },
+                data: {
+                    R19Est: "Con global",
+                }
+            })
+        });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error("[createOrUpdateFase3] Error:", error);
+            return { success: false, message: error instanceof Error ? error.message : "Error en Fase 3" };
+        }
+    }
+
     async findAll( user: Usuario, filterBySucursal: boolean = true ): Promise<Movimiento[]> {
 
         // Base del filtro: siempre filtra por cooperativa
@@ -213,6 +275,11 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                         supervisor: true,
                     }
                 },
+                evaluacionResumenFase3: {
+                    include: {
+                        supervisor: true,
+                    }
+                },
             },
             orderBy: {
                 R19Creado_en: 'desc',
@@ -223,6 +290,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             ...mov,
             evaluacionResumenFase1: mov.evaluacionResumenFase1 ?? undefined,
             evaluacionResumenFase2: mov.evaluacionResumenFase2 ?? undefined,
+            evaluacionResumenFase3: mov.evaluacionResumenFase3 ?? undefined,
         }))
     }
 
@@ -235,6 +303,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             include: {
                 evaluacionFase1: true,
                 evaluacionFase2: true,
+                evaluacionFase3: true,
                 evaluacionResumenFase1: {
                     include: {
                         ejecutivo: true,
@@ -242,6 +311,11 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     }
                 },
                 evaluacionResumenFase2: {
+                    include: {
+                        supervisor: true,
+                    }
+                },
+                evaluacionResumenFase3: {
                     include: {
                         supervisor: true,
                     }
@@ -261,6 +335,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             ...movimiento,
             evaluacionResumenFase1: movimiento.evaluacionResumenFase1 ?? undefined,
             evaluacionResumenFase2: movimiento.evaluacionResumenFase2 ?? undefined,
+            evaluacionResumenFase3: movimiento.evaluacionResumenFase3 ?? undefined,
         }
     }
 

@@ -7,6 +7,7 @@ import { BooleanResponse } from "src/common/dto/boolean-response.object";
 import { UpdateMovimientoArgs } from "./dto/inputs/update-movimiento.input";
 import { CreateFase2Input } from "./dto/inputs/create-fase2.input";
 import { ValidEstados } from "src/fase-i-levantamiento/solicitudes/enums/valid-estados.enum";
+import { CreateFase3Input } from "./dto/inputs/create-fase3.input";
 
 @Controller()
 export class MovimientosHandler {
@@ -49,6 +50,13 @@ export class MovimientosHandler {
         @Payload() { input, user }: { input: CreateFase2Input, user: Usuario }
     ) {
         return await this._movimientosService.createOrUpdateFase2( input, user );
+    }  
+
+    @MessagePattern('supervision.movimientos.createOrUpdateFase3')
+    async handleCreateOrUpdateFase3(
+        @Payload() { input, user }: { input: CreateFase3Input, user: Usuario }
+    ) {
+        return await this._movimientosService.createOrUpdateFase3( input, user );
     }  
 
     @MessagePattern('supervision.movimientos.getByFolio')

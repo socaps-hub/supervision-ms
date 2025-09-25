@@ -10,6 +10,7 @@ import { Movimiento } from './entities/movimiento.entity';
 import { UpdateMovimientoArgs } from './dto/inputs/update-movimiento.input';
 import { CreateFase2Input } from './dto/inputs/create-fase2.input';
 import { ValidEstadosArgs } from 'src/fase-i-levantamiento/solicitudes/dto/args/prestamos-by-estado.arg';
+import { CreateFase3Input } from './dto/inputs/create-fase3.input';
 
 @Resolver()
 @UseGuards(AuthGraphQLGuard)
@@ -44,6 +45,22 @@ export class MovimientosResolver {
       };
     }
 
+  }
+
+  @Mutation(() => BooleanResponse)
+  async createOrUpdateFase2(
+    @Args('input') input: CreateFase2Input,
+    @GetUserGraphQL() user: Usuario,
+  ): Promise<BooleanResponse> {
+    return await this.movimientosService.createOrUpdateFase2( input, user )
+  }
+
+  @Mutation(() => BooleanResponse)
+  async createOrUpdateFase3(
+    @Args('input') input: CreateFase3Input,
+    @GetUserGraphQL() user: Usuario,
+  ): Promise<BooleanResponse> {
+    return await this.movimientosService.createOrUpdateFase3( input, user )
   }
 
   @Query(() => [Movimiento])
@@ -84,14 +101,6 @@ export class MovimientosResolver {
     @GetUserGraphQL() user: Usuario,
   ) {
     return await this.movimientosService.remove(folio, user)
-  }
-
-  @Mutation(() => BooleanResponse)
-  async createOrUpdateFase2(
-    @Args('input') input: CreateFase2Input,
-    @GetUserGraphQL() user: Usuario,
-  ): Promise<BooleanResponse> {
-    return await this.movimientosService.createOrUpdateFase2( input, user )
-  }
+  }  
 
 }
