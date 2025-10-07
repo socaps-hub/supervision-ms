@@ -3,6 +3,8 @@ import { ReporteFase1Service } from './fase1/fase1.service';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { FiltroFechasInput } from 'src/sisconcre/common/dto/filtro-fechas.input';
 import { ReporteFase1Response } from './dto/fase1/reporte-segmentado-response.output';
+import { ResumenAnomaliasSucAndEjecutivosCategoriaResponse, ResumenAnomaliasSucAndEjecutivosEjecutivoResponse, ResumenAnomaliasSucAndEjecutivosResponseDto } from './dto/fase1/resumen-anomalias-suc-with-ejecutivos-response.output';
+import { ResumenAnomaliasArgs } from './dto/fase1/arg/resumen-anomalias.args';
 
 @Injectable()
 export class ReportesService {
@@ -13,6 +15,21 @@ export class ReportesService {
 
     async getReporteSegmentadoF1(input: FiltroFechasInput, user: Usuario): Promise<ReporteFase1Response> {
         return await this._reporteFase1Service.getReporteSegmentado(input, user)
+    }
+
+    async getResumenAnomaliasSucAndEjecutivos(input: FiltroFechasInput, user: Usuario): Promise<ResumenAnomaliasSucAndEjecutivosResponseDto> {
+        return await this._reporteFase1Service.getResumenAnomaliasSucursales(input, user);
+    }
+
+    async getResumenAnomaliasEjecutivosPorSucursal(
+        resumenAnomaliasArgs: ResumenAnomaliasArgs,
+        user: Usuario,
+    ): Promise<ResumenAnomaliasSucAndEjecutivosEjecutivoResponse[]> {
+        return await this._reporteFase1Service.getResumenAnomaliasEjecutivosPorSucursal(resumenAnomaliasArgs, user);
+    }
+
+    async getResumenAnomaliasEjecutivosGlobal(input: FiltroFechasInput, user: Usuario): Promise<ResumenAnomaliasSucAndEjecutivosCategoriaResponse> {
+        return await this._reporteFase1Service.getResumenAnomaliasGlobalAgrupadoPorSucursal(input, user)
     }
 
 }
