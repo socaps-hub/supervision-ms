@@ -8,6 +8,7 @@ import { FiltroFechasInput } from 'src/sisconcre/common/dto/filtro-fechas.input'
 import { ReporteFase1Response } from './dto/fase1/reporte-segmentado-response.output';
 import { ResumenAnomaliasSucAndEjecutivosCategoriaResponse, ResumenAnomaliasSucAndEjecutivosEjecutivoResponse, ResumenAnomaliasSucAndEjecutivosResponseDto } from './dto/fase1/resumen-anomalias-suc-with-ejecutivos-response.output';
 import { ResumenAnomaliasArgs } from './dto/fase1/arg/resumen-anomalias.args';
+import { ResultadosSeguimientoResponse } from './dto/fase2/resultados-seguimiento-response.output';
 
 @Resolver()
 @UseGuards(AuthGraphQLGuard)
@@ -15,6 +16,7 @@ export class ReportesResolver {
 
   constructor(private readonly reportesService: ReportesService) { }
 
+  // * FASE 1
   @Query(() => ReporteFase1Response)
   async reporteSegmentadoFase1(
     @Args('input') input: FiltroFechasInput,
@@ -45,6 +47,15 @@ export class ReportesResolver {
     @GetUserGraphQL() user: Usuario
   ) {
     return this.reportesService.getResumenAnomaliasEjecutivosGlobal(input, user);
+  }
+
+  // * FASE 2
+  @Query(() => ResultadosSeguimientoResponse)
+  async resultadosSeguimiento(
+    @Args('input') input: FiltroFechasInput,
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.reportesService.getResultadosSeguimiento(input, user);
   }
 
 }

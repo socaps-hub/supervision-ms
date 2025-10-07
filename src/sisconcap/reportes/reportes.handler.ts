@@ -12,6 +12,7 @@ export class ReportesHandler {
         private readonly _service: ReportesService,
     ) { }
 
+    // * FASE 1
     @MessagePattern('reportes-sisconcap.fase1.reporteSegmentado')
     handleGetReporteSegmentadoF1(
         @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
@@ -38,6 +39,14 @@ export class ReportesHandler {
         @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
     ) {
         return this._service.getResumenAnomaliasEjecutivosGlobal(input, user)
+    }
+
+    // * FASE 2
+    @MessagePattern('reportes-sisconcap.fase2.resultadosSeguimiento')
+    handleGetResultadosSeguimiento(
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
+    ) {
+        return this._service.getResultadosSeguimiento(input, user)
     }
 
 }
