@@ -49,4 +49,12 @@ export class ReportesHandler {
         return this._service.getResultadosSeguimiento(input, user)
     }
 
+    // * FASE 3
+    @MessagePattern('reportes-sisconcap.fase3.resultadosFinales')
+    handleGetResultadosFinales(
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
+    ) {
+        return this._service.getResultadosFinales(input, user)
+    }
+
 }

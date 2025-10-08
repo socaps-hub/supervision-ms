@@ -58,4 +58,13 @@ export class ReportesResolver {
     return this.reportesService.getResultadosSeguimiento(input, user);
   }
 
+  // * FASE 3
+  @Query(() => ResultadosSeguimientoResponse)
+  async resultadosFinales(
+    @Args('input') input: FiltroFechasInput,
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.reportesService.getResultadosFinales(input, user);
+  }
+
 }

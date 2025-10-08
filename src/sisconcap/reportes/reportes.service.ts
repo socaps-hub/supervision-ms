@@ -7,6 +7,7 @@ import { ResumenAnomaliasSucAndEjecutivosCategoriaResponse, ResumenAnomaliasSucA
 import { ResumenAnomaliasArgs } from './dto/fase1/arg/resumen-anomalias.args';
 import { ResultadosSeguimientoResponse } from './dto/fase2/resultados-seguimiento-response.output';
 import { ReporteFase2Service } from './fase2/fase2.service';
+import { ReporteFase3Service } from './fase3/fase3.service';
 
 @Injectable()
 export class ReportesService {
@@ -14,6 +15,7 @@ export class ReportesService {
     constructor(
         private readonly _reporteFase1Service: ReporteFase1Service,
         private readonly _reporteFase2Service: ReporteFase2Service,
+        private readonly _reporteFase3Service: ReporteFase3Service,
     ) { }
 
     // * FASE 1
@@ -39,6 +41,11 @@ export class ReportesService {
     // * FASE 2
     async getResultadosSeguimiento(input: FiltroFechasInput, user: Usuario): Promise<ResultadosSeguimientoResponse> {
         return await this._reporteFase2Service.getResultadosSeguimiento(input, user)
+    }
+
+    // * FASE 3
+    async getResultadosFinales(input: FiltroFechasInput, user: Usuario): Promise<ResultadosSeguimientoResponse> {
+        return await this._reporteFase3Service.getResultadosFinales(input, user)
     }
 
 }
