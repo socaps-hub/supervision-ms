@@ -9,6 +9,8 @@ import { ReporteFase1Response } from './dto/fase1/reporte-segmentado-response.ou
 import { ResumenAnomaliasSucAndEjecutivosCategoriaResponse, ResumenAnomaliasSucAndEjecutivosEjecutivoResponse, ResumenAnomaliasSucAndEjecutivosResponseDto } from './dto/fase1/resumen-anomalias-suc-with-ejecutivos-response.output';
 import { ResumenAnomaliasArgs } from './dto/fase1/arg/resumen-anomalias.args';
 import { ResultadosSeguimientoResponse } from './dto/fase2/resultados-seguimiento-response.output';
+import { SisconcapHistoricoFiltroInput } from './dto/historicos/inputs/filtro-historico-reporte.input';
+import { SisconcapHistoricoResponseDto } from './dto/historicos/historico-response.dto';
 
 @Resolver()
 @UseGuards(AuthGraphQLGuard)
@@ -65,6 +67,15 @@ export class ReportesResolver {
     @GetUserGraphQL() user: Usuario
   ) {
     return this.reportesService.getResultadosFinales(input, user);
+  }
+
+  // * HISTORICO
+  @Query(() => SisconcapHistoricoResponseDto)
+  async historico(
+    @Args('input') input: SisconcapHistoricoFiltroInput,
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.reportesService.getHistoricos(input, user);
   }
 
 }
