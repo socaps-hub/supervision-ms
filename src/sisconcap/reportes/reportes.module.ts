@@ -6,6 +6,7 @@ import { ReporteFase1Service } from './fase1/fase1.service';
 import { ReportesHandler } from './reportes.handler';
 import { ReporteFase2Service } from './fase2/fase2.service';
 import { ReporteFase3Service } from './fase3/fase3.service';
+import { HistoricoService } from './historicos/historico.service';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ReporteFase3Service } from './fase3/fase3.service';
     ReporteFase1Service,
     ReporteFase2Service,
     ReporteFase3Service,
+    HistoricoService,
   ],
 })
 export class ReportesModule { }

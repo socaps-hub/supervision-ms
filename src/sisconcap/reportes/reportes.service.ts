@@ -8,6 +8,9 @@ import { ResumenAnomaliasArgs } from './dto/fase1/arg/resumen-anomalias.args';
 import { ResultadosSeguimientoResponse } from './dto/fase2/resultados-seguimiento-response.output';
 import { ReporteFase2Service } from './fase2/fase2.service';
 import { ReporteFase3Service } from './fase3/fase3.service';
+import { HistoricoService } from './historicos/historico.service';
+import { SisconcapHistoricoResponseDto } from './dto/historicos/historico-response.dto';
+import { SisconcapHistoricoFiltroInput } from './dto/historicos/inputs/filtro-historico-reporte.input';
 
 @Injectable()
 export class ReportesService {
@@ -16,6 +19,7 @@ export class ReportesService {
         private readonly _reporteFase1Service: ReporteFase1Service,
         private readonly _reporteFase2Service: ReporteFase2Service,
         private readonly _reporteFase3Service: ReporteFase3Service,
+        private readonly _historicoService: HistoricoService,
     ) { }
 
     // * FASE 1
@@ -46,6 +50,11 @@ export class ReportesService {
     // * FASE 3
     async getResultadosFinales(input: FiltroFechasInput, user: Usuario): Promise<ResultadosSeguimientoResponse> {
         return await this._reporteFase3Service.getResultadosFinales(input, user)
+    }
+
+    // * HISTORICOS
+    async getHistoricos(input: SisconcapHistoricoFiltroInput, user: Usuario): Promise<SisconcapHistoricoResponseDto> {
+        return await this._historicoService.getReporteHistorico(input, user);
     }
 
 }
