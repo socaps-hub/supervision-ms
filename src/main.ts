@@ -33,6 +33,6 @@ async function bootstrap() {
   console.log('✅ Microservicio conectado a NATS (Supervision-MS)');
   
   await app.listen( envs.port ) // GraphQL Expuesto localmente
-  logger.log(`Supervision Microservice running on port ${ envs.port }`)
+  logger.log(`Supervision Microservice running on port ${ envs.port }`);
 }
 bootstrap();
