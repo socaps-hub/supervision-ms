@@ -66,4 +66,12 @@ export class ReportesHandler {
         return this._service.getHistoricos(input, user)
     }
 
+    // * BALANCE
+    @MessagePattern('reportes-sisconcap.balance')
+    handleGetBalance(
+        @Payload() { user }: { user: Usuario }
+    ) {
+        return this._service.getBalance(user)
+    }
+
 }
