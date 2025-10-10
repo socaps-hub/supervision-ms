@@ -11,6 +11,7 @@ import { ResumenAnomaliasArgs } from './dto/fase1/arg/resumen-anomalias.args';
 import { ResultadosSeguimientoResponse } from './dto/fase2/resultados-seguimiento-response.output';
 import { SisconcapHistoricoFiltroInput } from './dto/historicos/inputs/filtro-historico-reporte.input';
 import { SisconcapHistoricoResponseDto } from './dto/historicos/historico-response.dto';
+import { BalanceResponse } from './dto/balance/balance-response.output';
 
 @Resolver()
 @UseGuards(AuthGraphQLGuard)
@@ -76,6 +77,14 @@ export class ReportesResolver {
     @GetUserGraphQL() user: Usuario
   ) {
     return this.reportesService.getHistoricos(input, user);
+  }
+
+  // * BALANCE
+  @Query(() => BalanceResponse)
+  async balance(
+    @GetUserGraphQL() user: Usuario
+  ) {
+    return this.reportesService.getBalance(user);
   }
 
 }

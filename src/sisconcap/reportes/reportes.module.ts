@@ -7,6 +7,7 @@ import { ReportesHandler } from './reportes.handler';
 import { ReporteFase2Service } from './fase2/fase2.service';
 import { ReporteFase3Service } from './fase3/fase3.service';
 import { HistoricoService } from './historicos/historico.service';
+import { BalanceService } from './balance/balance.service';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HistoricoService } from './historicos/historico.service';
     ReporteFase2Service,
     ReporteFase3Service,
     HistoricoService,
+    BalanceService,
   ],
 })
 export class ReportesModule { }

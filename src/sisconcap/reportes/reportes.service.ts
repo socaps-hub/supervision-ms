@@ -11,6 +11,8 @@ import { ReporteFase3Service } from './fase3/fase3.service';
 import { HistoricoService } from './historicos/historico.service';
 import { SisconcapHistoricoResponseDto } from './dto/historicos/historico-response.dto';
 import { SisconcapHistoricoFiltroInput } from './dto/historicos/inputs/filtro-historico-reporte.input';
+import { BalanceResponse } from './dto/balance/balance-response.output';
+import { BalanceService } from './balance/balance.service';
 
 @Injectable()
 export class ReportesService {
@@ -20,6 +22,7 @@ export class ReportesService {
         private readonly _reporteFase2Service: ReporteFase2Service,
         private readonly _reporteFase3Service: ReporteFase3Service,
         private readonly _historicoService: HistoricoService,
+        private readonly _balanceService: BalanceService,
     ) { }
 
     // * FASE 1
@@ -55,6 +58,11 @@ export class ReportesService {
     // * HISTORICOS
     async getHistoricos(input: SisconcapHistoricoFiltroInput, user: Usuario): Promise<SisconcapHistoricoResponseDto> {
         return await this._historicoService.getReporteHistorico(input, user);
+    }
+
+    // * BALANCE
+    async getBalance(user: Usuario): Promise<BalanceResponse> {
+        return await this._balanceService.getBalance(user);
     }
 
 }
