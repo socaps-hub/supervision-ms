@@ -1,9 +1,10 @@
-import { join } from 'path';
 import { Module } from '@nestjs/common';
-import { ApolloDriverConfig, ApolloDriver } from '@nestjs/apollo';
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { join } from 'path';
 
+// Importa tus módulos
 import { SisconcreModule } from './sisconcre/sisconcre.module';
 import { CommonModule } from './common/common.module';
 import { EstructuraModule } from './estructura/estructura.module';
@@ -17,12 +18,9 @@ import { SisconcapModule } from './sisconcap/sisconcap.module';
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-     // debug: false,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       playground: false,
-      autoSchemaFile: join( process.cwd(), 'src/schema.gql'),
-      plugins: [
-        ApolloServerPluginLandingPageLocalDefault(),
-      ]
+      plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
     SisconcreModule,
     CommonModule,
@@ -33,7 +31,6 @@ import { SisconcapModule } from './sisconcap/sisconcap.module';
     FaseIvSegGlobalModule,
     SisconcapModule,
   ],
-  controllers: [],
-  providers: [],
 })
-export class AppModule {}
+export class AppModule {
+}

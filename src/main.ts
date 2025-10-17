@@ -3,6 +3,8 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { envs } from './config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs';
+// import { graphqlUploadExpress } from 'graphql-upload'
 
 async function bootstrap() {
   const logger = new Logger('Supervision-ms')
@@ -17,7 +19,7 @@ async function bootstrap() {
       servers: envs.natServers,
     }
   })
-  console.log(envs.natServers);
+  // app.use(graphqlUploadExpress({ maxFileSize: 50_000_000, maxFiles: 1, }));
   
   
   app.useGlobalPipes(
