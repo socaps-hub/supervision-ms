@@ -45,7 +45,7 @@ export class GruposService extends PrismaClient implements OnModuleInit {
     })
   }
 
-  async findAll( coopId: string, type: 'SISCONCRE' | 'SISCONCAP' = 'SISCONCRE' ): Promise<Grupo[]> {
+  async findAll( coopId: string, type: 'SISCONCRE' | 'SISCONCAP' | 'ACREDITO' = 'SISCONCRE' ): Promise<Grupo[]> {
 
     const grupos = await this.r02Grupo.findMany({
       where: {

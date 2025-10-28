@@ -18,7 +18,7 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
   }
 
   async create(createElementoInput: CreateElementoInput): Promise<Elemento> {
-    const { R04Nom, R04Imp, R04R_id } = createElementoInput;
+    const { R04Nom, R04Imp, R04R_id, R04Pond } = createElementoInput;
 
     const elemento = await this.r04Elemento.findFirst({
       where: { R04Nom, R04R_id }
@@ -36,6 +36,7 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
         R04Nom,
         R04Imp,
         R04R_id,
+        R04Pond,
       }
     });
   }
@@ -50,6 +51,7 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
       for (const item of data) {
         const nombre = item.Nombre?.trim();
         const impacto = item.Impacto?.trim().toUpperCase();
+        const ponderacion = item.Ponderacion;
 
         if (!nombre || !['ALTO', 'MEDIO', 'BAJO'].includes(impacto)) continue;
 
@@ -70,6 +72,7 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
           R04R_id: rubroId,
           R04Nom: nombre,
           R04Imp: impacto,
+          R04Pond: ponderacion || 0,
         });
       }
 
@@ -124,7 +127,7 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
   }
 
   async update(id: string, updateElementoInput: UpdateElementoInput): Promise<Elemento> {
-    const { R04Nom, R04Imp, R04R_id } = updateElementoInput;
+    const { R04Nom, R04Imp, R04R_id, R04Pond } = updateElementoInput;
 
     const elementoDB = await this.findById(id);
     if (!elementoDB) {
@@ -160,7 +163,8 @@ export class ElementosService extends PrismaClient implements OnModuleInit {
       data: {
         R04Nom,
         R04Imp,
-        R04R_id
+        R04R_id,
+        R04Pond,
       }
     });
   }

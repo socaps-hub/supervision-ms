@@ -5,10 +5,9 @@ export enum ValidRoles {
     admin = 'admin',
     ejecutivo = 'ejecutivo',
     supervisor = 'supervisor',
-    superUser = 'superUser'
+    superUser = 'superUser',
+    auditor = 'auditor',
 
 }
 
 registerEnumType( ValidRoles, { name: 'ValidRoles' } )
-
-

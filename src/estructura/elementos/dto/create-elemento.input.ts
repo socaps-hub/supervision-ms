@@ -1,5 +1,5 @@
-import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsNotEmpty, IsUUID, IsString, IsEnum } from 'class-validator';
+import { InputType, Field, ID, Int } from '@nestjs/graphql';
+import { IsNotEmpty, IsUUID, IsString, IsEnum, IsNumber } from 'class-validator';
 import { Impacto } from '../enums/elemento.enum';
 
 @InputType()
@@ -19,4 +19,8 @@ export class CreateElementoInput {
   @IsNotEmpty()
   @IsString()
   R04Imp: string; // Impacto: ALTO, MEDIO o BAJO
+
+  @Field( () => Int, { defaultValue: 0 } )
+  @IsNumber()
+  R04Pond: number;
 }
