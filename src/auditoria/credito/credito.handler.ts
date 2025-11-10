@@ -1,0 +1,65 @@
+import { Controller } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
+import { CreditoService } from "./credito.service";
+import { Usuario } from "src/common/entities/usuario.entity";
+import { CreateMuestraSeleccionInput } from "./dto/inputs/muestra-seleccion/create-muestra-seleccion.input";
+import { GetCreditosSeleccionadosInput } from "./dto/inputs/muestra-credito-seleccion/get-creditos-seleccionados.input";
+import { ParametrosMuestraExtendInput } from "./dto/inputs/muestra-params-extend.input";
+
+@Controller()
+export class CreditoHandler {
+  constructor(private readonly _service: CreditoService) {}
+
+  // * CALCULO DE UNIVERSO Y MUESTRA
+  // ────────────────────────────────────────────────
+  // 🔹 1️⃣ Cálculo inicial (valores absolutos)
+  // ────────────────────────────────────────────────
+  @MessagePattern('supervision.auditoria.credito.getMuestraInicial')
+  async handleGetMuestraInicial(
+    @Payload() { input, user }: { input: ParametrosMuestraExtendInput; user: Usuario },
+  ) {
+    return this._service.getMuestraInicial(input, user);
+  }
+
+  // ────────────────────────────────────────────────
+  // 🔹 2️⃣ Créditos filtrados (tabla dinámica)
+  // ────────────────────────────────────────────────
+  @MessagePattern('supervision.auditoria.credito.getCreditosFiltrados')
+  async handleGetCreditosFiltrados(
+    @Payload() { input, user }: { input: ParametrosMuestraExtendInput; user: Usuario },
+  ) {
+    return this._service.getCreditosFiltrados(input, user);
+  }
+
+  // * GUARDADO DE MUESTRA (SELECCION)
+  @MessagePattern('supervision.auditoria.credito.createOrUpdateMuestraSeleccion')
+  async handleCrearMuestraSeleccion(
+    @Payload() { user, input, folios, isUpdate, muestraId }: { user: Usuario; input: CreateMuestraSeleccionInput; folios: number[], isUpdate: boolean, muestraId: number },
+  ) {
+    return this._service.upsertMuestraSeleccionConFolios( user, input, folios, isUpdate, muestraId );
+  }
+
+  // * CONSULTA DE MUESTRAS (INVENTARIO)
+  // ────────────────────────────────────────────────
+  @MessagePattern('supervision.auditoria.credito.getAllMuestras')
+  async handleGetAllMuestras(
+    @Payload() { user, page = 1, pageSize = 20, paginado = false }: { user: Usuario; page?: number; pageSize?: number; paginado?: boolean },
+  ) {
+    return this._service.getAllMuestrasSeleccion(user, page, pageSize, paginado);
+  }
+
+  @MessagePattern('supervision.auditoria.credito.getCreditosSeleccionadosByMuestra')
+  async handleGetCreditosSeleccionadosByMuestra(
+    @Payload() { user, input }: { user: Usuario; input: GetCreditosSeleccionadosInput },
+  ) {
+    return this._service.getCreditosSeleccionadosByMuestra(user, input)
+  }
+
+  @MessagePattern('supervision.auditoria.credito.getMuestraDetalleById')
+  async handleGetMuestraDetalleById(
+    @Payload() { muestraId }: { muestraId: number },
+  ) {
+    return this._service.getMuestraDetalleById(muestraId)
+  }
+
+}

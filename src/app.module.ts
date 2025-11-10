@@ -3,6 +3,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { join } from 'path';
+import { GraphQLJSON } from 'graphql-scalars';
 
 // Importa tus módulos
 import { SisconcreModule } from './sisconcre/sisconcre.module';
@@ -13,6 +14,7 @@ import { FaseIiSeguimientoModule } from './fase-ii-seguimiento/fase-ii-seguimien
 import { FaseIiiDesembolsoModule } from './fase-iii-desembolso/fase-iii-desembolso.module';
 import { FaseIvSegGlobalModule } from './fase-iv-seg-global/fase-iv-seg-global.module';
 import { SisconcapModule } from './sisconcap/sisconcap.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { SisconcapModule } from './sisconcap/sisconcap.module';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       playground: false,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
+      resolvers: { JSON: GraphQLJSON },
     }),
     SisconcreModule,
     CommonModule,
@@ -30,6 +33,7 @@ import { SisconcapModule } from './sisconcap/sisconcap.module';
     FaseIiiDesembolsoModule,
     FaseIvSegGlobalModule,
     SisconcapModule,
+    AuditoriaModule,
   ],
 })
 export class AppModule {
