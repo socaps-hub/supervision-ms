@@ -12,6 +12,7 @@ import { ResultadoMuestrasResponse } from './dto/outputs/muestra-seleccion/resul
 import { GetCreditosSeleccionadosInput } from './dto/inputs/muestra-credito-seleccion/get-creditos-seleccionados.input';
 import { ResultadoCreditosSeleccionadosResponse } from './dto/outputs/muestra-credito-seleccion/resultado-creditos-seleccionados.output';
 import { ParametrosMuestraExtendInput } from './dto/inputs/muestra-params-extend.input';
+import { MuestraCreditoSeleccion } from './entities/muestra-credito-seleccion.entity';
 
 @Injectable()
 export class CreditoService extends PrismaClient implements OnModuleInit {
@@ -25,6 +26,61 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
     // ════════════════════════════════════════════════
     // 🔷 MÉTODOS PÚBLICOS
     // ════════════════════════════════════════════════
+
+    // TODO - gateway -> entities -> dtos -> services -> resolvers
+    public async getCreditoSeleccionadoById( id: number ): Promise<MuestraCreditoSeleccion> {
+        const credito = await this.a02MuestraCreditoSeleccion.findFirst({
+            where: {
+                A02Id: id
+            },
+            include: {
+                evaluacionRevisionF1: true,
+                resumenRevisionF1: {
+                    include: {
+                       auditor: true,
+                       responsable: true, 
+                    }
+                },
+            }
+        })
+
+        if (!credito) {
+            throw new RpcException({
+                message: `Crédito seleccionado con id ${ id } no fue encontrado`,
+                status: HttpStatus.NOT_FOUND
+          })
+        }
+
+        // Normalizar null -> undefined para los campos que tu DTO/entidad espera opcionales
+        return {
+            ...credito,
+            A02CAG: credito.A02CAG ?? undefined,
+            A02Nombre: credito.A02Nombre ?? undefined,
+            A02Relacion: credito.A02Relacion ?? undefined,
+            A02Prestamo: credito.A02Prestamo ?? undefined,
+            A02Clasificacion: credito.A02Clasificacion ?? undefined,
+            A02Producto: credito.A02Producto ?? undefined,
+            A02Finalidad: credito.A02Finalidad ?? undefined,
+            A02DestinoAgro: credito.A02DestinoAgro ?? undefined,
+            A02TipoPago: credito.A02TipoPago ?? undefined,
+            A02FechaOtorgamiento: credito.A02FechaOtorgamiento ?? undefined,
+            A02FechaVencimiento: credito.A02FechaVencimiento ?? undefined,
+            A02FechaConsultaBuro: credito.A02FechaConsultaBuro ?? undefined,
+            A02PlazoDias: credito.A02PlazoDias ?? undefined,
+            A02TasaInteresNormal: credito.A02TasaInteresNormal ?? undefined,
+            A02CantidadEntregada: credito.A02CantidadEntregada ?? undefined,
+            A02DeudaTotal: credito.A02DeudaTotal ?? undefined,
+            A02GarantiaLiquida: credito.A02GarantiaLiquida ?? undefined,
+            A02GarantiaPrendaria: credito.A02GarantiaPrendaria ?? undefined,
+            A02GarantiaHipotecaria: credito.A02GarantiaHipotecaria ?? undefined,
+            A02TipoAutorizacion: credito.A02TipoAutorizacion ?? undefined,
+            A02UsrAutorizacionNi: credito.A02UsrAutorizacionNi ?? undefined,
+            A02UsrAutorizacionNombre: credito.A02UsrAutorizacionNombre ?? undefined,
+            A02TipoCredito: credito.A02TipoCredito ?? undefined,
+            evaluacionRevisionF1: credito.evaluacionRevisionF1 ?? undefined,
+            resumenRevisionF1: credito.resumenRevisionF1 ?? undefined,
+        };
+    }
 
     // ────────────────────────────────────────────────
     // 🔹 1. Cálculo inicial (universo + muestra + resumen)
@@ -853,6 +909,12 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                     take: pageSize,
                     include: {
                         sucursal: true,
+                        resumenRevisionF1: {
+                            include: {
+                                auditor: true,
+                                responsable: true,
+                            }
+                        }
                     },
                     orderBy: { A02CreditoFolio: 'asc' },
                 });
@@ -861,6 +923,12 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                     where,
                     include: {
                         sucursal: true,
+                        resumenRevisionF1: {
+                            include: {
+                                auditor: true,
+                                responsable: true,
+                            }
+                        }
                     },
                     orderBy: { A02CreditoFolio: 'asc' },
                 });

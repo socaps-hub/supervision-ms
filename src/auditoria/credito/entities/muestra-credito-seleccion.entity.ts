@@ -3,6 +3,8 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { MuestraSeleccionCredito } from './muestra-seleccion-credito.entity';
 import { RA01Credito } from './radiografia-credito.entity';
 import { Sucursal } from 'src/common/entities/sucursal.entity';
+import { EvaluacionF1ACredito } from 'src/auditoria/fase1-revision/entities/credito/evaluacion-f1-a-credito.entity.ts';
+import { EvaluacionResumenF1ACredito } from 'src/auditoria/fase1-revision/entities/credito/evaluacion-resumen-f1-a-credito.entity';
 
 @ObjectType()
 export class MuestraCreditoSeleccion {
@@ -105,4 +107,14 @@ export class MuestraCreditoSeleccion {
   // 🔹 Campo calculado: “Aut.” o “Ord.”
   @Field(() => String, { nullable: true })
   A02TipoCredito?: string;
+
+  @Field(() => String)
+  A02Estado: string
+
+  // Relaciones
+  @Field(() => [EvaluacionF1ACredito], { nullable: true })
+  evaluacionRevisionF1?: EvaluacionF1ACredito[]
+
+  @Field(() => EvaluacionResumenF1ACredito, { nullable: true })
+  resumenRevisionF1?: EvaluacionResumenF1ACredito
 }

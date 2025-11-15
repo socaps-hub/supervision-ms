@@ -10,6 +10,13 @@ import { ParametrosMuestraExtendInput } from "./dto/inputs/muestra-params-extend
 export class CreditoHandler {
   constructor(private readonly _service: CreditoService) {}
 
+  @MessagePattern('supervision.auditoria.credito.getCreditoSeleccionadoById')
+  handleGetCreditoSeleccionadoById( 
+    @Payload() {id}: { id: number }
+  ) {
+    return this._service.getCreditoSeleccionadoById( id )
+  }
+
   // * CALCULO DE UNIVERSO Y MUESTRA
   // ────────────────────────────────────────────────
   // 🔹 1️⃣ Cálculo inicial (valores absolutos)
