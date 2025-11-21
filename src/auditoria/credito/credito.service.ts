@@ -13,6 +13,11 @@ import { GetCreditosSeleccionadosInput } from './dto/inputs/muestra-credito-sele
 import { ResultadoCreditosSeleccionadosResponse } from './dto/outputs/muestra-credito-seleccion/resultado-creditos-seleccionados.output';
 import { ParametrosMuestraExtendInput } from './dto/inputs/muestra-params-extend.input';
 import { MuestraCreditoSeleccion } from './entities/muestra-credito-seleccion.entity';
+import { ValidEstadosAuditoria } from '../enums/valid-estados.enum';
+import { InventarioRevisionFilterInput } from './dto/inputs/inventario-revision-filter.input';
+import { InventarioRevisionResponse } from './dto/outputs/inventario-revision-response.output';
+import { mapPrimeFilterToPrisma } from 'src/common/utils/map-prime-to-prisma.util';
+import { InventarioRevisionStatsOutput } from './dto/outputs/inventario-revision-stats.output';
 
 @Injectable()
 export class CreditoService extends PrismaClient implements OnModuleInit {
@@ -27,8 +32,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
     // 🔷 MÉTODOS PÚBLICOS
     // ════════════════════════════════════════════════
 
-    // TODO - gateway -> entities -> dtos -> services -> resolvers
-    public async getCreditoSeleccionadoById( id: number ): Promise<MuestraCreditoSeleccion> {
+    public async getCreditoSeleccionadoById(id: number): Promise<MuestraCreditoSeleccion> {
         const credito = await this.a02MuestraCreditoSeleccion.findFirst({
             where: {
                 A02Id: id
@@ -37,8 +41,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                 evaluacionRevisionF1: true,
                 resumenRevisionF1: {
                     include: {
-                       auditor: true,
-                       responsable: true, 
+                        auditor: true,
+                        responsable: true,
                     }
                 },
             }
@@ -46,9 +50,9 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
 
         if (!credito) {
             throw new RpcException({
-                message: `Crédito seleccionado con id ${ id } no fue encontrado`,
+                message: `Crédito seleccionado con id ${id} no fue encontrado`,
                 status: HttpStatus.NOT_FOUND
-          })
+            })
         }
 
         // Normalizar null -> undefined para los campos que tu DTO/entidad espera opcionales
@@ -1008,6 +1012,380 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         if (mes >= 4 && mes <= 6) return `T2-${año}`;
         if (mes >= 7 && mes <= 9) return `T3-${año}`;
         return `T4-${año}`;
+    }
+
+
+    // * INVENTARIO DE REVISIONES
+    public async findByEstado(estado: ValidEstadosAuditoria, user: Usuario, filterBySucursal: boolean = true): Promise<MuestraCreditoSeleccion[]> {
+        const estadosValidos = [
+            'No revisado',
+            'Con revision',
+            'Con seguimiento',
+        ];
+
+        if (!estadosValidos.includes(estado)) {
+            throw new RpcException({
+                message: `Estado ${estado} no es válido.`,
+                status: HttpStatus.BAD_REQUEST,
+            });
+        }
+
+        // Base del filtro: siempre filtra por cooperativa y activo
+        const where: any = {
+            sucursal: { R11Coop_id: user.R12Coop_id },
+            A02Estado: estado,
+        };
+
+        // Si la bandera está activa, también filtra por sucursal
+        if (filterBySucursal) {
+            where.A02Sucursal = user.R12Suc_id;
+        }
+
+        const creditos = await this.a02MuestraCreditoSeleccion.findMany({
+            where,
+            include: {
+                sucursal: true,
+                resumenRevisionF1: {
+                    include: {
+                        auditor: true,
+                        responsable: true,
+                    }
+                },
+            },
+            // orderBy: {
+            //     R19Creado_en: 'desc',
+            // },
+        });
+
+        return creditos.map(c => ({
+            ...c,
+            A02CAG: c.A02CAG ?? undefined,
+            A02Nombre: c.A02Nombre ?? undefined,
+            A02Relacion: c.A02Relacion ?? undefined,
+            A02Prestamo: c.A02Prestamo ?? undefined,
+            A02Clasificacion: c.A02Clasificacion ?? undefined,
+            A02Producto: c.A02Producto ?? undefined,
+            A02Finalidad: c.A02Finalidad ?? undefined,
+            A02DestinoAgro: c.A02DestinoAgro ?? undefined,
+            A02TipoPago: c.A02TipoPago ?? undefined,
+            A02FechaOtorgamiento: c.A02FechaOtorgamiento ?? undefined,
+            A02FechaVencimiento: c.A02FechaVencimiento ?? undefined,
+            A02FechaConsultaBuro: c.A02FechaConsultaBuro ?? undefined,
+            A02PlazoDias: c.A02PlazoDias ?? undefined,
+            A02TasaInteresNormal: c.A02TasaInteresNormal ?? undefined,
+            A02CantidadEntregada: c.A02CantidadEntregada ?? undefined,
+            A02DeudaTotal: c.A02DeudaTotal ?? undefined,
+            A02GarantiaLiquida: c.A02GarantiaLiquida ?? undefined,
+            A02GarantiaPrendaria: c.A02GarantiaPrendaria ?? undefined,
+            A02GarantiaHipotecaria: c.A02GarantiaHipotecaria ?? undefined,
+            A02TipoAutorizacion: c.A02TipoAutorizacion ?? undefined,
+            A02UsrAutorizacionNi: c.A02UsrAutorizacionNi ?? undefined,
+            A02UsrAutorizacionNombre: c.A02UsrAutorizacionNombre ?? undefined,
+            A02TipoCredito: c.A02TipoCredito ?? undefined,
+            resumenRevisionF1: c.resumenRevisionF1 ?? undefined,
+        }))
+    }
+
+    public async getInventarioRevisionFiltrado(
+        input: InventarioRevisionFilterInput,
+        user: Usuario,
+    ): Promise<InventarioRevisionResponse> {
+        const {
+            estado,
+            filterBySucursal = true,
+            searchText,
+            filters,
+            paginado = true,
+            page = 1,
+            pageSize = 50,
+            first,
+        } = input;
+
+        const estadosValidos: ValidEstadosAuditoria[] = [
+            ValidEstadosAuditoria.NO_REVISADO,
+            ValidEstadosAuditoria.CON_REVISION,
+            ValidEstadosAuditoria.CON_SEGUIMIENTO,
+        ];
+
+        if (!estadosValidos.includes(estado)) {
+            throw new RpcException({
+                message: `Estado ${estado} no es válido.`,
+                status: HttpStatus.BAD_REQUEST,
+            });
+        }
+
+        // 🔹 Si viene first (PrimeNG virtual scroll), lo usamos como offset real.
+        // Si no, usamos page tradicional.
+        const offset = first != null && first >= 0
+            ? first
+            : (Math.max(1, page) - 1) * pageSize;
+
+        const { registrosFiltrados, totalFiltrados } =
+            await this._obtenerInventarioRegistrosFiltrados(
+                estado,
+                user,
+                filterBySucursal,
+                filters ?? undefined,
+                searchText ?? undefined,
+                paginado,
+                offset,
+                pageSize,
+            );
+
+        // Normalizamos nullable → undefined para el GraphQL codegen
+        const registros = registrosFiltrados.map((c) => ({
+            ...c,
+            A02CAG: c.A02CAG ?? undefined,
+            A02Nombre: c.A02Nombre ?? undefined,
+            A02Relacion: c.A02Relacion ?? undefined,
+            A02Prestamo: c.A02Prestamo ?? undefined,
+            A02Clasificacion: c.A02Clasificacion ?? undefined,
+            A02Producto: c.A02Producto ?? undefined,
+            A02Finalidad: c.A02Finalidad ?? undefined,
+            A02DestinoAgro: c.A02DestinoAgro ?? undefined,
+            A02TipoPago: c.A02TipoPago ?? undefined,
+            A02FechaOtorgamiento: c.A02FechaOtorgamiento ?? undefined,
+            A02FechaVencimiento: c.A02FechaVencimiento ?? undefined,
+            A02FechaConsultaBuro: c.A02FechaConsultaBuro ?? undefined,
+            A02PlazoDias: c.A02PlazoDias ?? undefined,
+            A02TasaInteresNormal: c.A02TasaInteresNormal ?? undefined,
+            A02CantidadEntregada: c.A02CantidadEntregada ?? undefined,
+            A02DeudaTotal: c.A02DeudaTotal ?? undefined,
+            A02GarantiaLiquida: c.A02GarantiaLiquida ?? undefined,
+            A02GarantiaPrendaria: c.A02GarantiaPrendaria ?? undefined,
+            A02GarantiaHipotecaria: c.A02GarantiaHipotecaria ?? undefined,
+            A02TipoAutorizacion: c.A02TipoAutorizacion ?? undefined,
+            A02UsrAutorizacionNi: c.A02UsrAutorizacionNi ?? undefined,
+            A02UsrAutorizacionNombre: c.A02UsrAutorizacionNombre ?? undefined,
+            A02TipoCredito: c.A02TipoCredito ?? undefined,
+            resumenRevisionF1: c.resumenRevisionF1 ?? undefined,
+        }));
+
+        const effectivePage = first != null
+            ? Math.floor(offset / pageSize) + 1
+            : Math.max(1, page);
+
+        const totalPages = paginado
+            ? Math.ceil(totalFiltrados / pageSize)
+            : 1;
+
+        return {
+            registros,
+            page: effectivePage,
+            pageSize,
+            totalPages,
+            totalRegistros: totalFiltrados,
+        };
+    }
+
+    // STATS
+    public async getInventarioRevisionStats(
+        input: InventarioRevisionFilterInput,
+        user: Usuario,
+    ): Promise<InventarioRevisionStatsOutput> {
+
+        const whereCredSel = await this._buildInventarioWhere(
+            input.estado,
+            user,
+            input.filterBySucursal ?? true,
+            input.filters ?? undefined,
+            input.searchText,
+        );
+
+        // 👀 Ajusta el nombre de la relación según tu modelo Prisma
+        const whereResumen = {
+            creditoSeleccion: whereCredSel,
+        };
+
+        const [
+            hallazgosAgg,
+            byCalA,
+            byCalB,
+            totalCreditos
+        ] = await this.$transaction([
+            // 1) Suma total de hallazgos
+            this.a04EvaluacionResumenFase1.aggregate({
+                _sum: { A04Ha: true },
+                where: whereResumen,
+            }),
+
+            // 2) Conteos por Calificativo A
+            this.a04EvaluacionResumenFase1.groupBy({
+                by: ['A04CalA'],
+                _count: { _all: true },
+                where: whereResumen,
+                orderBy: undefined
+            }),
+
+            // 3) Conteos por Calificativo B
+            this.a04EvaluacionResumenFase1.groupBy({
+                by: ['A04CalB'],
+                _count: { _all: true },
+                where: whereResumen,
+                orderBy: undefined
+            }),
+
+            // 4) Total de créditos con resumen fase 1
+            this.a04EvaluacionResumenFase1.count({
+                where: whereResumen,
+            })
+        ]);
+
+        const totalHallazgos = hallazgosAgg._sum.A04Ha ?? 0;
+
+        const mapCalA = Object.fromEntries(
+            byCalA.map((g) => {
+                const cnt = typeof g._count === 'object' && g._count ? (g._count._all ?? 0) : 0;
+                return [g.A04CalA, cnt];
+            }),
+        );
+
+        const mapCalB = Object.fromEntries(
+            byCalB.map((g) => {
+                const cnt = typeof g._count === 'object' && g._count ? (g._count._all ?? 0) : 0;
+                return [g.A04CalB, cnt];
+            }),
+        );
+
+        return {
+            totalCreditos,
+
+            totalHallazgos,
+
+            calA_correctos: mapCalA['CORRECTO'] ?? 0,
+            calA_deficientes: mapCalA['DEFICIENTE'] ?? 0,
+
+            calB_completos: mapCalB['COMPLETO'] ?? 0,
+            calB_aceptables: mapCalB['ACEPTABLE'] ?? 0,
+            calB_graves: mapCalB['GRAVE'] ?? 0,
+        };
+    }
+
+    // HELPERS
+
+    private async _obtenerInventarioRegistrosFiltrados(
+        estado: ValidEstadosAuditoria,
+        user: Usuario,
+        filterBySucursal: boolean,
+        filters: Record<string, any> | undefined,
+        searchText: string | undefined,
+        paginado: boolean,
+        offset: number,
+        pageSize: number,
+    ) {
+        const where = await this._buildInventarioWhere(
+            estado,
+            user,
+            filterBySucursal,
+            filters,
+            searchText,
+        );
+
+        const skip = paginado ? Math.max(0, offset) : 0;
+        const take = paginado ? pageSize : undefined;
+
+        const [totalFiltrados, registrosFiltrados] = await this.$transaction([
+            this.a02MuestraCreditoSeleccion.count({ where }),
+            this.a02MuestraCreditoSeleccion.findMany({
+                where,
+                include: {
+                    sucursal: true,
+                    resumenRevisionF1: {
+                        include: {
+                            auditor: true,
+                            responsable: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    // aquí puedes cambiar el orden (por fecha revisión si tienes campo)
+                    A02Id: 'desc',
+                },
+                skip,
+                take,
+            }),
+        ]);
+
+        return { registrosFiltrados, totalFiltrados };
+    }
+
+    private async _buildInventarioWhere(
+        estado: ValidEstadosAuditoria,
+        user: Usuario,
+        filterBySucursal: boolean,
+        filters: Record<string, any> | undefined,
+        searchText: string | undefined,
+    ) {
+        const where: any = {
+            A02Estado: estado,
+            sucursal: { R11Coop_id: user.R12Coop_id },
+        };
+
+        if (filterBySucursal) {
+            where.A02Sucursal = user.R12Suc_id;
+        }
+
+        const OR: any[] = [];
+
+        // 🔹 Búsqueda global (caja de texto)
+        if (searchText && searchText.trim() !== '') {
+            const term = searchText.trim();
+            const isNumeric = /^[0-9]+$/.test(term);
+
+            if (isNumeric) {
+                OR.push({ A02CreditoFolio: Number(term) });
+            }
+
+            OR.push(
+                { A02CAG: { contains: term, mode: 'insensitive' } },
+                { A02Nombre: { contains: term, mode: 'insensitive' } },
+                { A02Prestamo: { contains: term, mode: 'insensitive' } },
+                { A02Clasificacion: { contains: term, mode: 'insensitive' } },
+                { A02Producto: { contains: term, mode: 'insensitive' } },
+                { A02UsrAutorizacionNi: { contains: term, mode: 'insensitive' } },
+            );
+
+            // Coincidencias por nombre de sucursal
+            const sucursalesCoincidentes = await this.r11Sucursal.findMany({
+                where: {
+                    R11Nom: { contains: term, mode: 'insensitive' },
+                    R11Coop_id: user.R12Coop_id,
+                },
+                select: { R11Id: true },
+            });
+
+            if (sucursalesCoincidentes.length > 0) {
+                OR.push({
+                    A02Sucursal: { in: sucursalesCoincidentes.map((s) => s.R11Id) },
+                });
+            }
+        }
+
+        // 🔹 Filtros por columna (PrimeNG)
+        // 🔹 Filtros por columna (PrimeNG)
+        if (filters) {
+            console.log(filters);
+
+            for (const [field, meta] of Object.entries(filters)) {
+                // Formato compatible PrimeNG:
+                // meta = { value, matchMode }  O  { constraints: [{ value, matchMode }] }
+                const constraint =
+                    Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
+
+                if (!constraint || constraint.value === undefined || constraint.value === null || constraint.value === '') {
+                    continue;
+                }
+
+                const mapped = mapPrimeFilterToPrisma(field, constraint);
+
+                // merge al where
+                Object.assign(where, mapped);
+            }
+        }
+
+        if (OR.length > 0) where.OR = OR;
+
+        return where;
     }
 
 }

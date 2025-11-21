@@ -5,6 +5,8 @@ import { Usuario } from "src/common/entities/usuario.entity";
 import { CreateMuestraSeleccionInput } from "./dto/inputs/muestra-seleccion/create-muestra-seleccion.input";
 import { GetCreditosSeleccionadosInput } from "./dto/inputs/muestra-credito-seleccion/get-creditos-seleccionados.input";
 import { ParametrosMuestraExtendInput } from "./dto/inputs/muestra-params-extend.input";
+import { ValidEstadosAuditoria } from "../enums/valid-estados.enum";
+import { InventarioRevisionFilterInput } from "./dto/inputs/inventario-revision-filter.input";
 
 @Controller()
 export class CreditoHandler {
@@ -67,6 +69,28 @@ export class CreditoHandler {
     @Payload() { muestraId }: { muestraId: number },
   ) {
     return this._service.getMuestraDetalleById(muestraId)
+  }
+
+  // * INVENTARIO DE REVISION
+  @MessagePattern('supervision.auditoria.credito.getByEstado')
+  async handleGetCreditosByEstado(
+    @Payload() { estado, user, filterBySucursal }: { estado: ValidEstadosAuditoria; user: Usuario, filterBySucursal: boolean },
+  ) {
+    return this._service.findByEstado( estado, user, filterBySucursal );
+  }
+
+  @MessagePattern('supervision.auditoria.credito.getInventarioRevisionFiltrado')
+  async handleGetInventarioRevisionFiltrado(
+    @Payload() { input, user }: { input: InventarioRevisionFilterInput, user: Usuario },
+  ) {
+    return this._service.getInventarioRevisionFiltrado( input, user );
+  }
+
+  @MessagePattern('supervision.auditoria.credito.getInventarioRevisionStats')
+  async handleGetInventarioRevisionStats(
+    @Payload() { input, user }: { input: InventarioRevisionFilterInput, user: Usuario },
+  ) {
+    return this._service.getInventarioRevisionStats( input, user );
   }
 
 }
