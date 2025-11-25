@@ -18,6 +18,7 @@ import { InventarioRevisionFilterInput } from './dto/inputs/inventario-revision-
 import { InventarioRevisionResponse } from './dto/outputs/inventario-revision-response.output';
 import { mapPrimeFilterToPrisma } from 'src/common/utils/map-prime-to-prisma.util';
 import { InventarioRevisionStatsOutput } from './dto/outputs/inventario-revision-stats.output';
+import { InventarioSeguimientoStatsOutput } from './dto/outputs/inventario-seguimiento-stats.output';
 
 @Injectable()
 export class CreditoService extends PrismaClient implements OnModuleInit {
@@ -45,6 +46,12 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                         responsable: true,
                     }
                 },
+                evaluacionRevisionF2: true,
+                resumenRevisionF2: {
+                    include: {
+                        auditor: true,
+                    }
+                }
             }
         })
 
@@ -83,6 +90,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             A02TipoCredito: credito.A02TipoCredito ?? undefined,
             evaluacionRevisionF1: credito.evaluacionRevisionF1 ?? undefined,
             resumenRevisionF1: credito.resumenRevisionF1 ?? undefined,
+            evaluacionRevisionF2: credito.evaluacionRevisionF2 ?? undefined,
+            resumenRevisionF2: credito.resumenRevisionF2 ?? undefined,
         };
     }
 
@@ -918,6 +927,11 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                                 auditor: true,
                                 responsable: true,
                             }
+                        },
+                        resumenRevisionF2: {
+                            include: {
+                                auditor: true,
+                            }
                         }
                     },
                     orderBy: { A02CreditoFolio: 'asc' },
@@ -931,6 +945,11 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                             include: {
                                 auditor: true,
                                 responsable: true,
+                            }
+                        },
+                        resumenRevisionF2: {
+                            include: {
+                                auditor: true,
                             }
                         }
                     },
@@ -1015,7 +1034,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
     }
 
 
-    // * INVENTARIO DE REVISIONES
+    // * INVENTARIOS
     public async findByEstado(estado: ValidEstadosAuditoria, user: Usuario, filterBySucursal: boolean = true): Promise<MuestraCreditoSeleccion[]> {
         const estadosValidos = [
             'No revisado',
@@ -1086,7 +1105,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         }))
     }
 
-    public async getInventarioRevisionFiltrado(
+    public async getInventarioExpedientesFiltrado(
         input: InventarioRevisionFilterInput,
         user: Usuario,
     ): Promise<InventarioRevisionResponse> {
@@ -1159,6 +1178,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             A02UsrAutorizacionNombre: c.A02UsrAutorizacionNombre ?? undefined,
             A02TipoCredito: c.A02TipoCredito ?? undefined,
             resumenRevisionF1: c.resumenRevisionF1 ?? undefined,
+            resumenRevisionF2: c.resumenRevisionF2 ?? undefined,
         }));
 
         const effectivePage = first != null
@@ -1178,7 +1198,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         };
     }
 
-    // STATS
+    //* STATS
     public async getInventarioRevisionStats(
         input: InventarioRevisionFilterInput,
         user: Usuario,
@@ -1261,7 +1281,85 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         };
     }
 
-    // HELPERS
+    async getInventarioSeguimientoStats(
+        input: InventarioRevisionFilterInput,
+        user: Usuario,
+    ): Promise<InventarioSeguimientoStatsOutput> {
+
+        const whereCredSel = await this._buildInventarioWhere(
+            input.estado,
+            user,
+            input.filterBySucursal ?? true,
+            input.filters ?? undefined,
+            input.searchText,
+        );
+
+        const whereResumen = {
+            creditoSeleccion: whereCredSel,
+        };
+
+        const [
+            totalsAgg,
+            resultGroup
+        ] = await this.$transaction([
+
+            // 1️⃣ Sumas totales de solvencias
+            this.a06EvaluacionResumenFase2.aggregate({
+                _sum: {
+                    A06Solv: true,
+                    A06NSolv: true
+                },
+                where: whereResumen
+            }),
+
+            // 2️⃣ Conteo por acción resultado (SOLVENTADO / NO_SOLVENTADO)
+            this.a06EvaluacionResumenFase2.groupBy({
+                by: ['A06ARes'],
+                _count: { _all: true },
+                where: whereResumen,
+                orderBy: undefined,
+            })
+
+        ]);
+
+        // Sumas
+        const totalSolv = totalsAgg._sum.A06Solv ?? 0;
+        const totalNSolv = totalsAgg._sum.A06NSolv ?? 0;
+
+        // Total créditos = suma de agrupar por acción de resultado
+        const totalCreditos = resultGroup.reduce((acc, v) =>
+            acc + (this._isCountObject(v._count) ? (v._count._all ?? 0) : 0), 0
+        );
+
+        // Conteos por AResultado
+        let totalAResSolventado = 0;
+        let totalAResNoSolventado = 0;
+
+        for (const g of resultGroup) {
+            const cnt = this._isCountObject(g._count) ? (g._count._all ?? 0) : 0;
+
+            if (g.A06ARes === 'SOLVENTADO') {
+                totalAResSolventado = cnt;
+            } else if (g.A06ARes === 'NO_SOLVENTADO') {
+                totalAResNoSolventado = cnt;
+            }
+        }
+
+        return {
+            totalCreditos,
+            totalSolventados: totalSolv,
+            totalNoSolventados: totalNSolv,
+            totalAccionResultadoSolventado: totalAResSolventado,
+            totalAccionResultadoNoSolventado: totalAResNoSolventado,
+        };
+    }
+
+
+    //* HELPERS
+
+    private _isCountObject(x: unknown): x is { _all?: number } {
+        return typeof x === 'object' && x !== null && '_all' in (x as object);
+    }
 
     private async _obtenerInventarioRegistrosFiltrados(
         estado: ValidEstadosAuditoria,
@@ -1296,10 +1394,21 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                             responsable: true,
                         },
                     },
+                    resumenRevisionF2: {
+                        include: {
+                            auditor: true,
+                        },
+                    },
                 },
                 orderBy: {
                     // aquí puedes cambiar el orden (por fecha revisión si tienes campo)
-                    A02Id: 'desc',
+                    // A02Id: 'desc',
+                    resumenRevisionF1: {
+                        A04FRev: 'desc',
+                    },
+                    // resumenRevisionF2: {
+                    //     A06FSeg: 'desc',
+                    // }
                 },
                 skip,
                 take,

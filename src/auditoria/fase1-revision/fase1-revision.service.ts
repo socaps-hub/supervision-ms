@@ -71,7 +71,6 @@ export class Fase1RevisionService extends PrismaClient implements OnModuleInit {
                     },
                 });
 
-                // TODO 5. Actualizar Estado del movimiento a "Con seguimiento"
                 await tx.a02MuestraCreditoSeleccion.update({
                     where: { A02Id: id },
                     data: {

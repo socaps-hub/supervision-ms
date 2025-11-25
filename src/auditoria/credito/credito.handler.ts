@@ -79,11 +79,11 @@ export class CreditoHandler {
     return this._service.findByEstado( estado, user, filterBySucursal );
   }
 
-  @MessagePattern('supervision.auditoria.credito.getInventarioRevisionFiltrado')
-  async handleGetInventarioRevisionFiltrado(
+  @MessagePattern('supervision.auditoria.credito.getInventarioExpedientesFiltrado')
+  async handleGetInventarioExpedientesFiltrado(
     @Payload() { input, user }: { input: InventarioRevisionFilterInput, user: Usuario },
   ) {
-    return this._service.getInventarioRevisionFiltrado( input, user );
+    return this._service.getInventarioExpedientesFiltrado( input, user );
   }
 
   @MessagePattern('supervision.auditoria.credito.getInventarioRevisionStats')
@@ -91,6 +91,13 @@ export class CreditoHandler {
     @Payload() { input, user }: { input: InventarioRevisionFilterInput, user: Usuario },
   ) {
     return this._service.getInventarioRevisionStats( input, user );
+  }
+  
+  @MessagePattern('supervision.auditoria.credito.getInventarioSeguimientoStats')
+  async handleGetInventarioSeguimientoStats(
+    @Payload() { input, user }: { input: InventarioRevisionFilterInput, user: Usuario },
+  ) {
+    return this._service.getInventarioSeguimientoStats( input, user );
   }
 
 }
