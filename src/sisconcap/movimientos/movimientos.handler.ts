@@ -8,6 +8,7 @@ import { UpdateMovimientoArgs } from "./dto/inputs/update-movimiento.input";
 import { CreateFase2Input } from "./dto/inputs/create-fase2.input";
 import { ValidEstados } from "src/fase-i-levantamiento/solicitudes/enums/valid-estados.enum";
 import { CreateFase3Input } from "./dto/inputs/create-fase3.input";
+import { InventarioSolicitudesFilterInput } from "src/fase-i-levantamiento/solicitudes/dto/inventario-solicitudes-filter.input";
 
 @Controller()
 export class MovimientosHandler {
@@ -73,6 +74,13 @@ export class MovimientosHandler {
         return this._movimientosService.findAll( user, filterBySucursal )
     }
 
+    @MessagePattern('supervision.movimientos.getInventarioMovimientosFiltrado')
+    async handleGetInventarioMovimientosFiltrado(
+    @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+    ) {
+    return this._movimientosService.getInventarioMovimientosFiltrado( input, user );
+    }
+
     @MessagePattern('supervision.movimientos.getByEstado')
     handleGetByEstado(
         @Payload() data: { estado: ValidEstados; user: Usuario, filterBySucursal: boolean }
@@ -99,6 +107,28 @@ export class MovimientosHandler {
         @Payload() { folio, user }: { folio: number, user: Usuario }
     ) {
         return await this._movimientosService.cancelFase3AndFase2( folio, user );
-    }  
+    }
+
+    // * STATS
+    @MessagePattern('supervision.movimientos.getInventarioF1Stats')
+    async handleGetInventarioF1Stats(
+        @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+    ) {
+        return this._movimientosService.getInventarioF1Stats( input, user );
+    }
+
+    @MessagePattern('supervision.movimientos.getInventarioF2Stats')
+    async handleGetInventarioF2Stats(
+        @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+    ) {
+        return this._movimientosService.getInventarioF2Stats( input, user );
+    }
+
+    @MessagePattern('supervision.movimientos.getInventarioF3Stats')
+    async handleGetInventarioF3Stats(
+        @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+    ) {
+        return this._movimientosService.getInventarioF3Stats( input, user );
+    }
 
 }

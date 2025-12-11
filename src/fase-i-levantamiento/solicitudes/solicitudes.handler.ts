@@ -8,6 +8,7 @@ import { Usuario } from 'src/common/entities/usuario.entity';
 import { CreateEvaluacionFase1Input } from '../evaluaciones/dto/create-evaluacion-fase1.input';
 import { CreateResumenFase1Input } from '../evaluaciones/resumen/dto/create-resumen-fase1.input';
 import { ValidEstados } from './enums/valid-estados.enum';
+import { InventarioSolicitudesFilterInput } from './dto/inventario-solicitudes-filter.input';
 
 @Controller()
 export class SolicitudesHandler {
@@ -28,6 +29,13 @@ export class SolicitudesHandler {
     @Payload() { user, filterBySucursal }: { user: Usuario, filterBySucursal: boolean }
   ) {
     return this.solicitudesService.findAll(user, filterBySucursal);
+  }
+
+  @MessagePattern('supervision.solicitudes.getInventarioSolicitudesFiltrado')
+  async handleGetInventarioSolicitudesFiltrado(
+    @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+  ) {
+    return this.solicitudesService.getInventarioSolicitudesFiltrado( input, user );
   }
 
   @MessagePattern('supervision.solicitudes.getById')
@@ -76,6 +84,35 @@ export class SolicitudesHandler {
     @Payload() data: { id: string, user: Usuario }
   ) {
     return this.solicitudesService.remove(data.id, data.user);
+  }
+
+  // * STATS
+  @MessagePattern('supervision.solicitudes.getInventarioSolicitudesStats')
+  async handleGetSolicitudesRevisionStats(
+    @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+  ) {
+    return this.solicitudesService.getInventarioSolicitudesStats( input, user );
+  }
+  
+  @MessagePattern('supervision.solicitudes.getInventarioSeguimientosStats')
+  async handleGetInventarioSeguimientosStats(
+    @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+  ) {
+    return this.solicitudesService.getInventarioSeguimientosStats( input, user );
+  }
+  
+  @MessagePattern('supervision.solicitudes.getInventarioDesembolsosStats')
+  async handleGetInventarioDesembolsosStats(
+    @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+  ) {
+    return this.solicitudesService.getInventarioDesembolsosStats( input, user );
+  }
+
+  @MessagePattern('supervision.solicitudes.getInventarioSeguimientoGlobalStats')
+  async handleGetInventarioSeguimientoGlobalStats(
+    @Payload() { input, user }: { input: InventarioSolicitudesFilterInput, user: Usuario },
+  ) {
+    return this.solicitudesService.getInventarioSeguimientoGlobalStats( input, user );
   }
 
 }
