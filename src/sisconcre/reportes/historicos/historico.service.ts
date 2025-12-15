@@ -46,7 +46,7 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
         }
     }
 
-     /** Función genérica de agrupamiento */
+    /** Función genérica de agrupamiento */
     private agruparPorMesYSucursal(
         prestamos: any[],
         extraerValores: (p: any, subFaseIV?: string) => Partial<HistoricoSucursalDto>,
@@ -111,10 +111,18 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
             totales.promedioAnomalias = totales.totalAnomalias / (totales.totalSolicitudes || 1);
         }
 
-        const meses: HistoricoMesDto[] = Array.from(mesesMap.entries()).map(([mes, sucursales]) => ({
-            mes,
-            sucursales,
-        }));
+        // const meses: HistoricoMesDto[] = Array.from(mesesMap.entries()).map(([mes, sucursales]) => ({
+        //     mes,
+        //     sucursales,
+        // }));
+        const meses: HistoricoMesDto[] = Array.from(mesesMap.entries())
+            .sort(([mesA], [mesB]) => {
+                return this.meses.indexOf(mesA) - this.meses.indexOf(mesB);
+            })
+            .map(([mes, sucursales]) => ({
+                mes,
+                sucursales,
+            }));
 
         return { meses, totales };
     }
@@ -122,11 +130,11 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
 
     private async reporteFaseI(input: HistoricoFiltroInput, user: Usuario): Promise<HistoricoResponseDto> {
         const prestamos = await this.r01Prestamo.findMany({
-            where: { 
-                resumenF1: { isNot: null }, 
-                R01FRev: { 
-                    gte: new Date(input.fechaInicio).toISOString(), 
-                    lte: new Date(input.fechaFinal).toISOString() 
+            where: {
+                resumenF1: { isNot: null },
+                R01FRev: {
+                    gte: new Date(input.fechaInicio).toISOString(),
+                    lte: new Date(input.fechaFinal).toISOString()
                 },
                 R01Coop_id: user.R12Coop_id
             },
@@ -140,11 +148,11 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
 
     private async reporteFaseII(input: HistoricoFiltroInput, user: Usuario): Promise<HistoricoResponseDto> {
         const prestamos = await this.r01Prestamo.findMany({
-            where: { 
-                resumenF2: { isNot: null }, 
-                R01FRev: { 
-                    gte: new Date(input.fechaInicio).toISOString(), 
-                    lte: new Date(input.fechaFinal).toISOString() 
+            where: {
+                resumenF2: { isNot: null },
+                R01FRev: {
+                    gte: new Date(input.fechaInicio).toISOString(),
+                    lte: new Date(input.fechaFinal).toISOString()
                 },
                 R01Coop_id: user.R12Coop_id
             },
@@ -159,11 +167,11 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
 
     private async reporteFaseIII(input: HistoricoFiltroInput, user: Usuario): Promise<HistoricoResponseDto> {
         const prestamos = await this.r01Prestamo.findMany({
-            where: { 
-                resumenF3: { isNot: null }, 
-                R01FRev: { 
-                    gte: new Date(input.fechaInicio).toISOString(), 
-                    lte: new Date(input.fechaFinal).toISOString() 
+            where: {
+                resumenF3: { isNot: null },
+                R01FRev: {
+                    gte: new Date(input.fechaInicio).toISOString(),
+                    lte: new Date(input.fechaFinal).toISOString()
                 },
                 R01Coop_id: user.R12Coop_id
             },
@@ -178,11 +186,11 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
 
     private async reporteFaseIV(input: HistoricoFiltroInput, user: Usuario): Promise<HistoricoResponseDto> {
         const prestamos = await this.r01Prestamo.findMany({
-            where: { 
-                resumenF4: { isNot: null }, 
-                R01FRev: { 
-                    gte: new Date(input.fechaInicio).toISOString(), 
-                    lte: new Date(input.fechaFinal).toISOString() 
+            where: {
+                resumenF4: { isNot: null },
+                R01FRev: {
+                    gte: new Date(input.fechaInicio).toISOString(),
+                    lte: new Date(input.fechaFinal).toISOString()
                 },
                 R01Coop_id: user.R12Coop_id
             },
