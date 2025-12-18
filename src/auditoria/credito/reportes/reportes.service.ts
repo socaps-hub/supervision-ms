@@ -39,14 +39,60 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
             }
         });
 
+        return this._construirReporteFase1(
+            registros,
+            r => r.sucursal.R11Nom
+        );
+    }
+
+    public async getReporteFase1ByClasificacion(
+        muestraId: number,
+        user: Usuario
+    ): Promise<ReporteFase1ResponseDTO> {
+
+        const registros = await this.a02MuestraCreditoSeleccion.findMany({
+            where: {
+                A02MuestraId: muestraId,
+                resumenRevisionF1: { isNot: null },
+                sucursal: { R11Coop_id: user.R12Coop_id }
+            },
+            select: {
+                A02Clasificacion: true,
+                resumenRevisionF1: {
+                    select: {
+                        A04CalA: true,
+                        A04CalB: true
+                    }
+                }
+            }
+        });
+
+        return this._construirReporteFase1(
+            registros,
+            r => r.A02Clasificacion ?? 'SIN CLASIFICACIÓN'
+        );
+    }
+
+    private _construirReporteFase1<
+        T extends {
+            resumenRevisionF1?: {
+                A04CalA?: string;
+                A04CalB?: string;
+            } | null;
+        }
+    >(
+        registros: T[],
+        getKey: (r: T) => string
+    ): ReporteFase1ResponseDTO {
+
         const mapa = new Map<string, ReporteFase1SucursalRowDTO>();
 
         for (const r of registros) {
-            const sucursal = r.sucursal.R11Nom;
+            const key = getKey(r);
 
-            if (!mapa.has(sucursal)) {
-                mapa.set(sucursal, {
-                    sucursal,
+            if (!mapa.has(key)) {
+                mapa.set(key, {
+                    sucursal: key, // campo genérico
                     expedientesRevisados: 0,
                     correctos: 0,
                     deficientes: 0,
@@ -57,7 +103,7 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
                 });
             }
 
-            const row = mapa.get(sucursal)!;
+            const row = mapa.get(key)!;
 
             row.expedientesRevisados++;
 
@@ -78,7 +124,6 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
             }
         }
 
-        // Cálculo de porcentajes por sucursal
         const rows = Array.from(mapa.values()).map(r => ({
             ...r,
             cumplimiento: r.expedientesRevisados
@@ -89,7 +134,6 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
                 : 0
         }));
 
-        // Totales
         const totales = rows.reduce((acc, r) => {
             acc.expedientesRevisados += r.expedientesRevisados;
             acc.correctos += r.correctos;
@@ -117,5 +161,7 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
 
         return { rows, totales };
     }
+
+
 
 }

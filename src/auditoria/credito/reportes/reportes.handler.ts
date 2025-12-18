@@ -18,4 +18,11 @@ export class ReportesHandler {
         return this._service.getReporteFase1ByMuestra(muestraId, user)
     }
 
+    @MessagePattern('reportes-acredito.fase1.reporteF1ByClasificacion')
+    handleGetReporteFase1ByClasificacion(
+        @Payload() { muestraId, user }: { muestraId: number, user: Usuario }
+    ) {
+        return this._service.getReporteFase1ByClasificacion(muestraId, user)
+    }
+
 }
