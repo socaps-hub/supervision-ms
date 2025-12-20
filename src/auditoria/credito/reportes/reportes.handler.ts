@@ -25,4 +25,18 @@ export class ReportesHandler {
         return this._service.getReporteFase1ByClasificacion(muestraId, user)
     }
 
+    @MessagePattern('reportes-acredito.fase1.detalleHallazgosFase1ByMuestra')
+    handleGetDetalleHallazgosFase1ByMuestra(
+        @Payload() { muestraId, user }: { muestraId: number, user: Usuario }
+    ) {
+        return this._service.getDetalleHallazgosFase1ByMuestra(muestraId, user)
+    }
+
+    @MessagePattern('reportes-acredito.fase1.detalleHallazgosFase1ByMuestraPorCategoria')
+    handleGetDetalleHallazgosFase1ByMuestraPorCategoria(
+        @Payload() { muestraId, user }: { muestraId: number, user: Usuario }
+    ) {
+        return this._service.getDetalleHallazgosFase1ByMuestraPorCategoria(muestraId, user)
+    }
+
 }

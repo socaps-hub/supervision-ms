@@ -1,7 +1,12 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { GrupoTipo, PrismaClient } from '@prisma/client';
 import { ReporteFase1ResponseDTO, ReporteFase1SucursalRowDTO } from './dto/output/fase1/acredito-reporte-fase1-response.output';
 import { Usuario } from 'src/common/entities/usuario.entity';
+import { ReporteHallazgosF1Response, SucursalHallazgoDto } from './dto/output/fase1/acredito-reporte-detalle-hallazgos-reponse.output';
+import { ResFaseI } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
+import { CategoriaHallazgoDto, ReporteHallazgosF1PorCategoriaResponse } from './dto/output/fase1/acredito-detalle-hallazgos-categoria-response.output';
+
+const RUBRO_PS_AUT = '% SOBRE AUTORIZADO';
 
 @Injectable()
 export class ReportesService extends PrismaClient implements OnModuleInit {
@@ -73,6 +78,316 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
         );
     }
 
+    async getDetalleHallazgosFase1ByMuestra(
+        muestraId: number,
+        user: Usuario
+    ): Promise<ReporteHallazgosF1Response> {
+
+        // 1️⃣ Rubros y elementos del grupo ACREDITO
+        const rubros = await this.r03Rubro.findMany({
+            where: {
+                grupo: {
+                    R02Tipo: GrupoTipo.ACREDITO,
+                    R02Coop_id: user.R12Coop_id,
+                },
+            },
+            include: {
+                elementos: {
+                    select: {
+                        R04Nom: true,
+                        R04Imp: true,
+                    },
+                },
+            },
+        });
+
+        // Mapa base rubros → elementos
+        const rubrosBaseMap = new Map<string, Map<string, string>>();
+        for (const r of rubros) {
+            if (!rubrosBaseMap.has(r.R03Nom)) {
+                rubrosBaseMap.set(r.R03Nom, new Map());
+            }
+            for (const e of r.elementos) {
+                rubrosBaseMap.get(r.R03Nom)!.set(e.R04Nom, e.R04Imp);
+            }
+        }
+        // ➕ Rubro virtual: % SOBRE AUTORIZADO
+        rubrosBaseMap.set(
+            RUBRO_PS_AUT,
+            new Map([[RUBRO_PS_AUT, 'ALTO']])
+        );
+
+        // 2️⃣ Créditos seleccionados de la muestra
+        const creditos = await this.a02MuestraCreditoSeleccion.findMany({
+            where: {
+                A02MuestraId: muestraId,
+                A02Estado: 'Con revision',
+                sucursal: { R11Coop_id: user.R12Coop_id },
+            },
+            include: {
+                sucursal: true,
+                evaluacionRevisionF1: {
+                    where: { A03Res: 'I' },
+                    include: {
+                        elemento: {
+                            select: {
+                                R04Nom: true,
+                                R04Imp: true,
+                                rubro: { select: { R03Nom: true } },
+                            },
+                        },
+                    },
+                },
+                resumenRevisionF1: {
+                    include: {
+                        responsable: true,
+                    },
+                },
+            },
+        });
+
+        let totalHallazgosGlobal = 0;
+        const sucursalesMap = new Map<string, SucursalHallazgoDto>();
+
+        // 3️⃣ Recorrer créditos
+        for (const c of creditos) {
+            const sucId = c.sucursal.R11Id;
+            const sucNom = c.sucursal.R11Nom;
+
+            if (!sucursalesMap.has(sucId)) {
+                sucursalesMap.set(sucId, {
+                    id: sucId,
+                    nombre: sucNom,
+                    totalCreditos: 0,
+                    totalHallazgos: 0,
+                    rubros: Array.from(rubrosBaseMap.entries()).map(([rubro, elementos]) => ({
+                        rubro,
+                        total: 0,
+                        elementos: Array.from(elementos.entries()).map(([elemento, impacto]) => ({
+                            elemento,
+                            impacto,
+                            total: 0
+                        }))
+                    })),
+                    ejecutivos: [],
+                });
+            }
+
+            const sucursal = sucursalesMap.get(sucId)!;
+            sucursal.totalCreditos++;
+
+            // Regla % sobre autorizado
+            const psAut = this.parseNumber(c.resumenRevisionF1?.A04PSAut);
+            const hayHallazgoPSAut = psAut > 0 && this.isNo(c.resumenRevisionF1?.A04Excep);
+
+            // Ejecutivo
+            const ejeId = c.resumenRevisionF1?.responsable?.R12Id ?? '0';
+            const ejeNom = c.resumenRevisionF1?.responsable?.R12Nom ?? 'Sin asignar';
+
+            let ejecutivo = sucursal.ejecutivos.find(e => e.id === ejeId);
+            if (!ejecutivo) {
+                ejecutivo = {
+                    id: ejeId,
+                    nombre: ejeNom,
+                    totalCreditos: 0,
+                    totalHallazgos: 0,
+                    rubros: JSON.parse(JSON.stringify(sucursal.rubros)),
+                };
+                sucursal.ejecutivos.push(ejecutivo);
+            }
+            ejecutivo.totalCreditos++;
+
+            // % SOBRE AUTORIZADO
+            if (hayHallazgoPSAut) {
+                sucursal.totalHallazgos++;
+                ejecutivo.totalHallazgos++;
+                totalHallazgosGlobal++;
+
+                const rubroPsSuc = sucursal.rubros.find(r => r.rubro === RUBRO_PS_AUT);
+                rubroPsSuc && (rubroPsSuc.total++, rubroPsSuc.elementos[0].total++);
+
+                const rubroPsEje = ejecutivo.rubros.find(r => r.rubro === RUBRO_PS_AUT);
+                rubroPsEje && (rubroPsEje.total++, rubroPsEje.elementos[0].total++);
+            }
+            
+            // Evaluaciones incorrectas
+            for (const ev of c.evaluacionRevisionF1) {
+
+                const rubroNom = ev.elemento?.rubro?.R03Nom;
+                const elemNom = ev.elemento?.R04Nom;
+                if (!rubroNom || !elemNom) continue;
+
+                const rubroSuc = sucursal.rubros.find(r => r.rubro === rubroNom);
+                const elemSuc = rubroSuc?.elementos.find(e => e.elemento === elemNom);
+                if (elemSuc) {
+                    elemSuc.total++;
+                    rubroSuc!.total++;
+                }
+
+                const rubroEje = ejecutivo.rubros.find(r => r.rubro === rubroNom);
+                const elemEje = rubroEje?.elementos.find(e => e.elemento === elemNom);
+                if (elemEje) {
+                    elemEje.total++;
+                    rubroEje!.total++;
+                }
+
+                sucursal.totalHallazgos++;
+                ejecutivo.totalHallazgos++;
+                totalHallazgosGlobal++;
+            }
+        }
+
+        // 4️⃣ Limpieza
+        const sucursales = Array.from(sucursalesMap.values()).map(s => ({
+            ...s,
+            // opcional: filtra ejecutivos sin hallazgos o déjalos si quieres verlos
+            ejecutivos: s.ejecutivos.filter(e => e.totalHallazgos > 0),
+        }));
+
+
+        return {
+            totalCreditosGlobal: creditos.length,
+            totalHallazgosGlobal,
+            sucursales,
+        };
+    }
+
+    async getDetalleHallazgosFase1ByMuestraPorCategoria(
+        muestraId: number,
+        user: Usuario
+    ): Promise<ReporteHallazgosF1PorCategoriaResponse> {
+
+        // 1️⃣ Rubros y elementos del grupo ACREDITO
+        const rubros = await this.r03Rubro.findMany({
+            where: {
+                grupo: {
+                    R02Tipo: GrupoTipo.ACREDITO,
+                    R02Coop_id: user.R12Coop_id,
+                },
+            },
+            include: {
+                elementos: {
+                    select: {
+                        R04Nom: true,
+                        R04Imp: true,
+                    },
+                },
+            },
+        });
+
+        // Rubros base
+        const rubrosBase = Array.from(rubros).map(r => ({
+            rubro: r.R03Nom,
+            total: 0,
+            elementos: r.elementos.map(e => ({
+                elemento: e.R04Nom,
+                impacto: e.R04Imp,
+                total: 0,
+            })),
+        }));
+        rubrosBase.push({
+            rubro: RUBRO_PS_AUT,
+            total: 0,
+            elementos: [
+                {
+                    elemento: RUBRO_PS_AUT,
+                    impacto: 'ALTO',
+                    total: 0,
+                },
+            ],
+        });
+
+        // 2️⃣ Créditos de la muestra
+        const creditos = await this.a02MuestraCreditoSeleccion.findMany({
+            where: {
+                A02MuestraId: muestraId,
+                A02Estado: 'Con revision',
+                sucursal: { R11Coop_id: user.R12Coop_id },
+            },
+            include: {
+                evaluacionRevisionF1: {
+                    where: { A03Res: 'I' },
+                    include: {
+                        elemento: {
+                            select: {
+                                R04Nom: true,
+                                rubro: { select: { R03Nom: true } },
+                            },
+                        },
+                    },
+                },
+                resumenRevisionF1: true,
+            },
+        });
+
+        let totalHallazgosGlobal = 0;
+        const categoriasMap = new Map<string, CategoriaHallazgoDto>();
+
+        // 3️⃣ Recorrido de créditos
+        for (const c of creditos) {
+
+            const categoria = c.A02Clasificacion ?? 'SIN CLASIFICACIÓN';
+
+            if (!categoriasMap.has(categoria)) {
+                categoriasMap.set(categoria, {
+                    categoria,
+                    totalCreditos: 0,
+                    totalHallazgos: 0,
+                    rubros: JSON.parse(JSON.stringify(rubrosBase)),
+                });
+            }
+
+            const cat = categoriasMap.get(categoria)!;
+            cat.totalCreditos++;
+
+            // Regla % sobre autorizado
+            const psAut = this.parseNumber(c.resumenRevisionF1?.A04PSAut);
+            const hayHallazgoPSAut = psAut > 0 && this.isNo(c.resumenRevisionF1?.A04Excep);
+
+            if (hayHallazgoPSAut) {
+                // Total categoría
+                cat.totalHallazgos++;
+                totalHallazgosGlobal++;
+
+                // Rubro virtual
+                const rubroPs = cat.rubros.find(r => r.rubro === RUBRO_PS_AUT);
+                if (rubroPs) {
+                    rubroPs.total++;
+                    rubroPs.elementos[0].total++;
+                }
+            }
+
+            // Hallazgos por elementos incorrectos
+            for (const ev of c.evaluacionRevisionF1) {
+                const rubroNom = ev.elemento?.rubro?.R03Nom;
+                const elemNom = ev.elemento?.R04Nom;
+                if (!rubroNom || !elemNom) continue;
+
+                const rubro = cat.rubros.find(r => r.rubro === rubroNom);
+                const elem = rubro?.elementos.find(e => e.elemento === elemNom);
+
+                if (elem) {
+                    elem.total++;
+                    rubro!.total++;
+                }
+
+                cat.totalHallazgos++;
+                totalHallazgosGlobal++;
+            }
+        }
+
+        // 4️⃣ Resultado
+        return {
+            totalCreditosGlobal: creditos.length,
+            totalHallazgosGlobal,
+            categorias: Array.from(categoriasMap.values()),
+        };
+    }
+
+
+    // *============================
+    // * HELPERS
+    // *============================
     private _construirReporteFase1<
         T extends {
             resumenRevisionF1?: {
@@ -162,6 +477,19 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
         return { rows, totales };
     }
 
+    private parseNumber(value: unknown): number {
+        if (value === null || value === undefined) return 0;
+        const s = String(value).trim();
+        if (!s) return 0;
+        // si viene con % o separadores, limpiamos
+        const cleaned = s.replace(/[^0-9.-]/g, '');
+        const n = Number(cleaned);
+        return Number.isFinite(n) ? n : 0;
+    }
+
+    private isNo(value: unknown): boolean {
+        return String(value ?? '').trim().toLowerCase() === 'no';
+    }
 
 
 }
