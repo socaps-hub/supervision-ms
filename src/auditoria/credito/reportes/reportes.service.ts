@@ -1,10 +1,15 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GrupoTipo, PrismaClient } from '@prisma/client';
+
+import { v4 as uuid } from 'uuid'
+
 import { ReporteFase1ResponseDTO, ReporteFase1SucursalRowDTO } from './dto/output/fase1/acredito-reporte-fase1-response.output';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { ReporteHallazgosF1Response, SucursalHallazgoDto } from './dto/output/fase1/acredito-reporte-detalle-hallazgos-reponse.output';
-import { ResFaseI } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
 import { CategoriaHallazgoDto, ReporteHallazgosF1PorCategoriaResponse } from './dto/output/fase1/acredito-detalle-hallazgos-categoria-response.output';
+import { AwsS3Service } from 'src/common/aws/services/aws-s3.service';
+import { ExcelService } from 'src/common/excel/services/excel.service';
+import { BuildCedulaExcelResponse } from './dto/output/build-cedula-excel-response.output';
 
 const RUBRO_PS_AUT = '% SOBRE AUTORIZADO';
 
@@ -16,6 +21,13 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
     async onModuleInit() {
         await this.$connect();
         this._logger.log('Database connected')
+    }
+
+    constructor(
+        private readonly _awsS3Service: AwsS3Service,
+        private readonly _excelService: ExcelService,
+    ) {
+        super()
     }
 
     // * FASE 1
@@ -209,7 +221,7 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
                 const rubroPsEje = ejecutivo.rubros.find(r => r.rubro === RUBRO_PS_AUT);
                 rubroPsEje && (rubroPsEje.total++, rubroPsEje.elementos[0].total++);
             }
-            
+
             // Evaluaciones incorrectas
             for (const ev of c.evaluacionRevisionF1) {
 
@@ -384,10 +396,92 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
         };
     }
 
+    async buildCedulaF1(muestraId: number, user: Usuario): Promise<BuildCedulaExcelResponse> {
+
+        const creditos = await this.a02MuestraCreditoSeleccion.findMany({
+            where: {
+                A02MuestraId: muestraId,
+                sucursal: { R11Coop_id: user.R12Coop_id },
+            },
+            include: {
+                sucursal: true,
+                resumenRevisionF1: true,
+            },
+            orderBy: {
+                A02CreditoFolio: 'asc',
+            },
+        });
+
+        const rows = creditos.map(c => ({
+            FOLIO_CREDITO: c.A02CreditoFolio,
+            CAG: c.A02CAG,
+            SOCIO: c.A02Nombre,
+            RELACION: c.A02Relacion,
+            SUCURSAL: c.sucursal?.R11Nom ?? '',
+            PRESTAMO: c.A02Prestamo,
+            PRODUCTO: c.A02Producto,
+            EJECUTIVO: c.A02UsrAutorizacionNombre,
+            OBSERVACIONES: c.resumenRevisionF1?.A04Obs ?? '',
+            CALIFICATIVO: c.resumenRevisionF1?.A04CalA ?? 'PENDIENTE',
+            TOLERANCIA: c.resumenRevisionF1?.A04CalB ?? 'PENDIENTE',
+        }));
+
+        const buffer = this._excelService.buildExcelBuffer({
+            rows,
+            sheetName: 'Relación de Créditos Revisados',
+            headers: [
+                'FOLIO_CREDITO',
+                'CAG',
+                'SOCIO',
+                'RELACION',
+                'SUCURSAL',
+                'PRESTAMO',
+                'PRODUCTO',
+                'EJECUTIVO',
+                'OBSERVACIONES',
+                'CALIFICATIVO',
+                'TOLERANCIA',
+            ],
+            columnWidths: [
+                15, // Folio
+                10, // CAG
+                30, // Socio
+                15, // Relación
+                20, // Sucursal
+                15, // Préstamo
+                20, // Producto
+                25, // Ejecutivo
+                60, // Observaciones
+                15, // Calificativo
+                15, // Tolerancia
+            ],
+        });
+
+
+        const filename = `Cedula_F1${muestraId}.xlsx`;
+
+        const { key } = await this._awsS3Service.uploadBuffer({
+            buffer,
+            key: `auditoria/cedulas/${uuid()}-${filename}`,
+            contentType:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const signedUrl = await this._awsS3Service.getSignedDownloadUrl({
+            key,
+            expiresInSeconds: 60 * 15, // 15 minutos
+        });
+
+        return {
+            url: signedUrl,
+            totalRegistros: rows.length,
+        };
+    }
 
     // *============================
     // * HELPERS
     // *============================
+
     private _construirReporteFase1<
         T extends {
             resumenRevisionF1?: {

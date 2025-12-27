@@ -39,4 +39,11 @@ export class ReportesHandler {
         return this._service.getDetalleHallazgosFase1ByMuestraPorCategoria(muestraId, user)
     }
 
+    @MessagePattern('reportes-acredito.fase1.buildExcelCreditosRevisados')
+    handleBuildExcelCreditosRevisados(
+        @Payload() { muestraId, user }: { muestraId: number, user: Usuario }
+    ) {
+        return this._service.buildCedulaF1(muestraId, user)
+    }
+
 }
