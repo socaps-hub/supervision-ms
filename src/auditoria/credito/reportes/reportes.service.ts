@@ -134,8 +134,8 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
         const creditos = await this.a02MuestraCreditoSeleccion.findMany({
             where: {
                 A02MuestraId: muestraId,
-                A02Estado: 'Con revision',
                 sucursal: { R11Coop_id: user.R12Coop_id },
+                resumenRevisionF1: { isNot: null }
             },
             include: {
                 sucursal: true,
@@ -314,8 +314,8 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
         const creditos = await this.a02MuestraCreditoSeleccion.findMany({
             where: {
                 A02MuestraId: muestraId,
-                A02Estado: 'Con revision',
                 sucursal: { R11Coop_id: user.R12Coop_id },
+                resumenRevisionF1: { isNot: null }
             },
             include: {
                 evaluacionRevisionF1: {
