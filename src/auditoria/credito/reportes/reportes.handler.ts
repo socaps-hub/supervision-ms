@@ -46,4 +46,19 @@ export class ReportesHandler {
         return this._service.buildCedulaF1(muestraId, user)
     }
 
+    // * FASE 2
+    @MessagePattern('reportes-acredito.fase1.reporteSeguimientoAnomaliasByMuestra')
+    handlegetReporteSeguimientoAnomaliasByMuestra(
+        @Payload() { muestraId, user }: { muestraId: number, user: Usuario }
+    ) {
+        return this._service.getReporteSeguimientoAnomaliasByMuestra(muestraId, user)
+    }
+
+    @MessagePattern('reportes-acredito.fase1.buildCedulaF2')
+    handleBuildCedulaF2(
+        @Payload() { muestraId, user }: { muestraId: number, user: Usuario }
+    ) {
+        return this._service.buildCedulaF2(muestraId, user)
+    }
+
 }

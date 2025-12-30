@@ -10,6 +10,7 @@ import { CategoriaHallazgoDto, ReporteHallazgosF1PorCategoriaResponse } from './
 import { AwsS3Service } from 'src/common/aws/services/aws-s3.service';
 import { ExcelService } from 'src/common/excel/services/excel.service';
 import { BuildCedulaExcelResponse } from './dto/output/build-cedula-excel-response.output';
+import { ReporteSeguimientoAnomaliasResponseDTO, ReporteSeguimientoAnomaliasRowDTO } from './dto/output/fase2/reporte-seguimiento-anomalias-response.output';
 
 const RUBRO_PS_AUT = '% SOBRE AUTORIZADO';
 
@@ -478,6 +479,147 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
         };
     }
 
+    // * FASE 2
+    public async getReporteSeguimientoAnomaliasByMuestra(
+        muestraId: number,
+        user: Usuario
+    ): Promise<ReporteSeguimientoAnomaliasResponseDTO> {
+
+        const registros = await this.a02MuestraCreditoSeleccion.findMany({
+            where: {
+                A02MuestraId: muestraId,
+                sucursal: { R11Coop_id: user.R12Coop_id },
+                resumenRevisionF2: { isNot: null }
+            },
+            select: {
+                sucursal: {
+                    select: { R11Nom: true }
+                },
+                resumenRevisionF1: {
+                    select: { A04Ha: true }
+                },
+                resumenRevisionF2: {
+                    select: {
+                        A06ARes: true,
+                        A06Solv: true,
+                        A06NSolv: true
+                    }
+                }
+            }
+        });
+
+        return this._construirReporteSeguimientoAnomalias(
+            registros,
+            r => r.sucursal.R11Nom
+        );
+    }
+
+    async buildCedulaF2(muestraId: number, user: Usuario): Promise<BuildCedulaExcelResponse> {
+
+        const creditos = await this.a02MuestraCreditoSeleccion.findMany({
+            where: {
+                A02MuestraId: muestraId,
+                sucursal: { R11Coop_id: user.R12Coop_id },
+            },
+            include: {
+                sucursal: true,
+                resumenRevisionF1: true,
+                resumenRevisionF2: {
+                    include: {
+                        auditor: true,
+                    }
+                },
+            },
+            orderBy: {
+                A02CreditoFolio: 'asc',
+            },
+        });
+
+        const rows = creditos.map(c => ({
+            FOLIO_CREDITO: c.A02CreditoFolio,
+            CAG: c.A02CAG,
+            SOCIO: c.A02Nombre,
+            SUCURSAL: c.sucursal?.R11Nom ?? '',
+            PRESTAMO: c.A02Prestamo,
+            CALIFICATIVO: c.resumenRevisionF1?.A04CalA ?? 'PENDIENTE',
+            TOLERANCIA: c.resumenRevisionF1?.A04CalB ?? 'PENDIENTE',
+            RESPONSABLE: c.A02UsrAutorizacionNombre,
+            AUDITOR_SEG: c.resumenRevisionF2?.auditor.R12Nom ?? '---',
+            OBSERVACIONES_INICIALES: c.resumenRevisionF1?.A04Obs ?? '',
+            COMPROMISO: c.resumenRevisionF1?.A04Comp ?? '---',
+            PLAZO_FECHA: c.resumenRevisionF1?.A04FPlzo ? new Date(c.resumenRevisionF1.A04FPlzo) : '---',
+            HALLAZGOS: c.resumenRevisionF1?.A04Ha,
+            SOLVENTADOS: c.resumenRevisionF2?.A06Solv,
+            NO_SOLVENTADOS: c.resumenRevisionF2?.A06NSolv,
+            ACCION_RESULTADO: c.resumenRevisionF2?.A06ARes,
+            OBSERVACIONES_SEG: c.resumenRevisionF2?.A06Obs,
+        }));
+
+        const buffer = this._excelService.buildExcelBuffer({
+            rows,
+            sheetName: 'Relación de Créditos Revisados',
+            headers: [
+                'FOLIO_CREDITO',
+                'CAG',
+                'SOCIO',
+                'SUCURSAL',
+                'PRESTAMO',
+                'CALIFICATIVO',
+                'TOLERANCIA',
+                'RESPONSABLE',
+                'AUDITOR_SEG',
+                'OBSERVACIONES_INICIALES',
+                'COMPROMISO',
+                'PLAZO_FECHA',
+                'HALLAZGOS',
+                'SOLVENTADOS',
+                'NO_SOLVENTADOS',
+                'ACCION_RESULTADO',
+                'OBSERVACIONES_SEG',
+            ],
+            columnWidths: [
+                15, // Folio
+                10, // CAG
+                30, // Socio
+                20, // Sucursal
+                15, // Préstamo
+                15, // Calificativo
+                15, // Tolerancia
+                25, // Ejecutivo
+                25, // Auditor Seguimiento
+                60, // Observaciones
+                60, // Compromisos
+                15, // Plazo Fecha
+                10, // Hallazgos
+                10, // Solventados
+                10, // No Solventados
+                15, // Accion Resultado
+                60, // Observaciones Seg
+            ],
+        });
+
+
+        const filename = `Cedula_F2${muestraId}.xlsx`;
+
+        const { key } = await this._awsS3Service.uploadBuffer({
+            buffer,
+            key: `auditoria/cedulas/${uuid()}-${filename}`,
+            contentType:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const signedUrl = await this._awsS3Service.getSignedDownloadUrl({
+            key,
+            expiresInSeconds: 60 * 15, // 15 minutos
+        });
+
+        return {
+            url: signedUrl,
+            totalRegistros: rows.length,
+        };
+    }
+
+
     // *============================
     // * HELPERS
     // *============================
@@ -570,6 +712,119 @@ export class ReportesService extends PrismaClient implements OnModuleInit {
 
         return { rows, totales };
     }
+
+    private _construirReporteSeguimientoAnomalias<
+        T extends {
+            resumenRevisionF1?: { A04Ha?: number } | null;
+            resumenRevisionF2?: {
+                A06ARes?: 'SOLVENTADO' | 'NO_SOLVENTADO';
+                A06Solv?: number;
+                A06NSolv?: number;
+            } | null;
+        }
+    >(
+        registros: T[],
+        getKey: (r: T) => string
+    ): ReporteSeguimientoAnomaliasResponseDTO {
+
+        const mapa = new Map<string, ReporteSeguimientoAnomaliasRowDTO>();
+
+        for (const r of registros) {
+            const key = getKey(r);
+
+            if (!mapa.has(key)) {
+                mapa.set(key, {
+                    sucursal: key,
+
+                    expedientesSeguimiento: 0,
+                    solventadosExp: 0,
+                    noSolventadosExp: 0,
+                    cumplimiento: 0,
+                    incumplimiento: 0,
+
+                    hallazgos: 0,
+                    solventadosHall: 0,
+                    noSolventadosHall: 0,
+                    corregidos: 0,
+                    sinCorregir: 0
+                });
+            }
+
+            const row = mapa.get(key)!;
+
+            // ───────── Expedientes ─────────
+            row.expedientesSeguimiento++;
+
+            if (r.resumenRevisionF2?.A06ARes === 'SOLVENTADO') {
+                row.solventadosExp++;
+            }
+
+            if (r.resumenRevisionF2?.A06ARes === 'NO_SOLVENTADO') {
+                row.noSolventadosExp++;
+            }
+
+            // ───────── Hallazgos ─────────
+            row.hallazgos += r.resumenRevisionF1?.A04Ha ?? 0;
+            row.solventadosHall += r.resumenRevisionF2?.A06Solv ?? 0;
+            row.noSolventadosHall += r.resumenRevisionF2?.A06NSolv ?? 0;
+        }
+
+        const rows = Array.from(mapa.values()).map(r => ({
+            ...r,
+            cumplimiento: r.expedientesSeguimiento
+                ? +(r.solventadosExp / r.expedientesSeguimiento * 100).toFixed(2)
+                : 0,
+            incumplimiento: r.expedientesSeguimiento
+                ? +(r.noSolventadosExp / r.expedientesSeguimiento * 100).toFixed(2)
+                : 0,
+            corregidos: r.hallazgos
+                ? +(r.solventadosHall / r.hallazgos * 100).toFixed(2)
+                : 0,
+            sinCorregir: r.hallazgos
+                ? +(r.noSolventadosHall / r.hallazgos * 100).toFixed(2)
+                : 0
+        }));
+
+        const totales = rows.reduce((acc, r) => {
+            acc.expedientesSeguimiento += r.expedientesSeguimiento;
+            acc.solventadosExp += r.solventadosExp;
+            acc.noSolventadosExp += r.noSolventadosExp;
+            acc.hallazgos += r.hallazgos;
+            acc.solventadosHall += r.solventadosHall;
+            acc.noSolventadosHall += r.noSolventadosHall;
+            return acc;
+        }, {
+            expedientesSeguimiento: 0,
+            solventadosExp: 0,
+            noSolventadosExp: 0,
+            cumplimiento: 0,
+            incumplimiento: 0,
+            hallazgos: 0,
+            solventadosHall: 0,
+            noSolventadosHall: 0,
+            corregidos: 0,
+            sinCorregir: 0
+        });
+
+        totales.cumplimiento = totales.expedientesSeguimiento
+            ? +(totales.solventadosExp / totales.expedientesSeguimiento * 100).toFixed(2)
+            : 0;
+
+        totales.incumplimiento = totales.expedientesSeguimiento
+            ? +(totales.noSolventadosExp / totales.expedientesSeguimiento * 100).toFixed(2)
+            : 0;
+
+        totales.corregidos = totales.hallazgos
+            ? +(totales.solventadosHall / totales.hallazgos * 100).toFixed(2)
+            : 0;
+
+        totales.sinCorregir = totales.hallazgos
+            ? +(totales.noSolventadosHall / totales.hallazgos * 100).toFixed(2)
+            : 0;
+
+        return { rows, totales };
+    }
+
 
     private parseNumber(value: unknown): number {
         if (value === null || value === undefined) return 0;
