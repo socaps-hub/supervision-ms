@@ -15,6 +15,7 @@ import { ValidEstados } from './enums/valid-estados.enum';
 import { InventarioSolicitudesFilterInput } from './dto/inputs/solicitudes/inventario-solicitudes-filter.input';
 import { UpdatePrestamoInput } from './dto/inputs/solicitudes/update-solicitud.input';
 import { SisConCreCreateFase2Input } from './dto/inputs/fase2-seguimiento/create-fase2input';
+import { SisConCreCreateFase3Input } from './dto/inputs/fase3-desembolso/create-fase3.input';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -247,7 +248,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                     data: {
                         R01Est: "Con seguimiento",
                     }
-                })              
+                })
 
             });
 
@@ -255,6 +256,65 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         } catch (error) {
             this.logger.error("[createOrUpdateFase2 - SisConCre] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 2 - SisConCre" };
+        }
+    }
+
+    async createOrUpdateFase3(
+        input: SisConCreCreateFase3Input,
+        user: Usuario,
+    ): Promise<{ success: boolean; message?: string }> {
+        const { prestamo, evaluaciones, resumen } = input;
+
+        try {
+            await this.$transaction(async (tx) => {
+                // 1. Eliminar evaluaciones y resumen previos
+                await tx.r09EvaluacionFase3.deleteMany({
+                    where: { R09P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                });
+
+                await tx.r10EvaluacionResumenFase3.deleteMany({
+                    where: { R10P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                });
+
+                if (!evaluaciones || evaluaciones.length === 0) {
+                    throw new Error("Debe registrar al menos una evaluación en Fase 3");
+                }
+
+                // 2. Insertar nuevas evaluaciones
+                await tx.r09EvaluacionFase3.createMany({
+                    data: evaluaciones.map((ev) => ({
+                        R09Id: crypto.randomUUID(),
+                        R09P_num: prestamo,
+                        R09E_id: ev.R09E_id,
+                        R09Res: ev.R09Res,
+                        R09Ev_en: new Date().toISOString(),
+                    })),
+                });
+
+                // 3. Insertar resumen con fecha generada automáticamente
+                await tx.r10EvaluacionResumenFase3.create({
+                    data: {
+                        R10P_num: prestamo,
+                        R10FDes: new Date().toISOString(),
+                        R10Sup: user.R12Id,
+                        ...resumen,
+                    },
+                });
+
+                // 4. Actualizar Estado del movimiento a "Con seguimiento"
+                await tx.r01Prestamo.update({
+                    where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
+                    data: {
+                        R01Est: "Con desembolso",
+                    }
+                })
+
+            });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error("[createOrUpdateFase3 - SisConCre] Error:", error);
+            return { success: false, message: error instanceof Error ? error.message : "Error en Fase 3 - SisConCre" };
         }
     }
 

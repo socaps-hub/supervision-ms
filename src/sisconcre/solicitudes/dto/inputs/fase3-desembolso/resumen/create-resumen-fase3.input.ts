@@ -7,10 +7,6 @@ import { Calificativo } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
 @InputType()
 export class CreateEvaluacionResumenFase3Input {
   
-  @Field()
-  @IsString()
-  R10P_num: string;
-
   @Field(() => Int)
   @IsNumber()
   R10Ha: number;

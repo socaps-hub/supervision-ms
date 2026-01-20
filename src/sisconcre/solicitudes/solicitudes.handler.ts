@@ -11,6 +11,7 @@ import { InventarioSolicitudesFilterInput } from "./dto/inputs/solicitudes/inven
 import { UpdatePrestamoInput } from "./dto/inputs/solicitudes/update-solicitud.input";
 import { UpdateAllPrestamoArgs } from "./dto/args/update-all-prestamo.arg";
 import { SisConCreCreateFase2Input } from "./dto/inputs/fase2-seguimiento/create-fase2input";
+import { SisConCreCreateFase3Input } from "./dto/inputs/fase3-desembolso/create-fase3.input";
 
 @Controller()
 export class SolicitudesHandler {
@@ -73,6 +74,30 @@ export class SolicitudesHandler {
             return {
                 success: false,
                 message: error?.message || 'No se pudo crear la Fase 2',
+            };
+        }
+
+    }
+
+    @MessagePattern('supervision.solicitudes.createOrUpdateFase3')
+    async handleCreateOrUpdateFase3(
+        @Payload() { input, user }: { input: SisConCreCreateFase3Input, user: Usuario }
+    ): Promise<BooleanResponse> {
+
+        try {
+            await this._service.createOrUpdateFase3(input, user);
+
+            this.logger.log('Fase 3 Creada por: ', user.R12Id);
+            return {
+                success: true,
+                message: 'Fase 3 creada exitosamente',
+            };
+        } catch (error) {
+            this.logger.error('❌ Error en SolicitudesHandler.handleCreateOrUpdateFase3', error);
+
+            return {
+                success: false,
+                message: error?.message || 'No se pudo crear la Fase 3',
             };
         }
 
