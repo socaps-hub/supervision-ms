@@ -5,14 +5,14 @@ import { Cooperativa } from 'src/common/entities/cooperativa.entity';
 import { Producto } from 'src/common/entities/producto.entity';
 import { Sucursal } from 'src/common/entities/sucursal.entity';
 import { Usuario } from 'src/common/entities/usuario.entity';
-import { EvaluacionFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/entities/evaluacion-fase2.entity';
-import { EvaluacionResumenFase2 } from 'src/fase-ii-seguimiento/evaluaciones-fase2/resumen-fase2/entities/evaluacion-resumen-fase2.entity';
 import { EvaluacionFase3 } from 'src/fase-iii-desembolso/evaluaciones-fase3/entities/evaluacion-fase3.entity';
 import { EvaluacionResumenFase3 } from 'src/fase-iii-desembolso/evaluaciones-fase3/resumen-fase3/entities/resumen-fase3.entity';
 import { EvaluacionFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/entities/evaluacion-fase4.entity';
 import { EvaluacionResumenFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/resumen-fase4/entities/resumen-fase4.entity';
 import { EvaluacionFase1 } from './fase1-levantamiento/evaluacion-fase1.entity';
 import { EvaluacionResumenFase1 } from './fase1-levantamiento/resumen-fase1.entity';
+import { EvaluacionFase2 } from './fase2-seguimiento/evaluacion-fase2.entity';
+import { EvaluacionResumenFase2 } from './fase2-seguimiento/evaluacion-resumen-fase2.entity';
 
 @ObjectType()
 export class Prestamo {

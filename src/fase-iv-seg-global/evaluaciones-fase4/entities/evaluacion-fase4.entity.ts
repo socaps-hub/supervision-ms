@@ -1,10 +1,10 @@
-import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { Field, ID, ObjectType } from '@nestjs/graphql';
 import { ResFaseIII as ResFIII, ResFaseI as ResFI } from '@prisma/client';
 import { ResFaseII as ResFII } from '@prisma/client';
 import { Elemento } from 'src/estructura/elementos/entities/elemento.entity';
-import { ResFaseII } from 'src/fase-ii-seguimiento/evaluaciones-fase2/enums/evaluacion-fase2.enum';
 import { ResFaseIII } from 'src/fase-iii-desembolso/evaluaciones-fase3/enums/evaluacion-fase3.enum';
 import { Prestamo } from 'src/sisconcre/solicitudes/entities/solicitud.entity';
+import { ResFaseII } from 'src/sisconcre/solicitudes/enums/evaluacion-fase2.enum';
 import { ResFaseI } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
 
 @ObjectType()

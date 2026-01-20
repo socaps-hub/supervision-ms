@@ -10,6 +10,7 @@ import { ValidEstados } from "./enums/valid-estados.enum";
 import { InventarioSolicitudesFilterInput } from "./dto/inputs/solicitudes/inventario-solicitudes-filter.input";
 import { UpdatePrestamoInput } from "./dto/inputs/solicitudes/update-solicitud.input";
 import { UpdateAllPrestamoArgs } from "./dto/args/update-all-prestamo.arg";
+import { SisConCreCreateFase2Input } from "./dto/inputs/fase2-seguimiento/create-fase2input";
 
 @Controller()
 export class SolicitudesHandler {
@@ -29,6 +30,7 @@ export class SolicitudesHandler {
         try {
             await this._service.createFase1(input, user);
 
+            this.logger.error('Fase 1 Creada por: ', user.R12Id);
             return {
                 success: true,
                 message: 'Fase 1 creada exitosamente',
@@ -48,7 +50,32 @@ export class SolicitudesHandler {
     async handleUpdateF1(
         @Payload() { input, user }: { input: UpdateAllPrestamoArgs, user: Usuario}
     ) {
+        this.logger.error('Fase 1 Actualizada por: ', user.R12Id);
         return await this._service.updateAll( input, user );
+    }
+
+    @MessagePattern('supervision.solicitudes.createOrUpdateFase2')
+    async handleCreateOrUpdateFase2(
+        @Payload() { input, user }: { input: SisConCreCreateFase2Input, user: Usuario }
+    ): Promise<BooleanResponse> {
+
+        try {
+            await this._service.createOrUpdateFase2(input, user);
+
+            this.logger.error('Fase 2 Creada por: ', user.R12Id);
+            return {
+                success: true,
+                message: 'Fase 2 creada exitosamente',
+            };
+        } catch (error) {
+            this.logger.error('❌ Error en SolicitudesHandler.handleCreateOrUpdateFase2', error);
+
+            return {
+                success: false,
+                message: error?.message || 'No se pudo crear la Fase 2',
+            };
+        }
+
     }
 
     @MessagePattern('supervision.solicitudes.getInventarioSolicitudesFiltrado')

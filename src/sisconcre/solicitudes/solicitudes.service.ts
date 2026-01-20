@@ -14,6 +14,7 @@ import { InventarioSolicitudesResponse } from './dto/output/inventario-solicitud
 import { ValidEstados } from './enums/valid-estados.enum';
 import { InventarioSolicitudesFilterInput } from './dto/inputs/solicitudes/inventario-solicitudes-filter.input';
 import { UpdatePrestamoInput } from './dto/inputs/solicitudes/update-solicitud.input';
+import { SisConCreCreateFase2Input } from './dto/inputs/fase2-seguimiento/create-fase2input';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -197,6 +198,67 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         }
     }
 
+    async createOrUpdateFase2(
+        input: SisConCreCreateFase2Input,
+        user: Usuario,
+    ): Promise<{ success: boolean; message?: string }> {
+        const { prestamo, evaluaciones, resumen } = input;
+
+        try {
+            await this.$transaction(async (tx) => {
+                // 1. Eliminar evaluaciones y resumen previos
+                await tx.r07EvaluacionFase2.deleteMany({
+                    where: { R07P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                });
+
+                await tx.r08EvaluacionResumenFase2.deleteMany({
+                    where: { R08P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                });
+
+                if (!evaluaciones || evaluaciones.length === 0) {
+                    throw new Error("Debe registrar al menos una evaluación en Fase 2");
+                }
+
+                // 2. Insertar nuevas evaluaciones
+                await tx.r07EvaluacionFase2.createMany({
+                    data: evaluaciones.map((ev) => ({
+                        R07Id: crypto.randomUUID(),
+                        R07P_num: prestamo,
+                        R07E_id: ev.R07E_id,
+                        R07Res: ev.R07Res,
+                        R07Ev_por: user.R12Id,
+                        R07Ev_en: new Date().toISOString(),
+                    })),
+                });
+
+                // 3. Insertar resumen con fecha generada automáticamente
+                await tx.r08EvaluacionResumenFase2.create({
+                    data: {
+                        R08P_num: prestamo,
+                        R08FSeg: new Date().toISOString(),
+                        R08Ev_por: user.R12Id,
+                        ...resumen,
+                    },
+                });
+
+                // 4. Actualizar Estado del movimiento a "Con seguimiento"
+                await tx.r01Prestamo.update({
+                    where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
+                    data: {
+                        R01Est: "Con seguimiento",
+                    }
+                })              
+
+            });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error("[createOrUpdateFase2 - SisConCre] Error:", error);
+            return { success: false, message: error instanceof Error ? error.message : "Error en Fase 2 - SisConCre" };
+        }
+    }
+
+    // * INVENTARIOS
     public async getInventarioSolicitudesFiltrado(
         input: InventarioSolicitudesFilterInput,
         user: Usuario,
@@ -416,7 +478,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 ...rest,
             },
         });
-    }   
+    }
 
     async remove(id: string, user: Usuario): Promise<R01Prestamo> {
         const exists = await this.findById(id, user)

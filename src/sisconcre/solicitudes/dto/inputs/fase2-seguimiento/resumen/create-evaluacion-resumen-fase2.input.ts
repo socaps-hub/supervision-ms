@@ -5,11 +5,6 @@ import { Calificativo, Resolucion } from 'src/sisconcre/solicitudes/enums/evalua
 
 @InputType()
 export class CreateEvaluacionResumenFase2Input {
-
-    @Field(() => String)
-    @IsString()
-    R08P_num: string;
-
     @Field(() => Int)
     @IsNumber()
     R08SolvT: number;

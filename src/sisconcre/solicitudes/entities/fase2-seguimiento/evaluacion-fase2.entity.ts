@@ -3,8 +3,8 @@ import { ResFaseII as ResFII } from '@prisma/client';
 
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { Elemento } from 'src/estructura/elementos/entities/elemento.entity';
-import { ResFaseII } from '../enums/evaluacion-fase2.enum';
 import { Prestamo } from 'src/sisconcre/solicitudes/entities/solicitud.entity';
+import { ResFaseII } from '../../enums/evaluacion-fase2.enum';
 
 @ObjectType()
 export class EvaluacionFase2 {

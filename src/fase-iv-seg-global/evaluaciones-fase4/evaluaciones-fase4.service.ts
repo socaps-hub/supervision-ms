@@ -9,8 +9,8 @@ import { UpdateEvaluacionFase4Input } from './dto/inputs/update-evaluacion-fase4
 import { CreateEvaluacionResumenFase4Input } from './resumen-fase4/dto/inputs/create-evaluacion-resumen-fase4.input';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { SaveEvaluacionesFase4Args } from './dto/args/save-evaluaciones-fase4.args';
-import { ResFaseII } from 'src/fase-ii-seguimiento/evaluaciones-fase2/enums/evaluacion-fase2.enum';
 import { Calificativo } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
+import { ResFaseII } from 'src/sisconcre/solicitudes/enums/evaluacion-fase2.enum';
 
 @Injectable()
 export class EvaluacionesFase4Service extends PrismaClient implements OnModuleInit {
