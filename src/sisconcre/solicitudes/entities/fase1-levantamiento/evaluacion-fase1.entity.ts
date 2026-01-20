@@ -3,8 +3,8 @@ import { ResFaseI as ResFI } from '@prisma/client';
 
 import { Elemento } from 'src/estructura/elementos/entities/elemento.entity';
 import { Usuario } from 'src/common/entities/usuario.entity';
-import { Prestamo } from 'src/fase-i-levantamiento/solicitudes/entities/solicitud.entity';
-import { ResFaseI } from '../enums/evaluacion.enum';
+import { ResFaseI } from '../../enums/evaluacion.enum';
+import { Prestamo } from '../solicitud.entity';
 // import { ResFaseI } from '@prisma/client';
 
 @ObjectType()

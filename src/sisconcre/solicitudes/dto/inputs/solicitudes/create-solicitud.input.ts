@@ -1,6 +1,5 @@
-import { InputType, Field, Float, ID, GraphQLISODateTime } from '@nestjs/graphql';
-import { IsUUID, IsString, IsNotEmpty, IsDate, IsOptional, IsEnum, IsBoolean, Length, MaxLength, MinLength, IsDecimal, IsNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { InputType, Field, Float, ID } from '@nestjs/graphql';
+import { IsUUID, IsString, IsOptional, IsBoolean, Length, MaxLength, IsNumber } from 'class-validator';
 
 @InputType()
 export class CreatePrestamoInput {

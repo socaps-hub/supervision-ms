@@ -1,7 +1,7 @@
 import { Field, InputType, Int } from "@nestjs/graphql";
 import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
-import { ValidEstados } from "../enums/valid-estados.enum";
 import { GraphQLJSON } from "graphql-scalars";
+import { ValidEstados } from "src/sisconcre/solicitudes/enums/valid-estados.enum";
 
 @InputType()
 export class InventarioSolicitudesFilterInput {

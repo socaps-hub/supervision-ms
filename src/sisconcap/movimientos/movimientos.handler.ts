@@ -6,9 +6,9 @@ import { Usuario } from "src/common/entities/usuario.entity";
 import { BooleanResponse } from "src/common/dto/boolean-response.object";
 import { UpdateMovimientoArgs } from "./dto/inputs/update-movimiento.input";
 import { CreateFase2Input } from "./dto/inputs/create-fase2.input";
-import { ValidEstados } from "src/fase-i-levantamiento/solicitudes/enums/valid-estados.enum";
 import { CreateFase3Input } from "./dto/inputs/create-fase3.input";
-import { InventarioSolicitudesFilterInput } from "src/fase-i-levantamiento/solicitudes/dto/inventario-solicitudes-filter.input";
+import { InventarioSolicitudesFilterInput } from "src/sisconcre/solicitudes/dto/inputs/solicitudes/inventario-solicitudes-filter.input";
+import { ValidEstados } from "src/sisconcre/solicitudes/enums/valid-estados.enum";
 
 @Controller()
 export class MovimientosHandler {

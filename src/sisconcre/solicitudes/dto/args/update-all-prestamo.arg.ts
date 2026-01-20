@@ -1,10 +1,10 @@
 import { Field, ID, InputType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
 import { ValidateNested, IsArray, IsString } from "class-validator";
+import { CreateEvaluacionFase1Input } from "../inputs/fase1-levantamiento/evaluacion/create-evaluacion-fase1.input";
+import { CreateResumenFase1Input } from "../inputs/fase1-levantamiento/resumen/create-resumen-fase1.input";
+import { UpdatePrestamoInput } from "../inputs/solicitudes/update-solicitud.input";
 
-import { UpdatePrestamoInput } from "../update-solicitud.input";
-import { CreateEvaluacionFase1Input } from "src/fase-i-levantamiento/evaluaciones/dto/create-evaluacion-fase1.input";
-import { CreateResumenFase1Input } from "src/fase-i-levantamiento/evaluaciones/resumen/dto/create-resumen-fase1.input";
 
 @InputType()
 export class UpdateAllPrestamoArgs {

@@ -9,8 +9,8 @@ import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { Movimiento } from './entities/movimiento.entity';
 import { UpdateMovimientoArgs } from './dto/inputs/update-movimiento.input';
 import { CreateFase2Input } from './dto/inputs/create-fase2.input';
-import { ValidEstadosArgs } from 'src/fase-i-levantamiento/solicitudes/dto/args/prestamos-by-estado.arg';
 import { CreateFase3Input } from './dto/inputs/create-fase3.input';
+import { ValidEstadosArgs } from 'src/sisconcre/solicitudes/dto/args/prestamos-by-estado.arg';
 
 @Resolver()
 @UseGuards(AuthGraphQLGuard)

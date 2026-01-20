@@ -2,9 +2,8 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { ResFaseIII as ResFIII } from '@prisma/client';
 
 import { Elemento } from 'src/estructura/elementos/entities/elemento.entity';
-import { Usuario } from 'src/common/entities/usuario.entity';
-import { Prestamo } from 'src/fase-i-levantamiento/solicitudes/entities/solicitud.entity';
 import { ResFaseIII } from '../enums/evaluacion-fase3.enum';
+import { Prestamo } from 'src/sisconcre/solicitudes/entities/solicitud.entity';
 
 @ObjectType()
 export class EvaluacionFase3 {

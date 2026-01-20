@@ -1,7 +1,7 @@
 import { InputType, Field, ID, Int } from "@nestjs/graphql";
 import { ResFaseI as ResF1 } from "@prisma/client";
 import { IsInt, IsString } from "class-validator";
-import { ResFaseI } from "src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum";
+import { ResFaseI } from "src/sisconcre/solicitudes/enums/evaluacion.enum";
 
 @InputType()
 export class CreateSisconcapEvaluacionFase1Input {

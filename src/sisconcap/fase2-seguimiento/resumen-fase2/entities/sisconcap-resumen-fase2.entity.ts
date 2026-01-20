@@ -1,8 +1,8 @@
 import { ObjectType, Field, Int } from "@nestjs/graphql";
 import { Calificativo as Cal} from "@prisma/client";
 import { Usuario } from "src/common/entities/usuario.entity";
-import { Calificativo } from "src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum";
 import { Movimiento } from "src/sisconcap/movimientos/entities/movimiento.entity";
+import { Calificativo } from "src/sisconcre/solicitudes/enums/evaluacion.enum";
 
 @ObjectType()
 export class SisconcapEvaluacionResumenFase2 {

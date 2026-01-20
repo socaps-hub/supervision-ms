@@ -1,7 +1,7 @@
 import { InputType, Field, Int, ID } from '@nestjs/graphql';
 import { Calificativo as Cal, Resolucion as Res } from '@prisma/client';
 import { IsNumber, IsString } from 'class-validator';
-import { Calificativo, Resolucion } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
+import { Calificativo, Resolucion } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
 
 @InputType()
 export class CreateEvaluacionResumenFase2Input {

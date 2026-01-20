@@ -1,8 +1,8 @@
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { Calificativo as Cal, Resolucion as Res } from '@prisma/client';
 import { Usuario } from 'src/common/entities/usuario.entity';
-import { Calificativo, Resolucion } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
-import { Prestamo } from 'src/fase-i-levantamiento/solicitudes/entities/solicitud.entity';
+import { Prestamo } from 'src/sisconcre/solicitudes/entities/solicitud.entity';
+import { Calificativo, Resolucion } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
 
 @ObjectType()
 export class EvaluacionResumenFase2 {

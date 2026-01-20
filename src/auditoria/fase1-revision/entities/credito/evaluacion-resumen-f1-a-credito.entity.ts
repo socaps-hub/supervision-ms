@@ -4,7 +4,7 @@ import { Calificativo as Cal, CalificativoB } from '@prisma/client';
 import { CalificativoBEnum } from '../../enums/calificativo-b.enum';
 import { MuestraCreditoSeleccion } from 'src/auditoria/credito/entities/muestra-credito-seleccion.entity';
 import { Usuario } from 'src/common/entities/usuario.entity';
-import { Calificativo } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
+import { Calificativo } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
 
 @ObjectType()
 export class EvaluacionResumenF1ACredito {

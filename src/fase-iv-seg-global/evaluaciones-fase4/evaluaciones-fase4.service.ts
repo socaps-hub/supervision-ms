@@ -9,8 +9,8 @@ import { UpdateEvaluacionFase4Input } from './dto/inputs/update-evaluacion-fase4
 import { CreateEvaluacionResumenFase4Input } from './resumen-fase4/dto/inputs/create-evaluacion-resumen-fase4.input';
 import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { SaveEvaluacionesFase4Args } from './dto/args/save-evaluaciones-fase4.args';
-import { Calificativo } from 'src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum';
 import { ResFaseII } from 'src/fase-ii-seguimiento/evaluaciones-fase2/enums/evaluacion-fase2.enum';
+import { Calificativo } from 'src/sisconcre/solicitudes/enums/evaluacion.enum';
 
 @Injectable()
 export class EvaluacionesFase4Service extends PrismaClient implements OnModuleInit {
@@ -91,6 +91,14 @@ export class EvaluacionesFase4Service extends PrismaClient implements OnModuleIn
             R16Ev_por: resumen.R16Ev_por,
           },
         });
+
+        // 5. Actualizar solicitud
+        await tx.r01Prestamo.update({
+            where: { R01NUM: resumen.R16P_num, R01Coop_id: user.R12Coop_id },
+            data: {
+                R01Est: "Con global",
+            }
+        })
       });
 
       return { success: true };

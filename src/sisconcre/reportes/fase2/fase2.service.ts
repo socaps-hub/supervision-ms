@@ -5,9 +5,9 @@ import { PrismaClient } from "@prisma/client";
 import { Usuario } from "src/common/entities/usuario.entity";
 import { ReporteFase2Response, ReporteFase2Sucursal } from "../dto/fase2/resultados-seguimiento.dto";
 import { FiltroFechasInput } from "src/sisconcre/common/dto/filtro-fechas.input";
-import { Calificativo } from "src/fase-i-levantamiento/evaluaciones/enums/evaluacion.enum";
 import { NATS_SERVICE } from "src/config";
 import { firstValueFrom } from "rxjs";
+import { Calificativo } from "src/sisconcre/solicitudes/enums/evaluacion.enum";
 
 @Injectable()
 export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
