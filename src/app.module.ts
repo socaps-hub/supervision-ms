@@ -9,7 +9,6 @@ import { GraphQLJSON } from 'graphql-scalars';
 import { SisconcreModule } from './sisconcre/sisconcre.module';
 import { CommonModule } from './common/common.module';
 import { EstructuraModule } from './estructura/estructura.module';
-import { FaseIvSegGlobalModule } from './fase-iv-seg-global/fase-iv-seg-global.module';
 import { SisconcapModule } from './sisconcap/sisconcap.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 
@@ -25,7 +24,6 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
     SisconcreModule,
     CommonModule,
     EstructuraModule,
-    FaseIvSegGlobalModule,
     SisconcapModule,
     AuditoriaModule,
   ],

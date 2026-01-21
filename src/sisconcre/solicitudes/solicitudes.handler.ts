@@ -12,12 +12,12 @@ import { UpdatePrestamoInput } from "./dto/inputs/solicitudes/update-solicitud.i
 import { UpdateAllPrestamoArgs } from "./dto/args/update-all-prestamo.arg";
 import { SisConCreCreateFase2Input } from "./dto/inputs/fase2-seguimiento/create-fase2input";
 import { SisConCreCreateFase3Input } from "./dto/inputs/fase3-desembolso/create-fase3.input";
+import { SisConCreCreateFase4Input } from "./dto/inputs/fase4-seguimiento-global/create-or-update-fase4.input";
 
 @Controller()
 export class SolicitudesHandler {
     private readonly logger = new Logger('Solicitudes Handler');
 
-    // *TODO -> Eliminar fase-i-levantamiento y solucionar posibles errores
     constructor(
         private readonly _service: SolicitudesService,
     ) { }
@@ -101,6 +101,38 @@ export class SolicitudesHandler {
             };
         }
 
+    }
+
+    // TODO -> BORRAR CARPETA DE FASEIV Y CORREGIR ERRORES, CAMBIAR PASO MASIVO F4 A SOLICITUDES SERVICE
+    @MessagePattern('supervision.solicitudes.createOrUpdateFase4')
+    async handleCreateOrUpdateFase4(
+        @Payload() { input, user }: { input: SisConCreCreateFase4Input, user: Usuario }
+    ): Promise<BooleanResponse> {
+
+        try {
+            await this._service.createOrUpdateFase4(input, user);
+
+            this.logger.log('Fase 4 Creada por: ', user.R12Id);
+            return {
+                success: true,
+                message: 'Fase 4 creada exitosamente',
+            };
+        } catch (error) {
+            this.logger.error('❌ Error en SolicitudesHandler.handleCreateOrUpdateFase4', error);
+
+            return {
+                success: false,
+                message: error?.message || 'No se pudo crear la Fase 4',
+            };
+        }
+
+    }
+
+    @MessagePattern('supervision.solicitudes.pasoMasivoAFase4')
+    async handlePasoMasivoAFase4(
+        @Payload() user: Usuario
+    ) {
+        return this._service.pasoMasivoAFase4( user );
     }
 
     @MessagePattern('supervision.solicitudes.getInventarioSolicitudesFiltrado')

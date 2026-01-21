@@ -1,11 +1,16 @@
 import { Field, ID, InputType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
-import { ValidateNested, IsArray, IsString } from "class-validator";
-import { CreateEvaluacionResumenFase4Input } from "../../resumen-fase4/dto/inputs/create-evaluacion-resumen-fase4.input";
-import { CreateEvaluacionFase4Input } from "../inputs/create-evaluacion-fase4.input";
+import { ValidateNested, IsArray, IsString, Length } from "class-validator";
+import { CreateEvaluacionFase4Input } from "./evaluacion/create-evaluacion-fase4.input";
+import { CreateEvaluacionResumenFase4Input } from "./resumen/create-evaluacion-resumen-fase4.input";
 
 @InputType()
-export class SaveEvaluacionesFase4Args {
+export class SisConCreCreateFase4Input {
+
+    @Field(() => String)
+    @Length(8, 8)
+    @IsString()
+    prestamo: string;
 
     @Field(() => [CreateEvaluacionFase4Input])
     @IsArray()

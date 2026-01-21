@@ -1,13 +1,13 @@
 import { R01Prestamo } from '@prisma/client';
 import { Prestamo } from '../entities/solicitud.entity';
-import { EvaluacionFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/entities/evaluacion-fase4.entity';
-import { EvaluacionResumenFase4 } from 'src/fase-iv-seg-global/evaluaciones-fase4/resumen-fase4/entities/resumen-fase4.entity';
 import { EvaluacionFase1 } from '../entities/fase1-levantamiento/evaluacion-fase1.entity';
 import { EvaluacionResumenFase1 } from '../entities/fase1-levantamiento/resumen-fase1.entity';
 import { EvaluacionFase2 } from '../entities/fase2-seguimiento/evaluacion-fase2.entity';
 import { EvaluacionResumenFase2 } from '../entities/fase2-seguimiento/evaluacion-resumen-fase2.entity';
 import { EvaluacionFase3 } from '../entities/fase3-desembolso/evaluacion-fase3.entity';
 import { EvaluacionResumenFase3 } from '../entities/fase3-desembolso/resumen-fase3.entity';
+import { EvaluacionFase4 } from '../entities/fase4-seguimiento-global/evaluacion-fase4.entity';
+import { EvaluacionResumenFase4 } from '../entities/fase4-seguimiento-global/resumen-fase4.entity';
 
 type PrestamoWithRelaciones = R01Prestamo & {
   evaluacionesF1?: EvaluacionFase1[];

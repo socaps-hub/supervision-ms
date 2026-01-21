@@ -4,11 +4,7 @@ import { IsString } from 'class-validator';
 import { ResFaseII } from 'src/sisconcre/solicitudes/enums/evaluacion-fase2.enum';
 
 @InputType()
-export class CreateEvaluacionFase4Input {
-  @Field(() => ID)
-  @IsString()
-  R15P_num: string;
-  
+export class CreateEvaluacionFase4Input {  
   @Field(() => String)
   @IsString()
   R15E_id: string;

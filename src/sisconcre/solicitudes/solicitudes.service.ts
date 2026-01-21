@@ -16,6 +16,11 @@ import { InventarioSolicitudesFilterInput } from './dto/inputs/solicitudes/inven
 import { UpdatePrestamoInput } from './dto/inputs/solicitudes/update-solicitud.input';
 import { SisConCreCreateFase2Input } from './dto/inputs/fase2-seguimiento/create-fase2input';
 import { SisConCreCreateFase3Input } from './dto/inputs/fase3-desembolso/create-fase3.input';
+import { SisConCreCreateFase4Input } from './dto/inputs/fase4-seguimiento-global/create-or-update-fase4.input';
+import { Calificativo } from './enums/evaluacion.enum';
+import { CreateEvaluacionFase4Input } from './dto/inputs/fase4-seguimiento-global/evaluacion/create-evaluacion-fase4.input';
+import { CreateEvaluacionResumenFase4Input } from './dto/inputs/fase4-seguimiento-global/resumen/create-evaluacion-resumen-fase4.input';
+import { ResFaseII } from './enums/evaluacion-fase2.enum';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -316,6 +321,162 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             this.logger.error("[createOrUpdateFase3 - SisConCre] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 3 - SisConCre" };
         }
+    }
+
+    async createOrUpdateFase4(
+        input: SisConCreCreateFase4Input,
+        user: Usuario,
+    ): Promise<{ success: boolean; message?: string }> {
+        const { prestamo, evaluaciones, resumen } = input;
+
+        try {
+            await this.$transaction(async (tx) => {
+                // ✅ 0. Validar que el préstamo pertenezca a la cooperativa del usuario
+                const prestamoDB = await tx.r01Prestamo.findUnique({
+                    where: { R01NUM: prestamo },
+                    select: { R01Coop_id: true },
+                });
+
+                if (!prestamoDB) {
+                    throw new Error('El préstamo no existe');
+                }
+
+                if (prestamoDB.R01Coop_id !== user.R12Coop_id) {
+                    throw new Error('No autorizado para modificar este préstamo');
+                }
+
+                // 1. Eliminar evaluaciones y resumen previos
+                await tx.r15EvaluacionFase4.deleteMany({
+                    where: { R15P_num: prestamo },
+                });
+
+                await tx.r16EvaluacionResumenFase4.deleteMany({
+                    where: { R16P_num: prestamo },
+                });
+
+                if (!evaluaciones || evaluaciones.length === 0) {
+                    throw new Error("Debe registrar al menos una evaluación en Fase 4");
+                }
+
+                // 2. Insertar nuevas evaluaciones
+                await tx.r15EvaluacionFase4.createMany({
+                    data: evaluaciones.map((ev) => ({
+                        R15P_num: prestamo,
+                        R15Id: crypto.randomUUID(),
+                        R15E_id: ev.R15E_id,
+                        R15Res: ev.R15Res,
+                    })),
+                });
+
+                // 3. Insertar resumen con fecha generada automáticamente
+                await tx.r16EvaluacionResumenFase4.create({
+                    data: {
+                        R16P_num: prestamo,
+                        R16SolvT: resumen.R16SolvT,
+                        R16SolvA: resumen.R16SolvA,
+                        R16SolvM: resumen.R16SolvM,
+                        R16SolvB: resumen.R16SolvB,
+                        R16SegCal: resumen.R16SegCal,
+                        R16DesCal: resumen.R16DesCal,
+                        R16CalF: resumen.R16CalF,
+                        R16HaSolv: resumen.R16HaSolv,
+                        R16PenCu: resumen.R16PenCu,
+                        R16RcF: resumen.R16RcF,
+                        R16Obs: resumen.R16Obs,
+                        R16FGlo: new Date().toISOString(),
+                        R16Ev_por: resumen.R16Ev_por,
+                    },
+                });
+
+                // 4. Actualizar Estado del movimiento a "Con seguimiento"
+                await tx.r01Prestamo.update({
+                    where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
+                    data: {
+                        R01Est: "Con global",
+                    }
+                })
+
+            });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error("[createOrUpdateFase4 - SisConCre] Error:", error);
+            return { success: false, message: error instanceof Error ? error.message : "Error en Fase 4 - SisConCre" };
+        }
+    }
+
+    async pasoMasivoAFase4(user: Usuario): Promise<{ success: boolean; message: string }> {
+        const prestamos = await this.r01Prestamo.findMany({
+            where: {
+                R01Coop_id: user.R12Coop_id,
+                R01Est: "Con desembolso",
+                resumenF2: { R08Cal: Calificativo.CORRECTO },
+                resumenF3: { R10Cal: Calificativo.CORRECTO },
+                resumenF4: null // aún no tienen seguimiento global
+            },
+            include: {
+                evaluacionesF2: true,
+                evaluacionesF3: true,
+                resumenF2: true,
+                resumenF3: true
+            }
+        });
+
+        if (!prestamos.length) {
+            return { success: false, message: 'No hay préstamos elegibles para pasar a Seguimiento Global' };
+        }
+
+        for (const prestamo of prestamos) {
+            const evaluaciones: CreateEvaluacionFase4Input[] = [];
+
+            for (const ev of prestamo.evaluacionesF2) {
+                evaluaciones.push({
+                    R15E_id: ev.R07E_id,
+                    R15Res: ev.R07Res,
+                });
+            }
+
+            for (const ev of prestamo.evaluacionesF3) {
+                evaluaciones.push({
+                    R15E_id: ev.R09E_id,
+                    R15Res: ev.R09Res as ResFaseII,
+                });
+            }
+
+            const resumen: CreateEvaluacionResumenFase4Input = {
+                R16SolvA: prestamo.resumenF2?.R08SolvA ?? 0,
+                R16SolvM: prestamo.resumenF2?.R08SolvM ?? 0,
+                R16SolvB: prestamo.resumenF2?.R08SolvB ?? 0,
+                R16SolvT: prestamo.resumenF2?.R08SolvT ?? 0,
+                R16SegCal: prestamo.resumenF2?.R08Cal ?? 'CORRECTO',
+                R16DesCal: prestamo.resumenF3?.R10Cal ?? 'CORRECTO',
+                R16CalF: 'CORRECTO',
+                R16HaSolv: prestamo.resumenF3?.R10Ha ?? 0,
+                R16PenCu: prestamo.resumenF3?.R10Pendientes ?? 0,
+                R16RcF: prestamo.resumenF3?.R10Rc ?? 0,
+                R16Ev_por: user.R12Id, // o el ID del usuario que ejecuta
+                R16Obs: 'Registro masivo automático',
+            };
+
+            await this.r15EvaluacionFase4.createMany({ data: evaluaciones.map( e => ({ R15P_num: prestamo.R01NUM, ...e })) });
+            await this.r16EvaluacionResumenFase4.create({
+                data: {
+                    ...resumen,
+                    R16P_num: prestamo.R01NUM,
+                    R16FGlo: new Date().toISOString(),
+                    R16Ev_por: user.R12Id,
+                },
+            });
+
+            await this.r01Prestamo.update({
+                where: { R01NUM: prestamo.R01NUM },
+                data: { R01Est: 'Con global' }
+            });
+        }
+
+        const prestamoOrPrestamos = prestamos.length === 1 ? 'préstamo pasó' : 'prestamos pasaron'
+
+        return { success: true, message: `${prestamos.length} ${prestamoOrPrestamos} a Seguimiento Global automáticamente.` };
     }
 
     // * INVENTARIOS
