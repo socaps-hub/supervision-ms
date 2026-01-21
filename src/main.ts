@@ -31,7 +31,7 @@ async function bootstrap() {
   );
   
   await app.startAllMicroservices()
-  await app.init()
+  // await app.init()
   console.log('✅ Microservicio conectado a NATS (Supervision-MS)');
   
   await app.listen( envs.port ) // GraphQL Expuesto localmente
