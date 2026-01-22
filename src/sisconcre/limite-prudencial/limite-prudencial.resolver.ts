@@ -13,20 +13,20 @@ import { Usuario } from 'src/common/entities/usuario.entity';
 export class LimitePrudencialResolver {
   constructor(private readonly limitePrudencialService: LimitePrudencialService) {}
 
-  @Mutation(() => LimitePrudencial)
-  createLimitePrudencial(
-    @Args('createLimitePrudencialInput') createLimitePrudencialInput: CreateLimitePrudencialInput,
-    @GetUserGraphQL() user: Usuario,
-  ) {
-    return this.limitePrudencialService.create(createLimitePrudencialInput, user);
-  }
+  // @Mutation(() => LimitePrudencial)
+  // createLimitePrudencial(
+  //   @Args('createLimitePrudencialInput') createLimitePrudencialInput: CreateLimitePrudencialInput,
+  //   @GetUserGraphQL() user: Usuario,
+  // ) {
+  //   return this.limitePrudencialService.create(createLimitePrudencialInput, user);
+  // }
 
-  @Query(() => LimitePrudencial)
-  findLastLimitePrudencial(
-    @GetUserGraphQL() user: Usuario,
-  ) {
-    return this.limitePrudencialService.findLast(user);
-  }
+  // @Query(() => LimitePrudencial)
+  // findLastLimitePrudencial(
+  //   @GetUserGraphQL() user: Usuario,
+  // ) {
+  //   return this.limitePrudencialService.findLast(user);
+  // }
 
   // @Query(() => [LimitePrudencial], { name: 'limitePrudencial' })
   // findAll() {

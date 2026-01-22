@@ -19,8 +19,8 @@ export class LimitePrudencial {
   @Field( () => Date )
   R18Actualizado_en: Date 
   
-  @Field( () => Cooperativa )
-  cooperativa: Cooperativa
+  @Field( () => Cooperativa, { nullable: true })
+  cooperativa?: Cooperativa
 
 
 }

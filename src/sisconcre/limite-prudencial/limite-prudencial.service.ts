@@ -18,70 +18,45 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
 
     const { R18Importe } = createLimitePrudencialInput
 
-    const limitePrudencial = await this.r18LimitePrudencial.findFirst({
-      where: { R18Importe, R18Coop_id: user.R12Coop_id }
-    })
+    try {
 
-    if ( limitePrudencial ) {
-      // SI ya existe, se modifica la fecha de creación para que sea el actual
-      return await this.r18LimitePrudencial.update({
-        where: { R18Id: limitePrudencial.R18Id },
-        data: {
-          R18Importe,
-          R18Coop_id: user.R12Coop_id,
-          R18Creado_en: new Date()
-        },
-        include: {
-          cooperativa: {
-            select: {
-              R17Id: true,
-              R17Nom: true,
-              R17Activ: true,
-              R17Logo: true,
-              sucursales: true,
-            }
-          },
-        }
+      const limitePrudencial = await this.r18LimitePrudencial.findFirst({
+        where: { R18Importe, R18Coop_id: user.R12Coop_id }
       })
-    }
 
-    return await this.r18LimitePrudencial.create({
-      data: {
-        ...createLimitePrudencialInput,
-        R18Coop_id: user.R12Coop_id
-      },
-      include: {
-        cooperativa: {
-          select: {
-            R17Id: true,
-            R17Nom: true,
-            R17Activ: true,
-            R17Logo: true,
-            sucursales: true,
-          }
-        },
+      if ( limitePrudencial ) {
+        // SI ya existe, se modifica la fecha de creación para que sea el actual
+        await this.r18LimitePrudencial.update({
+          where: { R18Id: limitePrudencial.R18Id },
+          data: {
+            R18Importe,
+            R18Coop_id: user.R12Coop_id,
+            R18Creado_en: new Date()
+          },
+        })
+
+        return { limitePrudencialId: limitePrudencial.R18Id }
       }
-    });
+
+      const limitePrudCreated = await this.r18LimitePrudencial.create({
+        data: {
+          ...createLimitePrudencialInput,
+          R18Coop_id: user.R12Coop_id
+        },
+      });
+      
+      return { limitePrudencialId: limitePrudCreated.R18Id }
+    } catch (error) {
+      this._logger.error("[Limite prudencial create - SisConCre] Error:", error);
+      return { success: false, message: error instanceof Error ? error.message : "Error en creación/actualización de límite prudencial - SisConCre" };
+    }    
   }
 
   async findLast( user: Usuario ) {
-    console.log(user);
-    
     const limitePrudencial = await this.r18LimitePrudencial.findFirst({
       where: { R18Coop_id: user.R12Coop_id },
       orderBy: {
         R18Creado_en: 'desc'
-      },
-      include: {
-        cooperativa: {
-          select: {
-            R17Id: true,
-            R17Nom: true,
-            R17Activ: true,
-            R17Logo: true,
-            sucursales: true,
-          }
-        },
       }
     })
 
@@ -93,20 +68,4 @@ export class LimitePrudencialService extends PrismaClient implements OnModuleIni
 
     return limitePrudencial
   }
-
-  // findAll() {
-  //   return `This action returns all limitePrudencial`;
-  // }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} limitePrudencial`;
-  // }
-
-  // update(id: number, updateLimitePrudencialInput: UpdateLimitePrudencialInput) {
-  //   return `This action updates a #${id} limitePrudencial`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} limitePrudencial`;
-  // }
 }
