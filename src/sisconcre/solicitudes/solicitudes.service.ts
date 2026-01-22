@@ -101,7 +101,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         }
     }
 
-    async updateAll(input: UpdateAllPrestamoArgs, user: Usuario): Promise<BooleanResponse> {
+    async updateAll(input: UpdateAllPrestamoArgs, user: Usuario) {
         const { prestamo, evaluaciones, resumen, currentId } = input;
         const { R01NUM, R01Nso, R01Nom, id, ...rest } = prestamo;
 
@@ -197,16 +197,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 };
             });
 
-            return { success: true, ...result };
+            return result;
 
         } catch (error) {
-            // console.log('Errror en update', error.message);
-            return { success: false, message: error.message || '' }
-            // Puedes personalizar el tipo de error según el código de Prisma
-            // throw new RpcException({
-            //   message: error?.message || 'Ocurrió un error al modificar la solicitud completa',
-            //   status: HttpStatus.INTERNAL_SERVER_ERROR,
-            // });
+            this.logger.error("[updateAll - SisConCre] Error:", error);
+            return { success: false, message: error instanceof Error ? error.message : "Error en actualización de Fase 1 - SisConCre" };
         }
     }
 

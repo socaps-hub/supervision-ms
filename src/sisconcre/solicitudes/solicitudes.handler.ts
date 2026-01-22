@@ -79,8 +79,23 @@ export class SolicitudesHandler {
     async handleUpdateF1(
         @Payload() { input, user }: { input: UpdateAllPrestamoArgs, user: Usuario}
     ) {
-        this.logger.log('Fase 1 Actualizada por: ', user.R12Id);
-        return await this._service.updateAll( input, user );
+        try {
+            const result = await this._service.updateAll( input, user );
+
+            this.logger.log('Fase 1 Actualizada por: ', user.R12Id);
+            return {
+                success: true,
+                message: 'Fase 1 actualizada exitosamente',
+                ...result,
+            };
+        } catch (error) {
+            this.logger.error('❌ Error en SolicitudesHandler.handleUpdateF1', error);
+
+            return {
+                success: false,
+                message: error?.message || 'No se pudo actualizar la Fase 1',
+            };
+        }
     }
 
     @UseInterceptors(ActivityLogRpcInterceptor)
