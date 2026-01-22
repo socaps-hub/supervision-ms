@@ -702,7 +702,9 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     }
 
     async remove(id: string, user: Usuario): Promise<R01Prestamo> {
-        const exists = await this.findById(id, user)
+        const exists = await this.r01Prestamo.findUnique({
+            where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+        })
 
         if (!exists) {
             throw new RpcException({
@@ -711,7 +713,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             });
         }
 
-        return await this.r01Prestamo.delete({ where: { R01NUM: id } })
+        return await this.r01Prestamo.delete({ where: { R01NUM: id, R01Coop_id: user.R12Coop_id } })
     }
 
 
