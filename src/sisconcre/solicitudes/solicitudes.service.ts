@@ -75,7 +75,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                     R05Ev_en: new Date().toISOString(),
                 }));
 
-                await tx.r05EvaluacionFase1.createMany({
+                const evaluacion = await tx.r05EvaluacionFase1.createMany({
                     data: evaluacionesData,
                 });
 
@@ -87,9 +87,9 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                     },
                 });
                 return {
-                    prestamo: prestamoDB,
-                    evaluaciones: evaluacionesData,
-                    resumen: resumenDB,
+                    prestamoId: prestamoDB.R01NUM,
+                    evaluacionId: prestamoDB.R01NUM,
+                    resumenId: resumenDB.R06P_num,
                 };
             });
 
@@ -106,7 +106,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         const { R01NUM, R01Nso, R01Nom, id, ...rest } = prestamo;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
 
                 // Verificar que no exista un prestamo con el mismo num
                 const exists = await tx.r01Prestamo.findUnique({
@@ -189,9 +189,15 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         },
                     });
                 }
+
+                return {
+                    prestamoId: R01NUM,
+                    evaluacionId: R01NUM,
+                    resumenId: existing.R06P_num,
+                };
             });
 
-            return { success: true };
+            return { success: true, ...result };
 
         } catch (error) {
             // console.log('Errror en update', error.message);
@@ -207,11 +213,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     async createOrUpdateFase2(
         input: SisConCreCreateFase2Input,
         user: Usuario,
-    ): Promise<{ success: boolean; message?: string }> {
+     ) {
         const { prestamo, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r07EvaluacionFase2.deleteMany({
                     where: { R07P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
@@ -238,7 +244,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 3. Insertar resumen con fecha generada automáticamente
-                await tx.r08EvaluacionResumenFase2.create({
+               const newResumen = await tx.r08EvaluacionResumenFase2.create({
                     data: {
                         R08P_num: prestamo,
                         R08FSeg: new Date().toISOString(),
@@ -248,16 +254,21 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 4. Actualizar Estado del movimiento a "Con seguimiento"
-                await tx.r01Prestamo.update({
+                const prestamoUpdated = await tx.r01Prestamo.update({
                     where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
                     data: {
                         R01Est: "Con seguimiento",
                     }
                 })
 
+                return {
+                    prestamoId: prestamoUpdated.R01NUM,
+                    evaluacionId: prestamoUpdated.R01NUM,
+                    resumenId: newResumen.R08P_num,
+                };
             });
 
-            return { success: true };
+            return result;
         } catch (error) {
             this.logger.error("[createOrUpdateFase2 - SisConCre] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 2 - SisConCre" };
@@ -267,11 +278,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     async createOrUpdateFase3(
         input: SisConCreCreateFase3Input,
         user: Usuario,
-    ): Promise<{ success: boolean; message?: string }> {
+    ) {
         const { prestamo, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r09EvaluacionFase3.deleteMany({
                     where: { R09P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
@@ -297,7 +308,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 3. Insertar resumen con fecha generada automáticamente
-                await tx.r10EvaluacionResumenFase3.create({
+                const newResumen = await tx.r10EvaluacionResumenFase3.create({
                     data: {
                         R10P_num: prestamo,
                         R10FDes: new Date().toISOString(),
@@ -307,16 +318,21 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 4. Actualizar Estado del movimiento a "Con seguimiento"
-                await tx.r01Prestamo.update({
+                const prestamoUpdated = await tx.r01Prestamo.update({
                     where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
                     data: {
                         R01Est: "Con desembolso",
                     }
                 })
 
+                return {
+                    prestamoId: prestamoUpdated.R01NUM,
+                    evaluacionId: prestamoUpdated.R01NUM,
+                    resumenId: newResumen.R10P_num,
+                };
             });
 
-            return { success: true };
+            return result;
         } catch (error) {
             this.logger.error("[createOrUpdateFase3 - SisConCre] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 3 - SisConCre" };
@@ -326,11 +342,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     async createOrUpdateFase4(
         input: SisConCreCreateFase4Input,
         user: Usuario,
-    ): Promise<{ success: boolean; message?: string }> {
+    ) {
         const { prestamo, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // ✅ 0. Validar que el préstamo pertenezca a la cooperativa del usuario
                 const prestamoDB = await tx.r01Prestamo.findUnique({
                     where: { R01NUM: prestamo },
@@ -369,7 +385,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 3. Insertar resumen con fecha generada automáticamente
-                await tx.r16EvaluacionResumenFase4.create({
+                const newResumen = await tx.r16EvaluacionResumenFase4.create({
                     data: {
                         R16P_num: prestamo,
                         R16SolvT: resumen.R16SolvT,
@@ -389,23 +405,32 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 4. Actualizar Estado del movimiento a "Con seguimiento"
-                await tx.r01Prestamo.update({
+                const prestamoUpdated = await tx.r01Prestamo.update({
                     where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
                     data: {
                         R01Est: "Con global",
                     }
                 })
 
+                return {
+                    prestamoId: prestamoUpdated.R01NUM,
+                    evaluacionId: prestamoUpdated.R01NUM,
+                    resumenId: newResumen.R16P_num,
+                };
             });
 
-            return { success: true };
+            return result;
         } catch (error) {
             this.logger.error("[createOrUpdateFase4 - SisConCre] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 4 - SisConCre" };
         }
     }
 
-    async pasoMasivoAFase4(user: Usuario): Promise<{ success: boolean; message: string }> {
+    async pasoMasivoAFase4(user: Usuario): Promise<{
+        success: boolean;
+        message: string;
+        prestamoIds: string[];
+    }> {
         const prestamos = await this.r01Prestamo.findMany({
             where: {
                 R01Coop_id: user.R12Coop_id,
@@ -422,12 +447,15 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             }
         });
 
+        const prestamoIds: string[] = [];
         if (!prestamos.length) {
-            return { success: false, message: 'No hay préstamos elegibles para pasar a Seguimiento Global' };
+            return { success: false, message: 'No hay préstamos elegibles para pasar a Seguimiento Global', prestamoIds, };
         }
 
         for (const prestamo of prestamos) {
             const evaluaciones: CreateEvaluacionFase4Input[] = [];
+
+            prestamoIds.push(prestamo.R01NUM);
 
             for (const ev of prestamo.evaluacionesF2) {
                 evaluaciones.push({
@@ -476,7 +504,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
         const prestamoOrPrestamos = prestamos.length === 1 ? 'préstamo pasó' : 'prestamos pasaron'
 
-        return { success: true, message: `${prestamos.length} ${prestamoOrPrestamos} a Seguimiento Global automáticamente.` };
+        return { 
+            success: true, 
+            message: `${prestamos.length} ${prestamoOrPrestamos} a Seguimiento Global automáticamente.`,
+            prestamoIds,
+        };
     }
 
     // * INVENTARIOS
@@ -701,7 +733,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         });
     }
 
-    async remove(id: string, user: Usuario): Promise<R01Prestamo> {
+    async remove(id: string, user: Usuario): Promise<{ prestamoId: string }> {
         const exists = await this.r01Prestamo.findUnique({
             where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
         })
@@ -713,7 +745,9 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             });
         }
 
-        return await this.r01Prestamo.delete({ where: { R01NUM: id, R01Coop_id: user.R12Coop_id } })
+        const prestamoRemoved = await this.r01Prestamo.delete({ where: { R01NUM: id, R01Coop_id: user.R12Coop_id } })
+
+        return { prestamoId: prestamoRemoved.R01NUM }
     }
 
 

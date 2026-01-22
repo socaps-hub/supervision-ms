@@ -13,6 +13,7 @@ import { AwsModule } from './aws/aws.module';
         }),
         ExcelModule,
         AwsModule,
-    ]
+        // NatsModule,
+    ],
 })
 export class CommonModule {}

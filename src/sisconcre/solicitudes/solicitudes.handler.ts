@@ -1,4 +1,4 @@
-import { Controller, Logger } from "@nestjs/common";
+import { Controller, Logger, UseInterceptors } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
 
 import { SolicitudesService } from "./solicitudes.service";
@@ -13,6 +13,9 @@ import { UpdateAllPrestamoArgs } from "./dto/args/update-all-prestamo.arg";
 import { SisConCreCreateFase2Input } from "./dto/inputs/fase2-seguimiento/create-fase2input";
 import { SisConCreCreateFase3Input } from "./dto/inputs/fase3-desembolso/create-fase3.input";
 import { SisConCreCreateFase4Input } from "./dto/inputs/fase4-seguimiento-global/create-or-update-fase4.input";
+import { ActivityLog } from "src/common/decorators/activity-log.decorator";
+import { AuditActionEnum } from "src/common/enums/audit-action.enum";
+import { ActivityLogRpcInterceptor } from "src/common/interceptor/activity-log-rpc.interceptor";
 
 @Controller()
 export class SolicitudesHandler {
@@ -23,18 +26,31 @@ export class SolicitudesHandler {
     ) { }
 
     // * FASES ACTIONS
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.CREATE,
+        eventName: 'supervision.solicitudes.createFase1',
+        entities: [
+            { name: 'R01Prestamo', idPath: 'prestamoId' },
+            { name: 'R05EvaluacionFase1', idPath: 'evaluacionId' },
+            { name: 'R06EvaluacionResumenFase1', idPath: 'resumenId' },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.createFase1')
     async handleCreateFase1(
         @Payload() { input, user }: { input: SisConCreCreateFase1Input, user: Usuario }
     ): Promise<BooleanResponse> {
 
         try {
-            await this._service.createFase1(input, user);
+            const result = await this._service.createFase1(input, user);
 
             this.logger.log('Fase 1 Creada por: ', user.R12Id);
             return {
                 success: true,
                 message: 'Fase 1 creada exitosamente',
+                ...result
             };
         } catch (error) {
             this.logger.error('❌ Error en SolicitudesHandler.handleCreateFase1', error);
@@ -47,6 +63,18 @@ export class SolicitudesHandler {
 
     }
 
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.UPDATE,
+        eventName: 'supervision.solicitudes.updateAll',
+        entities: [
+            { name: 'R01Prestamo', idPath: 'prestamoId' },
+            { name: 'R05EvaluacionFase1', idPath: 'evaluacionId' },
+            { name: 'R06EvaluacionResumenFase1', idPath: 'resumenId' },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.updateAll')
     async handleUpdateF1(
         @Payload() { input, user }: { input: UpdateAllPrestamoArgs, user: Usuario}
@@ -55,18 +83,31 @@ export class SolicitudesHandler {
         return await this._service.updateAll( input, user );
     }
 
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.CREATE,
+        eventName: 'supervision.solicitudes.createOrUpdateFase2',
+        entities: [
+            { name: 'R01Prestamo', idPath: 'prestamoId' },
+            { name: 'R07EvaluacionFase2', idPath: 'evaluacionId' },
+            { name: 'R08EvaluacionResumenFase2', idPath: 'resumenId' },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.createOrUpdateFase2')
     async handleCreateOrUpdateFase2(
         @Payload() { input, user }: { input: SisConCreCreateFase2Input, user: Usuario }
     ): Promise<BooleanResponse> {
 
         try {
-            await this._service.createOrUpdateFase2(input, user);
+            const result = await this._service.createOrUpdateFase2(input, user);
 
             this.logger.log('Fase 2 Creada por: ', user.R12Id);
             return {
                 success: true,
                 message: 'Fase 2 creada exitosamente',
+                ...result,
             };
         } catch (error) {
             this.logger.error('❌ Error en SolicitudesHandler.handleCreateOrUpdateFase2', error);
@@ -79,18 +120,31 @@ export class SolicitudesHandler {
 
     }
 
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.CREATE,
+        eventName: 'supervision.solicitudes.createOrUpdateFase3',
+        entities: [
+            { name: 'R01Prestamo', idPath: 'prestamoId' },
+            { name: 'R09EvaluacionFase3', idPath: 'evaluacionId' },
+            { name: 'R10EvaluacionResumenFase3', idPath: 'resumenId' },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.createOrUpdateFase3')
     async handleCreateOrUpdateFase3(
         @Payload() { input, user }: { input: SisConCreCreateFase3Input, user: Usuario }
     ): Promise<BooleanResponse> {
 
         try {
-            await this._service.createOrUpdateFase3(input, user);
+            const result = await this._service.createOrUpdateFase3(input, user);
 
             this.logger.log('Fase 3 Creada por: ', user.R12Id);
             return {
                 success: true,
                 message: 'Fase 3 creada exitosamente',
+                ...result,
             };
         } catch (error) {
             this.logger.error('❌ Error en SolicitudesHandler.handleCreateOrUpdateFase3', error);
@@ -103,19 +157,31 @@ export class SolicitudesHandler {
 
     }
 
-    // TODO -> BORRAR CARPETA DE FASEIV Y CORREGIR ERRORES, CAMBIAR PASO MASIVO F4 A SOLICITUDES SERVICE
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.CREATE,
+        eventName: 'supervision.solicitudes.createOrUpdateFase4',
+        entities: [
+            { name: 'R01Prestamo', idPath: 'prestamoId' },
+            { name: 'R15EvaluacionFase4', idPath: 'evaluacionId' },
+            { name: 'R16EvaluacionResumenFase4', idPath: 'resumenId' },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.createOrUpdateFase4')
     async handleCreateOrUpdateFase4(
         @Payload() { input, user }: { input: SisConCreCreateFase4Input, user: Usuario }
     ): Promise<BooleanResponse> {
 
         try {
-            await this._service.createOrUpdateFase4(input, user);
+            const result = await this._service.createOrUpdateFase4(input, user);
 
             this.logger.log('Fase 4 Creada por: ', user.R12Id);
             return {
                 success: true,
                 message: 'Fase 4 creada exitosamente',
+                ...result,
             };
         } catch (error) {
             this.logger.error('❌ Error en SolicitudesHandler.handleCreateOrUpdateFase4', error);
@@ -128,9 +194,22 @@ export class SolicitudesHandler {
 
     }
 
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.EXECUTE,
+        eventName: 'supervision.solicitudes.pasoMasivoAFase4',
+        entities: [
+            {
+                name: 'R01Prestamo',
+                idPath: 'prestamoIds', // 👈 array
+            },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.pasoMasivoAFase4')
     async handlePasoMasivoAFase4(
-        @Payload() user: Usuario
+        @Payload() {user}:{user: Usuario}
     ) {
         return this._service.pasoMasivoAFase4( user );
     }
@@ -163,11 +242,37 @@ export class SolicitudesHandler {
         return this._service.update(data.updatePrestamoInput.id, data.updatePrestamoInput, data.user);
     }    
 
+    @UseInterceptors(ActivityLogRpcInterceptor)
+    @ActivityLog({
+        service: 'supervision-ms',
+        module: 'solicitudes',
+        action: AuditActionEnum.DELETE,
+        eventName: 'supervision.solicitudes.remove',
+        entities: [
+            { name: 'R01Prestamo', idPath: 'prestamoId' },
+        ],
+    })
     @MessagePattern('supervision.solicitudes.remove')
-    handleRemove(
-        @Payload() data: { id: string, user: Usuario }
+    async handleRemove(
+        @Payload() { id, user }: { id: string, user: Usuario }
     ) {
-        return this._service.remove(data.id, data.user);
+        try {
+            const result = await this._service.remove(id, user);
+
+            this.logger.log('Solicitud eliminada por: ', user.R12Id);
+            return {
+                success: true,
+                message: `Solicitud ${ id } eliminada exitosamente`,
+                ...result,
+            };
+        } catch (error) {
+            this.logger.error('❌ Error en SolicitudesHandler.handleRemove', error);
+
+            return {
+                success: false,
+                message: error?.message || 'No se pudo eliminar la solicitud',
+            };
+        }
     }
 
     // * STATS
