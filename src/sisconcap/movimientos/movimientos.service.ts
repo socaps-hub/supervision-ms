@@ -104,7 +104,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     });
 
                     // Crear resumen fase 3
-                    await tx.r25EvaluacionResumenFase3.create({
+                    const newResumen = await tx.r25EvaluacionResumenFase3.create({
                         data: {
                             R25Folio: movimiento.R19Folio,
                             R25Solv: 0,
@@ -126,9 +126,9 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                 }
 
                 return {
-                    movimiento,
-                    evaluaciones,
-                    resumen,
+                    movimientoId: movimiento.R19Folio.toString(),
+                    evaluacionId: movimiento.R19Folio.toString(),
+                    resumenId: resumen.R21Folio.toString(),
                 };
             });
 
@@ -136,21 +136,18 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
 
         } catch (error) {
             this.logger.error('❌ Error en la transacción de creación de Fase 1:', error);
-            throw new RpcException({
-                message: 'No se pudo crear la Fase 1 (movimiento, evaluaciones y resumen)',
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-            });
+            return { success: false, message: error instanceof Error ? error.message : "Error en Fase 1 - SisConCap" };
         }
     }
 
     async createOrUpdateFase2(
         input: CreateFase2Input,
         user: Usuario
-    ): Promise<{ success: boolean; message?: string }> {
+     ) {
         const { folio, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r22EvaluacionFase2Sisconcap.deleteMany({
                     where: { R22Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
@@ -232,9 +229,10 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     })
                 }
 
+                return { movimientoId: folio.toString() }
             });
 
-            return { success: true };
+            return result
         } catch (error) {
             this.logger.error("[createOrUpdateFase2] Error:", error);
             // return { success: false, message: error.message || "Error en Fase 2" };
@@ -245,11 +243,11 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
     async createOrUpdateFase3(
         input: CreateFase3Input,
         user: Usuario
-    ): Promise<{ success: boolean; message?: string }> {
+    ) {
         const { folio, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r24EvaluacionFase3Sisconcap.deleteMany({
                     where: { R24Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
@@ -294,9 +292,11 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                         R19Est: "Con global",
                     }
                 })
+
+                return { movimientoId: folio.toString() }
             });
 
-            return { success: true };
+            return result
         } catch (error) {
             this.logger.error("[createOrUpdateFase3] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 3" };
@@ -497,11 +497,11 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         }
     }
 
-    async updateFase1(input: UpdateMovimientoArgs, user: Usuario): Promise<BooleanResponse> {
+    async updateFase1(input: UpdateMovimientoArgs, user: Usuario) {
         const { movimiento, evaluaciones, resumen, folio } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Verificar que el movimiento exista y pertenezca a la misma cooperativa
                 const exists = await tx.r19Movimientos.findFirst({
                     where: {
@@ -620,9 +620,12 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     })
                 }
 
+                return {
+                    movimientoId: folio.toString(),
+                }
             });
 
-            return { success: true };
+            return result
         } catch (error) {
             this.logger.error('❌ Error en updateFase1:', error);
             return {
@@ -632,15 +635,17 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         }
     }
 
-    async remove(folio: number, user: Usuario): Promise<Movimiento> {
+    async remove(folio: number, user: Usuario): Promise<{ movimientoId: string }> {
         await this.findByFolio(folio, user)
 
-        return await this.r19Movimientos.delete({ where: { R19Folio: folio } })
+        const movimientoDeleted = await this.r19Movimientos.delete({ where: { R19Folio: folio } })
+
+        return { movimientoId: movimientoDeleted.R19Folio.toString() }
     }
 
     async cancelFase3AndFase2(folio: number, user: Usuario) {
         try {
-            return await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // Eliminar Fase 3
                 await tx.r24EvaluacionFase3Sisconcap.deleteMany({
                     where: { R24Folio: folio, movimiento: { R19Coop_id: user.R12Coop_id } },
@@ -666,8 +671,10 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                     }
                 })
 
-                return { success: true };
+                return { movimientoId: folio.toString() };
             });
+
+            return result
         } catch (error) {
             this.logger.error(`Error eliminando evaluaciones del folio ${folio}:`, error);
             return { success: false, message: error instanceof Error ? error.message : "Error al tratar de cancelar fase 3 y fase 2" };
