@@ -15,6 +15,7 @@ export interface ActivityLogMetadata {
   action: AuditActionEnum;
   source?: AuditSourceEnum;
   eventName?: string;
+  operationName?: string;
 
   entities: ActivityLogEntityMeta[];
 }
