@@ -797,6 +797,9 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                 return {
                     success: true,
                     message: `Muestra ${action} correctamente con ${detalles.length} créditos.`,
+                    muestraId: muestra.A01Id,          // 👈 CLAVE
+                    totalCreditos: detalles.length,    // 👈 métrica útil
+                    isUpdate,
                 };
             });
         } catch (error) {

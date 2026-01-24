@@ -16,54 +16,54 @@ import { GrupoTipo } from './enums/grupo-type-enum';
 export class GruposResolver {
   constructor(private readonly gruposService: GruposService) {}
 
-  @Mutation(() => Grupo, { name: 'createGrupo' })
-  createGrupo(
-    @Args('createGrupoInput') createGrupoInput: CreateGrupoInput
-  ) {
-    return this.gruposService.create(createGrupoInput)
-  }
+  // @Mutation(() => Grupo, { name: 'createGrupo' })
+  // createGrupo(
+  //   @Args('createGrupoInput') createGrupoInput: CreateGrupoInput
+  // ) {
+  //   return this.gruposService.create(createGrupoInput)
+  // }
 
-  @Query(() => [Grupo], { name: 'grupos' })
-  findAll(
-    @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string,
-    @Args('type', { type: () => GrupoTipo, nullable: true, defaultValue: GrupoTipo.SISCONCRE }) type: GrupoTipo
-  ) {
-    return this.gruposService.findAll( coopId, type );
-  }
+  // @Query(() => [Grupo], { name: 'grupos' })
+  // findAll(
+  //   @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string,
+  //   @Args('type', { type: () => GrupoTipo, nullable: true, defaultValue: GrupoTipo.SISCONCRE }) type: GrupoTipo
+  // ) {
+  //   return this.gruposService.findAll( coopId, type );
+  // }
 
-  @Query(() => [Grupo], { name: 'adminGroups' })
-  findAllAdminGroups(
-    @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string,
-  ) {
-    return this.gruposService.findAllAdminGroups( coopId );
-  }
+  // @Query(() => [Grupo], { name: 'adminGroups' })
+  // findAllAdminGroups(
+  //   @Args('coopId', { type: () => ID }, ParseUUIDPipe) coopId: string,
+  // ) {
+  //   return this.gruposService.findAllAdminGroups( coopId );
+  // }
 
-  @Query(() => Grupo, { name: 'grupo' })
-  findByName(
-    @Args('name', { type: () => String }) name: string,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.gruposService.findByName(name, user);
-  }
+  // @Query(() => Grupo, { name: 'grupo' })
+  // findByName(
+  //   @Args('name', { type: () => String }) name: string,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.gruposService.findByName(name, user);
+  // }
 
-  @Mutation(() => Grupo)
-  updateGrupo(
-    @Args('updateGrupoInput') updateGrupoInput: UpdateGrupoInput
-  ) {
-    return this.gruposService.update(updateGrupoInput.id, updateGrupoInput);
-  }
+  // @Mutation(() => Grupo)
+  // updateGrupo(
+  //   @Args('updateGrupoInput') updateGrupoInput: UpdateGrupoInput
+  // ) {
+  //   return this.gruposService.update(updateGrupoInput.id, updateGrupoInput);
+  // }
 
-  @Mutation(() => Grupo)
-  removeGrupo(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
-  ) {
-    return this.gruposService.remove(id);
-  }
+  // @Mutation(() => Grupo)
+  // removeGrupo(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.gruposService.remove(id);
+  // }
 
-  @Mutation(() => BooleanResponse)
-  createManyGruposFromExcel(
-    @Args('createManyGruposFromExcelArgs') createManyGruposFromExcelArgs: CreateManyGruposFromExcelArgs,
-  ) {
-    return this.gruposService.createManyFromExcel(createManyGruposFromExcelArgs.data, createManyGruposFromExcelArgs.coopId);
-  }
+  // @Mutation(() => BooleanResponse)
+  // createManyGruposFromExcel(
+  //   @Args('createManyGruposFromExcelArgs') createManyGruposFromExcelArgs: CreateManyGruposFromExcelArgs,
+  // ) {
+  //   return this.gruposService.createManyFromExcel(createManyGruposFromExcelArgs.data, createManyGruposFromExcelArgs.coopId);
+  // }
 }

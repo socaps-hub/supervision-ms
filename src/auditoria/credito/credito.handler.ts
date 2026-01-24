@@ -1,4 +1,4 @@
-import { Controller } from "@nestjs/common";
+import { Controller, UseInterceptors } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
 import { CreditoService } from "./credito.service";
 import { Usuario } from "src/common/entities/usuario.entity";
@@ -7,6 +7,9 @@ import { GetCreditosSeleccionadosInput } from "./dto/inputs/muestra-credito-sele
 import { ParametrosMuestraExtendInput } from "./dto/inputs/muestra-params-extend.input";
 import { ValidEstadosAuditoria } from "../enums/valid-estados.enum";
 import { InventarioRevisionFilterInput } from "./dto/inputs/inventario-revision-filter.input";
+import { ActivityLog } from "src/common/decorators/activity-log.decorator";
+import { AuditActionEnum } from "src/common/enums/audit-action.enum";
+import { ActivityLogRpcInterceptor } from "src/common/interceptor/activity-log-rpc.interceptor";
 
 @Controller()
 export class CreditoHandler {
@@ -41,11 +44,33 @@ export class CreditoHandler {
   }
 
   // * GUARDADO DE MUESTRA (SELECCION)
+  @UseInterceptors(ActivityLogRpcInterceptor)
+  @ActivityLog({  
+    service: 'supervision-ms',
+    module: 'auditoria-credito',
+    action: AuditActionEnum.EXECUTE,
+    eventName: 'supervision.auditoria.credito.muestra.upsert',
+    entities: [
+      { name: 'A01MuestraSeleccionCredito', idPath: 'muestraId' },
+    ],
+  })
   @MessagePattern('supervision.auditoria.credito.createOrUpdateMuestraSeleccion')
   async handleCrearMuestraSeleccion(
-    @Payload() { user, input, folios, isUpdate, muestraId }: { user: Usuario; input: CreateMuestraSeleccionInput; folios: number[], isUpdate: boolean, muestraId: number },
+    @Payload() { user, input, folios, isUpdate, muestraId }: {
+      user: Usuario;
+      input: CreateMuestraSeleccionInput;
+      folios: number[];
+      isUpdate: boolean;
+      muestraId?: number;
+    },
   ) {
-    return this._service.upsertMuestraSeleccionConFolios( user, input, folios, isUpdate, muestraId );
+    return this._service.upsertMuestraSeleccionConFolios(
+      user,
+      input,
+      folios,
+      isUpdate,
+      muestraId,
+    );
   }
 
   // * CONSULTA DE MUESTRAS (INVENTARIO)

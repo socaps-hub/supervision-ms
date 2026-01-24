@@ -17,7 +17,7 @@ export class Fase1RevisionService extends PrismaClient implements OnModuleInit {
         const { id, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.a03EvaluacionFase1AuditoriaC.deleteMany({
                     where: { A03CSId: id, creditoSeleccion: { sucursal: { R11Coop_id: user.R12Coop_id } } },
@@ -77,9 +77,11 @@ export class Fase1RevisionService extends PrismaClient implements OnModuleInit {
                         A02Estado: "Con revision",
                     }
                 })
+
+                return { id: id }
             });
 
-            return { success: true };
+            return { success: true, ...result };
         } catch (error) {
             this.logger.error("[createOrUpdateFase1] Error:", error);
             // return { success: false, message: error.message || "Error en Fase 2" };

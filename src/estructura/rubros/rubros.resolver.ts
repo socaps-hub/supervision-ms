@@ -13,45 +13,45 @@ import { CreateManyRubrosFromExcelArgs } from './dto/args/create-many-rubros-fro
 export class RubrosResolver {
   constructor(private readonly rubrosService: RubrosService) {}
 
-  @Mutation(() => Rubro)
-  createRubro(
-    @Args('createRubroInput') createRubroInput: CreateRubroInput
-  ) {
-    return this.rubrosService.create(createRubroInput);
-  }
+  // @Mutation(() => Rubro)
+  // createRubro(
+  //   @Args('createRubroInput') createRubroInput: CreateRubroInput
+  // ) {
+  //   return this.rubrosService.create(createRubroInput);
+  // }
 
-  @Query(() => [Rubro], { name: 'rubros' })
-  findAll(
-    @Args('coopId', ParseUUIDPipe) coopId: string
-  ) {
-    return this.rubrosService.findAll( coopId );
-  }
+  // @Query(() => [Rubro], { name: 'rubros' })
+  // findAll(
+  //   @Args('coopId', ParseUUIDPipe) coopId: string
+  // ) {
+  //   return this.rubrosService.findAll( coopId );
+  // }
 
-  @Query(() => Rubro, { name: 'rubro' })
-  findOne(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
-  ) {
-    return this.rubrosService.findById(id);
-  }
+  // @Query(() => Rubro, { name: 'rubro' })
+  // findOne(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.rubrosService.findById(id);
+  // }
 
-  @Mutation(() => Rubro)
-  updateRubro(
-    @Args('updateRubroInput') updateRubroInput: UpdateRubroInput
-  ) {
-    return this.rubrosService.update(updateRubroInput.id, updateRubroInput);
-  }
+  // @Mutation(() => Rubro)
+  // updateRubro(
+  //   @Args('updateRubroInput') updateRubroInput: UpdateRubroInput
+  // ) {
+  //   return this.rubrosService.update(updateRubroInput.id, updateRubroInput);
+  // }
 
-  @Mutation(() => Rubro)
-  removeRubro(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
-  ) {
-    return this.rubrosService.remove(id);
-  }
+  // @Mutation(() => Rubro)
+  // removeRubro(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.rubrosService.remove(id);
+  // }
 
-  @Mutation(() => BooleanResponse)
-  createManyRubrosFromExcel(
-    @Args('createManyRubrosFromExcelArgs') createManyRubrosFromExcelArgs: CreateManyRubrosFromExcelArgs,
-  ) {
-    return this.rubrosService.createManyFromExcel(createManyRubrosFromExcelArgs.data, createManyRubrosFromExcelArgs.coopId);
-  }
+  // @Mutation(() => BooleanResponse)
+  // createManyRubrosFromExcel(
+  //   @Args('createManyRubrosFromExcelArgs') createManyRubrosFromExcelArgs: CreateManyRubrosFromExcelArgs,
+  // ) {
+  //   return this.rubrosService.createManyFromExcel(createManyRubrosFromExcelArgs.data, createManyRubrosFromExcelArgs.coopId);
+  // }
 }

@@ -17,7 +17,7 @@ export class Fase2SeguimientoService extends PrismaClient implements OnModuleIni
         const { id, evaluaciones, resumen } = input;
 
         try {
-            await this.$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.a05EvaluacionFase2AuditoriaC.deleteMany({
                     where: { A05CSId: id, creditoSeleccion: { sucursal: { R11Coop_id: user.R12Coop_id } } },
@@ -56,9 +56,11 @@ export class Fase2SeguimientoService extends PrismaClient implements OnModuleIni
                         A02Estado: "Con seguimiento",
                     }
                 })
+
+                return { id }
             });
 
-            return { success: true };
+            return { success: true, ...result };
         } catch (error) {
             this.logger.error("[createOrUpdateFase2] Error:", error);
             return { success: false, message: error instanceof Error ? error.message : "Error en Fase 2" };

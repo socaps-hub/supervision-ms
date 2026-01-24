@@ -1,14 +1,27 @@
-import { Controller } from "@nestjs/common";
+import { Controller, UseInterceptors } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
 import { Usuario } from "src/common/entities/usuario.entity";
 import { Fase2SeguimientoService } from "./fase2-seguimiento.service";
 import { CreateFase2SeguimientoInput } from "./dto/inputs/credito/create-fase2-seguimiento.input";
+import { ActivityLog } from "src/common/decorators/activity-log.decorator";
+import { AuditActionEnum } from "src/common/enums/audit-action.enum";
+import { ActivityLogRpcInterceptor } from "src/common/interceptor/activity-log-rpc.interceptor";
 
 @Controller()
 export class Fase2SeguimientoHandler {
 
   constructor(private readonly _service: Fase2SeguimientoService) {}
 
+  @UseInterceptors(ActivityLogRpcInterceptor)
+  @ActivityLog({
+    service: 'supervision-ms',
+    module: 'auditoria-credito',
+    action: AuditActionEnum.EXECUTE,
+    eventName: 'supervision.auditoria.fase2.handleCreateOrUpdateFase2',
+    entities: [
+      { name: 'A02MuestraCreditoSeleccion', idPath: 'id' },
+    ],
+  })
   @MessagePattern('supervision.auditoria.fase2.handleCreateOrUpdateFase2')
   handleCreateOrUpdateFase1(
     @Payload() { input, user }: { input: CreateFase2SeguimientoInput, user: Usuario }

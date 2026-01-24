@@ -15,45 +15,45 @@ export class ElementosResolver {
     private readonly elementosService: ElementosService
   ) {}
 
-  @Mutation(() => Elemento)
-  createElemento(
-    @Args('createElementoInput') createElementoInput: CreateElementoInput,
-  ) {
-    return this.elementosService.create(createElementoInput);
-  }
+  // @Mutation(() => Elemento)
+  // createElemento(
+  //   @Args('createElementoInput') createElementoInput: CreateElementoInput,
+  // ) {
+  //   return this.elementosService.create(createElementoInput);
+  // }
 
-  @Query(() => [Elemento], { name: 'elementosPorRubro' })
-  findAll(
-    @Args('rubroId', { type: () => ID }, ParseUUIDPipe) rubroId: string
-  ) {
-    return this.elementosService.findAll(rubroId);
-  }
+  // @Query(() => [Elemento], { name: 'elementosPorRubro' })
+  // findAll(
+  //   @Args('rubroId', { type: () => ID }, ParseUUIDPipe) rubroId: string
+  // ) {
+  //   return this.elementosService.findAll(rubroId);
+  // }
 
-  @Query(() => Elemento, { name: 'elemento' })
-  findOne(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
-  ) {
-    return this.elementosService.findById(id);
-  }
+  // @Query(() => Elemento, { name: 'elemento' })
+  // findOne(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.elementosService.findById(id);
+  // }
 
-  @Mutation(() => Elemento)
-  updateElemento(
-    @Args('updateElementoInput') updateElementoInput: UpdateElementoInput
-  ) {
-    return this.elementosService.update(updateElementoInput.id, updateElementoInput);
-  }
+  // @Mutation(() => Elemento)
+  // updateElemento(
+  //   @Args('updateElementoInput') updateElementoInput: UpdateElementoInput
+  // ) {
+  //   return this.elementosService.update(updateElementoInput.id, updateElementoInput);
+  // }
 
-  @Mutation(() => Elemento)
-  removeElemento(
-    @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
-  ) {
-    return this.elementosService.remove(id);
-  }
+  // @Mutation(() => Elemento)
+  // removeElemento(
+  //   @Args('id', { type: () => ID }, ParseUUIDPipe) id: string
+  // ) {
+  //   return this.elementosService.remove(id);
+  // }
 
-  @Mutation(() => BooleanResponse)
-  createManyElementosFromExcel(
-    @Args('createManyElementosFromExcelArgs') createManyElementosFromExcelArgs: CreateManyElementosFromExcelArgs,
-  ) {
-    return this.elementosService.createManyFromExcel(createManyElementosFromExcelArgs.data, createManyElementosFromExcelArgs.rubroId);
-  }
+  // @Mutation(() => BooleanResponse)
+  // createManyElementosFromExcel(
+  //   @Args('createManyElementosFromExcelArgs') createManyElementosFromExcelArgs: CreateManyElementosFromExcelArgs,
+  // ) {
+  //   return this.elementosService.createManyFromExcel(createManyElementosFromExcelArgs.data, createManyElementosFromExcelArgs.rubroId);
+  // }
 }
