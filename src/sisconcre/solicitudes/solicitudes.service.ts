@@ -705,6 +705,64 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         return prestamo;
     }
 
+    async findF4EvaluationsById(id: string, user: Usuario): Promise<R01Prestamo> {
+        const prestamo = await this.r01Prestamo.findUnique({
+            where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+            include: {
+                categoria: true,
+                producto: true,
+                sucursal: true,
+                supervisor: true,
+                ejecutivo: true,
+                evaluacionesF4: {
+                    include: {
+                        elemento: {
+                            include: {
+                                rubro: {
+                                    include: {
+                                        grupo: true
+                                    }
+                                }
+                            },
+                        },
+                    }
+                },
+                resumenF4: {
+                    include: {
+                        evaluador: true,
+                    }
+                }
+            },
+        });
+
+        if (!prestamo) {
+            throw new RpcException({
+                message: `Préstamo con número ${id} no encontrado`,
+                status: HttpStatus.NOT_FOUND,
+            });
+        }
+
+        // Enriquecer evaluacionesF4 con resF1 y resF3
+        prestamo.evaluacionesF4 = await Promise.all(
+            prestamo.evaluacionesF4.map(async evaluacion => {
+                const resF1 = await this.r05EvaluacionFase1.findFirst({
+                    where: { R05E_id: evaluacion.R15E_id, R05P_num: id }
+                });
+                const resF3 = await this.r09EvaluacionFase3.findFirst({
+                    where: { R09E_id: evaluacion.R15E_id, R09P_num: id }
+                });
+
+                return {
+                    ...evaluacion,
+                    resF1: resF1?.R05Res || null,
+                    resF3: resF3?.R09Res || null,
+                };
+            })
+        );
+
+        return prestamo;
+    }
+
     async update(id: string, data: UpdatePrestamoInput, user: Usuario): Promise<R01Prestamo> {
         const exists = await this.findById(id, user)
 

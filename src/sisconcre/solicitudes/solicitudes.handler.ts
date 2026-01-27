@@ -243,6 +243,13 @@ export class SolicitudesHandler {
         return this._service.findById(data.id, data.user);
     }
 
+    @MessagePattern('supervision.solicitudes.getF4EvaluationsById')
+    handleGetF4EvaluationsById(
+        @Payload() data: { id: string, user: Usuario }
+    ) {
+        return this._service.findF4EvaluationsById(data.id, data.user);
+    }
+
     @MessagePattern('supervision.solicitudes.getByEstado')
     handleGetByEstado(
         @Payload() data: { estado: ValidEstados; user: Usuario, filterBySucursal: boolean }
