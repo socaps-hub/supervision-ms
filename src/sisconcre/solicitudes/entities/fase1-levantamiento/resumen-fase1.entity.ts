@@ -7,7 +7,10 @@ import { Prestamo } from '../solicitud.entity';
 @ObjectType()
 export class EvaluacionResumenFase1 {
   @Field(() => ID)
-  R06P_num: string;
+  R06Id: string;
+
+  @Field(() => String)
+  R06P_id: string;
 
   @Field(() => Int)
   R06Ha: number;

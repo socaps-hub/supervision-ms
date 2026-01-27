@@ -18,6 +18,9 @@ import { EvaluacionResumenFase4 } from './fase4-seguimiento-global/resumen-fase4
 export class Prestamo {
 
   @Field(() => ID)
+  R01Id: string;
+
+  @Field(() => String)
   R01NUM: string;
   
   @Field(() => ID)

@@ -21,6 +21,7 @@ import { Calificativo } from './enums/evaluacion.enum';
 import { CreateEvaluacionFase4Input } from './dto/inputs/fase4-seguimiento-global/evaluacion/create-evaluacion-fase4.input';
 import { CreateEvaluacionResumenFase4Input } from './dto/inputs/fase4-seguimiento-global/resumen/create-evaluacion-resumen-fase4.input';
 import { ResFaseII } from './enums/evaluacion-fase2.enum';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -43,7 +44,12 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             const result = await this.$transaction(async (tx) => {
                 // 0. Verificar NO existencia de la solicitud
                 const exists = await tx.r01Prestamo.findUnique({
-                    where: { R01NUM: prestamo.R01NUM, R01Coop_id: user.R12Coop_id },
+                    where: { 
+                        R01NUM_R01Coop_id: {
+                            R01NUM: prestamo.R01NUM,
+                            R01Coop_id: user.R12Coop_id,
+                        }
+                    },
                     include: {
                         sucursal: true
                     }
@@ -60,6 +66,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 const prestamoDB = await tx.r01Prestamo.create({
                     data: {
                         ...prestamo,
+                        R01Id: randomUUID(),
                         R01Nom: prestamo.R01Nom.toUpperCase()
                     },
                     include: {
@@ -70,7 +77,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 2. Crear evaluaciones asociadas al prestamo
                 const evaluacionesData = evaluaciones.map((ev) => ({
                     ...ev,
-                    R05P_num: prestamoDB.R01NUM,
+                    R05P_id: prestamoDB.R01Id,
                     R05Ev_por: user.R12Id,
                     R05Ev_en: new Date().toISOString(),
                 }));
@@ -83,13 +90,15 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 const resumenDB = await tx.r06EvaluacionResumenFase1.create({
                     data: {
                         ...resumen,
+                        R06P_id: prestamoDB.R01Id,
                         R06Ev_por: user.R12Id,
+                        R06Id: randomUUID(),
                     },
                 });
                 return {
                     prestamoId: prestamoDB.R01NUM,
                     evaluacionId: prestamoDB.R01NUM,
-                    resumenId: resumenDB.R06P_num,
+                    resumenId: resumenDB.R06Id,
                 };
             });
 
@@ -110,16 +119,16 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // Verificar que no exista un prestamo con el mismo num
                 const exists = await tx.r01Prestamo.findUnique({
-                    where: { R01NUM, R01Coop_id: user.R12Coop_id },
+                    where: { 
+                        R01Id: currentId,
+                    },
                     include: {
                         sucursal: true
                     }
                 });
                 // console.log({exists, currentId});        
 
-                if (exists && exists.R01NUM !== currentId) {
-                    console.log('error');
-
+                if (exists && exists.R01Id !== currentId) {
                     const sucursal = exists.sucursal.R11Nom
                     const socio = exists.R01Nom
                     const cag = exists.R01Nso
@@ -130,7 +139,9 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // 1. Actualiza el préstamo
                 await tx.r01Prestamo.update({
-                    where: { R01NUM: currentId, R01Coop_id: user.R12Coop_id },
+                    where: { 
+                        R01Id: currentId
+                    },
                     data: {
                         R01NUM,
                         R01Nso,
@@ -142,8 +153,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 2. Elimina evaluaciones antiguas
                 await tx.r05EvaluacionFase1.deleteMany({
                     where: {
-                        R05P_num: R01NUM,
-                        prestamo: { R01Coop_id: user.R12Coop_id },
+                        R05P_id: currentId,
                     },
                 });
 
@@ -151,7 +161,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 await tx.r05EvaluacionFase1.createMany({
                     data: evaluaciones.map((ev) => ({
                         ...ev,
-                        R05P_num: currentId,
+                        R05P_id: currentId,
                         R05Id: crypto.randomUUID(),
                         R05Ev_por: user.R12Id,
                         R05Ev_en: new Date().toISOString(),
@@ -159,14 +169,10 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 4. Crea o actualiza el resumen
-                const existing = await tx.r06EvaluacionResumenFase1.findFirst({
+                const existing = await tx.r06EvaluacionResumenFase1.findUnique({
                     where: {
-                        R06P_num: R01NUM,
-                        prestamo: {
-                            R01Coop_id: user.R12Coop_id
-                        }
+                        R06P_id: currentId,
                     },
-                    include: { prestamo: true }
                 });
 
                 if (!existing) {
@@ -176,8 +182,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 if (existing) {
                     await tx.r06EvaluacionResumenFase1.update({
                         where: {
-                            R06P_num: R01NUM,
-                            prestamo: { R01Coop_id: user.R12Coop_id },
+                            R06P_id: currentId,
                         },
                         data: resumen,
                     });
@@ -185,6 +190,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                     await tx.r06EvaluacionResumenFase1.create({
                         data: {
                             ...resumen,
+                            R06Id: crypto.randomUUID(),
+                            R06P_id: currentId,
                             R06Ev_por: user.R12Id,
                         },
                     });
@@ -193,7 +200,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 return {
                     prestamoId: R01NUM,
                     evaluacionId: R01NUM,
-                    resumenId: existing.R06P_num,
+                    resumenId: existing.R06Id,
                 };
             });
 
@@ -208,18 +215,18 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     async createOrUpdateFase2(
         input: SisConCreCreateFase2Input,
         user: Usuario,
-     ) {
-        const { prestamo, evaluaciones, resumen } = input;
+    ) {
+        const { prestamoId, evaluaciones, resumen } = input;
 
         try {
             const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r07EvaluacionFase2.deleteMany({
-                    where: { R07P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                    where: { R07P_id: prestamoId, prestamo: { R01Coop_id: user.R12Coop_id } },
                 });
 
                 await tx.r08EvaluacionResumenFase2.deleteMany({
-                    where: { R08P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                    where: { R08P_id: prestamoId, prestamo: { R01Coop_id: user.R12Coop_id } },
                 });
 
                 if (!evaluaciones || evaluaciones.length === 0) {
@@ -229,8 +236,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 2. Insertar nuevas evaluaciones
                 await tx.r07EvaluacionFase2.createMany({
                     data: evaluaciones.map((ev) => ({
-                        R07Id: crypto.randomUUID(),
-                        R07P_num: prestamo,
+                        R07P_id: prestamoId,
                         R07E_id: ev.R07E_id,
                         R07Res: ev.R07Res,
                         R07Ev_por: user.R12Id,
@@ -239,9 +245,9 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 });
 
                 // 3. Insertar resumen con fecha generada automáticamente
-               const newResumen = await tx.r08EvaluacionResumenFase2.create({
+                const newResumen = await tx.r08EvaluacionResumenFase2.create({
                     data: {
-                        R08P_num: prestamo,
+                        R08P_id: prestamoId,
                         R08FSeg: new Date().toISOString(),
                         R08Ev_por: user.R12Id,
                         ...resumen,
@@ -250,7 +256,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // 4. Actualizar Estado del movimiento a "Con seguimiento"
                 const prestamoUpdated = await tx.r01Prestamo.update({
-                    where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
+                    where: { R01Id: prestamoId, R01Coop_id: user.R12Coop_id },
                     data: {
                         R01Est: "Con seguimiento",
                     }
@@ -259,7 +265,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 return {
                     prestamoId: prestamoUpdated.R01NUM,
                     evaluacionId: prestamoUpdated.R01NUM,
-                    resumenId: newResumen.R08P_num,
+                    resumenId: newResumen.R08Id,
                 };
             });
 
@@ -274,17 +280,17 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         input: SisConCreCreateFase3Input,
         user: Usuario,
     ) {
-        const { prestamo, evaluaciones, resumen } = input;
+        const { prestamoId, evaluaciones, resumen } = input;
 
         try {
             const result = await this.$transaction(async (tx) => {
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r09EvaluacionFase3.deleteMany({
-                    where: { R09P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                    where: { R09P_id: prestamoId, prestamo: { R01Coop_id: user.R12Coop_id } },
                 });
 
                 await tx.r10EvaluacionResumenFase3.deleteMany({
-                    where: { R10P_num: prestamo, prestamo: { R01Coop_id: user.R12Coop_id } },
+                    where: { R10P_id: prestamoId, prestamo: { R01Coop_id: user.R12Coop_id } },
                 });
 
                 if (!evaluaciones || evaluaciones.length === 0) {
@@ -294,8 +300,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 2. Insertar nuevas evaluaciones
                 await tx.r09EvaluacionFase3.createMany({
                     data: evaluaciones.map((ev) => ({
-                        R09Id: crypto.randomUUID(),
-                        R09P_num: prestamo,
+                        R09P_id: prestamoId,
                         R09E_id: ev.R09E_id,
                         R09Res: ev.R09Res,
                         R09Ev_en: new Date().toISOString(),
@@ -305,7 +310,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 3. Insertar resumen con fecha generada automáticamente
                 const newResumen = await tx.r10EvaluacionResumenFase3.create({
                     data: {
-                        R10P_num: prestamo,
+                        R10P_id: prestamoId,
                         R10FDes: new Date().toISOString(),
                         R10Sup: user.R12Id,
                         ...resumen,
@@ -314,7 +319,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // 4. Actualizar Estado del movimiento a "Con seguimiento"
                 const prestamoUpdated = await tx.r01Prestamo.update({
-                    where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
+                    where: { R01Id: prestamoId, R01Coop_id: user.R12Coop_id },
                     data: {
                         R01Est: "Con desembolso",
                     }
@@ -323,7 +328,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 return {
                     prestamoId: prestamoUpdated.R01NUM,
                     evaluacionId: prestamoUpdated.R01NUM,
-                    resumenId: newResumen.R10P_num,
+                    resumenId: newResumen.R10Id,
                 };
             });
 
@@ -338,13 +343,13 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         input: SisConCreCreateFase4Input,
         user: Usuario,
     ) {
-        const { prestamo, evaluaciones, resumen } = input;
+        const { prestamoId, evaluaciones, resumen } = input;
 
         try {
             const result = await this.$transaction(async (tx) => {
                 // ✅ 0. Validar que el préstamo pertenezca a la cooperativa del usuario
                 const prestamoDB = await tx.r01Prestamo.findUnique({
-                    where: { R01NUM: prestamo },
+                    where: { R01Id: prestamoId },
                     select: { R01Coop_id: true },
                 });
 
@@ -358,11 +363,11 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // 1. Eliminar evaluaciones y resumen previos
                 await tx.r15EvaluacionFase4.deleteMany({
-                    where: { R15P_num: prestamo },
+                    where: { R15P_id: prestamoId },
                 });
 
                 await tx.r16EvaluacionResumenFase4.deleteMany({
-                    where: { R16P_num: prestamo },
+                    where: { R16P_id: prestamoId },
                 });
 
                 if (!evaluaciones || evaluaciones.length === 0) {
@@ -372,8 +377,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 2. Insertar nuevas evaluaciones
                 await tx.r15EvaluacionFase4.createMany({
                     data: evaluaciones.map((ev) => ({
-                        R15P_num: prestamo,
-                        R15Id: crypto.randomUUID(),
+                        R15P_id: prestamoId,
                         R15E_id: ev.R15E_id,
                         R15Res: ev.R15Res,
                     })),
@@ -382,7 +386,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 // 3. Insertar resumen con fecha generada automáticamente
                 const newResumen = await tx.r16EvaluacionResumenFase4.create({
                     data: {
-                        R16P_num: prestamo,
+                        R16P_id: prestamoId,
                         R16SolvT: resumen.R16SolvT,
                         R16SolvA: resumen.R16SolvA,
                         R16SolvM: resumen.R16SolvM,
@@ -401,7 +405,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // 4. Actualizar Estado del movimiento a "Con seguimiento"
                 const prestamoUpdated = await tx.r01Prestamo.update({
-                    where: { R01NUM: prestamo, R01Coop_id: user.R12Coop_id },
+                    where: { R01Id: prestamoId, R01Coop_id: user.R12Coop_id },
                     data: {
                         R01Est: "Con global",
                     }
@@ -410,7 +414,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 return {
                     prestamoId: prestamoUpdated.R01NUM,
                     evaluacionId: prestamoUpdated.R01NUM,
-                    resumenId: newResumen.R16P_num,
+                    resumenId: newResumen.R16Id,
                 };
             });
 
@@ -481,32 +485,34 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 R16Obs: 'Registro masivo automático',
             };
 
-            await this.r15EvaluacionFase4.createMany({ data: evaluaciones.map( e => ({ R15P_num: prestamo.R01NUM, ...e })) });
+            await this.r15EvaluacionFase4.createMany({ data: evaluaciones.map(e => ({ R15P_id: prestamo.R01Id, ...e })) });
             await this.r16EvaluacionResumenFase4.create({
                 data: {
                     ...resumen,
-                    R16P_num: prestamo.R01NUM,
+                    R16P_id: prestamo.R01Id,
                     R16FGlo: new Date().toISOString(),
                     R16Ev_por: user.R12Id,
                 },
             });
 
             await this.r01Prestamo.update({
-                where: { R01NUM: prestamo.R01NUM },
+                where: { R01Id: prestamo.R01Id },
                 data: { R01Est: 'Con global' }
             });
         }
 
         const prestamoOrPrestamos = prestamos.length === 1 ? 'préstamo pasó' : 'prestamos pasaron'
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             message: `${prestamos.length} ${prestamoOrPrestamos} a Seguimiento Global automáticamente.`,
             prestamoIds,
         };
     }
+    
 
     // * INVENTARIOS
+    
     public async getInventarioSolicitudesFiltrado(
         input: InventarioSolicitudesFilterInput,
         user: Usuario,
@@ -630,7 +636,9 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
     async findById(id: string, user: Usuario): Promise<R01Prestamo> {
         const prestamo = await this.r01Prestamo.findUnique({
-            where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+            where: { 
+                R01Id: id,
+            },
             include: {
                 categoria: true,
                 producto: true,
@@ -656,24 +664,6 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         supervisor: true
                     }
                 },
-                evaluacionesF4: {
-                    include: {
-                        elemento: {
-                            include: {
-                                rubro: {
-                                    include: {
-                                        grupo: true
-                                    }
-                                }
-                            },
-                        },
-                    }
-                },
-                resumenF4: {
-                    include: {
-                        evaluador: true,
-                    }
-                }
             },
         });
 
@@ -684,54 +674,98 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             });
         }
 
-        // Enriquecer evaluacionesF4 con resF1 y resF3
-        prestamo.evaluacionesF4 = await Promise.all(
-            prestamo.evaluacionesF4.map(async evaluacion => {
-                const resF1 = await this.r05EvaluacionFase1.findFirst({
-                    where: { R05E_id: evaluacion.R15E_id, R05P_num: id }
-                });
-                const resF3 = await this.r09EvaluacionFase3.findFirst({
-                    where: { R09E_id: evaluacion.R15E_id, R09P_num: id }
-                });
-
-                return {
-                    ...evaluacion,
-                    resF1: resF1?.R05Res || null,
-                    resF3: resF3?.R09Res || null,
-                };
-            })
-        );
-
         return prestamo;
     }
 
+    // async findF4EvaluationsById(id: string, user: Usuario): Promise<R01Prestamo> {
+    //     const prestamo = await this.r01Prestamo.findUnique({
+    //         where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+    //         include: {
+    //             categoria: true,
+    //             producto: true,
+    //             sucursal: true,
+    //             supervisor: true,
+    //             ejecutivo: true,
+    //             evaluacionesF4: {
+    //                 include: {
+    //                     elemento: {
+    //                         include: {
+    //                             rubro: {
+    //                                 include: {
+    //                                     grupo: true
+    //                                 }
+    //                             }
+    //                         },
+    //                     },
+    //                 }
+    //             },
+    //             resumenF4: {
+    //                 include: {
+    //                     evaluador: true,
+    //                 }
+    //             }
+    //         },
+    //     });
+
+    //     if (!prestamo) {
+    //         throw new RpcException({
+    //             message: `Préstamo con número ${id} no encontrado`,
+    //             status: HttpStatus.NOT_FOUND,
+    //         });
+    //     }
+
+    //     // Enriquecer evaluacionesF4 con resF1 y resF3
+    //     prestamo.evaluacionesF4 = await Promise.all(
+    //         prestamo.evaluacionesF4.map(async evaluacion => {
+    //             const resF1 = await this.r05EvaluacionFase1.findFirst({
+    //                 where: { R05E_id: evaluacion.R15E_id, R05P_num: id }
+    //             });
+    //             const resF3 = await this.r09EvaluacionFase3.findFirst({
+    //                 where: { R09E_id: evaluacion.R15E_id, R09P_num: id }
+    //             });
+
+    //             return {
+    //                 ...evaluacion,
+    //                 resF1: resF1?.R05Res || null,
+    //                 resF3: resF3?.R09Res || null,
+    //             };
+    //         })
+    //     );
+
+    //     return prestamo;
+    // }
+
+
     async findF4EvaluationsById(id: string, user: Usuario): Promise<R01Prestamo> {
+        // 1) Trae el préstamo + evaluaciones F4 con su jerarquía, y el resumen (en una sola ida)
         const prestamo = await this.r01Prestamo.findUnique({
-            where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+            where: { 
+                R01Id: id
+            },
             include: {
                 categoria: true,
                 producto: true,
                 sucursal: true,
                 supervisor: true,
                 ejecutivo: true,
+
                 evaluacionesF4: {
                     include: {
                         elemento: {
                             include: {
                                 rubro: {
                                     include: {
-                                        grupo: true
-                                    }
-                                }
+                                        grupo: true,
+                                    },
+                                },
                             },
                         },
-                    }
+                    },
                 },
+
                 resumenF4: {
-                    include: {
-                        evaluador: true,
-                    }
-                }
+                    include: { evaluador: true },
+                },
             },
         });
 
@@ -742,23 +776,63 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             });
         }
 
-        // Enriquecer evaluacionesF4 con resF1 y resF3
-        prestamo.evaluacionesF4 = await Promise.all(
-            prestamo.evaluacionesF4.map(async evaluacion => {
-                const resF1 = await this.r05EvaluacionFase1.findFirst({
-                    where: { R05E_id: evaluacion.R15E_id, R05P_num: id }
-                });
-                const resF3 = await this.r09EvaluacionFase3.findFirst({
-                    where: { R09E_id: evaluacion.R15E_id, R09P_num: id }
-                });
+        // 2) Si no hay evaluaciones, regresa temprano (evita queries innecesarias)
+        if (!prestamo.evaluacionesF4?.length) {
+            // Normaliza campos extra (por si el front espera resF1/resF3)
+            prestamo.evaluacionesF4 = [];
+            return prestamo;
+        }
 
-                return {
-                    ...evaluacion,
-                    resF1: resF1?.R05Res || null,
-                    resF3: resF3?.R09Res || null,
-                };
-            })
+        // 3) Enriquecimiento por lote (adiós N+1):
+        //    - Tomamos todos los elementoIds presentes en F4
+        const elementoIds = Array.from(
+            new Set(prestamo.evaluacionesF4.map(e => e.R15E_id).filter(Boolean)),
         );
+
+        // Defensa extra: si por alguna razón no hay ids, no consultamos
+        if (!elementoIds.length) {
+            prestamo.evaluacionesF4 = prestamo.evaluacionesF4.map(e => ({
+                ...e,
+                resF1: null,
+                resF3: null,
+            }));
+            return prestamo;
+        }
+
+        // 4) Consultas en paralelo a F1 y F3 (solo las filas del préstamo + elementos relevantes)
+        const [f1Rows, f3Rows] = await Promise.all([
+            this.r05EvaluacionFase1.findMany({
+                where: {
+                    R05P_id: id,
+                    R05E_id: { in: elementoIds },
+                },
+                select: {
+                    R05E_id: true,
+                    R05Res: true,
+                },
+            }),
+            this.r09EvaluacionFase3.findMany({
+                where: {
+                    R09P_id: id,
+                    R09E_id: { in: elementoIds },
+                },
+                select: {
+                    R09E_id: true,
+                    R09Res: true,
+                },
+            }),
+        ]);
+
+        // 5) Indexación en memoria para O(1) lookup
+        const f1Map = new Map<string, any>(f1Rows.map(r => [r.R05E_id, r.R05Res]));
+        const f3Map = new Map<string, any>(f3Rows.map(r => [r.R09E_id, r.R09Res]));
+
+        // 6) Enriquecer sin más queries
+        prestamo.evaluacionesF4 = prestamo.evaluacionesF4.map(e => ({
+            ...e,
+            resF1: f1Map.get(e.R15E_id) ?? null,
+            resF3: f3Map.get(e.R15E_id) ?? null,
+        }));
 
         return prestamo;
     }
@@ -777,7 +851,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         const { id: R01NUM, ...rest } = data
 
         return await this.r01Prestamo.update({
-            where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+            where: { R01Id: id, R01Coop_id: user.R12Coop_id },
             data: {
                 R01NUM,
                 R01Nom: rest.R01Nom?.toUpperCase(),
@@ -787,8 +861,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     }
 
     async remove(id: string, user: Usuario): Promise<{ prestamoId: string }> {
-        const exists = await this.r01Prestamo.findUnique({
-            where: { R01NUM: id, R01Coop_id: user.R12Coop_id },
+        const exists = await this.r01Prestamo.findFirst({
+            where: { R01Id: id, R01Coop_id: user.R12Coop_id },
         })
 
         if (!exists) {
@@ -798,7 +872,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             });
         }
 
-        const prestamoRemoved = await this.r01Prestamo.delete({ where: { R01NUM: id, R01Coop_id: user.R12Coop_id } })
+        const prestamoRemoved = await this.r01Prestamo.delete({ where: { R01Id: id, R01Coop_id: user.R12Coop_id } })
 
         return { prestamoId: prestamoRemoved.R01NUM }
     }
@@ -809,6 +883,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     // *==================
 
     // Inv Solicitudes
+    
     public async getInventarioSolicitudesStats(
         input: InventarioSolicitudesFilterInput,
         user: Usuario,

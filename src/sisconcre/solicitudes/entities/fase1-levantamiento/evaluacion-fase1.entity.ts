@@ -13,7 +13,7 @@ export class EvaluacionFase1 {
   R05Id: string;
 
   @Field(() => String)
-  R05P_num: string;
+  R05P_id: string;
 
   @Field(() => String)
   R05E_id: string;

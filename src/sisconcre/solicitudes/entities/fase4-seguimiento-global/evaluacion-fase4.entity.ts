@@ -11,10 +11,10 @@ export class EvaluacionFase4 {
   @Field(() => ID)
   R15Id: string;
 
-  @Field()
-  R15P_num: string;
+  @Field(() => String)
+  R15P_id: string;
 
-  @Field()
+  @Field(() => String)
   R15E_id: string;
 
   @Field(() => ResFaseII)

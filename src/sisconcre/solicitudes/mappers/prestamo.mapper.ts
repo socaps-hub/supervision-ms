@@ -23,6 +23,7 @@ type PrestamoWithRelaciones = R01Prestamo & {
 
 export function mapR01ToPrestamo(data: PrestamoWithRelaciones): Prestamo {
   return {
+    R01Id: data.R01Id,
     R01NUM: data.R01NUM,
     R01Suc_id: data.R01Suc_id,
     R01Nso: data.R01Nso,

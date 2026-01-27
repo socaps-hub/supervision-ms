@@ -7,7 +7,10 @@ import { Calificativo, Resolucion } from 'src/sisconcre/solicitudes/enums/evalua
 @ObjectType()
 export class EvaluacionResumenFase2 {
   @Field(() => ID)
-  R08P_num: string;
+  R08Id: string;
+
+  @Field(() => ID)
+  R08P_id: string;
 
   @Field(() => Int)
   R08SolvT: number;

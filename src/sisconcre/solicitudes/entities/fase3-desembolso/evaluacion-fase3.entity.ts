@@ -11,16 +11,16 @@ export class EvaluacionFase3 {
   @Field(() => ID)
   R09Id: string;
 
-  @Field()
-  R09P_num: string;
+  @Field(() => String)
+  R09P_id: string;
 
-  @Field()
+  @Field(() => String)
   R09E_id: string;
 
   @Field(() => ResFaseIII)
   R09Res: ResFIII;
 
-  @Field()
+  @Field(() => String)
   R09Ev_en: string;
 
   // Relaciones
