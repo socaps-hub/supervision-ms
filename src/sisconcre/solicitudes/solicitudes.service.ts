@@ -635,7 +635,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     }
 
     async findById(id: string, user: Usuario): Promise<R01Prestamo> {
-        const prestamo = await this.r01Prestamo.findUnique({
+        const prestamo = await this.r01Prestamo.findFirst({
             where: { 
                 R01Id: id,
             },
