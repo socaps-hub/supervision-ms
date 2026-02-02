@@ -20,6 +20,7 @@ import { mapPrimeFilterToPrisma } from 'src/common/utils/map-prime-to-prisma.uti
 import { InventarioRevisionStatsOutput } from './dto/outputs/inventario-revision-stats.output';
 import { InventarioSeguimientoStatsOutput } from './dto/outputs/inventario-seguimiento-stats.output';
 import { buildPrismaWhereFromPrimeFilters } from 'src/common/utils/prisma-where-from-prime-filters.builder';
+import { normalizeToYYYYMMDD } from 'src/common/utils/date.util';
 
 @Injectable()
 export class CreditoService extends PrismaClient implements OnModuleInit {
@@ -216,7 +217,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         nivelConfianza: number,
         controlId: number,
     ) {
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         const globalWhere = {
             RA01FEntrega: { gte: fechaInicio, lte: fechaFinal },
@@ -254,7 +256,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         controlId: number,
         foliosSeleccionados: number[] = [],
     ) {
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         const baseWhere = await this._buildFilterWhere(
             filters,
@@ -376,7 +379,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         muestra: any[],
         controlId: number,
     ): Promise<ResultadoMuestraSucursalResumen[]> {
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         const agrupados = await this.rA01Credito.groupBy({
             by: ['RA01Sucursal', 'RA01Tipo'],
@@ -481,108 +485,6 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         if (confianza >= 90) return 1.645;
         return 1.64;
     }
-
-    // private async _buildFilterWhere(
-    //     filters: Record<string, any> | undefined,
-    //     searchText: string | undefined,
-    //     usuario: Usuario,
-    //     fechaInicio: string,
-    //     fechaFinal: string,
-    //     controlId: number,
-    // ) {
-    //     const where: any = {
-    //         RA01FEntrega: { gte: fechaInicio, lte: fechaFinal },
-    //         RA01ControlId: controlId,
-    //     };
-
-    //     const OR: any[] = [];
-
-    //     // 🔸 Búsqueda global
-    //     if (searchText && searchText.trim() !== '') {
-    //         const term = searchText.trim();
-    //         const isNumeric = /^[0-9]+$/.test(term);
-
-    //         if (isNumeric) OR.push({ RA01Folio: Number(term) });
-
-    //         OR.push(
-    //             { RA01NumeroDeCredito: { contains: term, mode: 'insensitive' } },
-    //             { RA01NumeroCag: { contains: term, mode: 'insensitive' } },
-    //             { RA01Nombre: { contains: term, mode: 'insensitive' } },
-    //             { RA01Tipo: { contains: term, mode: 'insensitive' } },
-    //             { RA01Categoria: { contains: term, mode: 'insensitive' } },
-    //         );
-
-    //         const sucursalesCoincidentes = await this.r11Sucursal.findMany({
-    //             where: {
-    //                 R11Nom: { contains: term, mode: 'insensitive' },
-    //                 R11Coop_id: usuario.R12Coop_id,
-    //             },
-    //             select: { R11NumSuc: true },
-    //         });
-
-    //         if (sucursalesCoincidentes.length > 0) {
-    //             OR.push({ RA01Sucursal: { in: sucursalesCoincidentes.map((s) => s.R11NumSuc) } });
-    //         }
-    //     }
-
-    //     // 🔸 Filtros por columna (PrimeNG)
-    //     if (filters) {
-    //         for (const [field, meta] of Object.entries(filters)) {
-    //             const constraintObj = Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
-    //             const value = constraintObj?.value;
-    //             const matchMode = constraintObj?.matchMode ?? 'contains';
-    //             if (!value && value !== 0) continue;
-
-    //             switch (matchMode) {
-    //                 case 'startsWith':
-    //                     where[field] = { startsWith: value, mode: 'insensitive' };
-    //                     break;
-    //                 case 'contains':
-    //                     where[field] = { contains: value, mode: 'insensitive' };
-    //                     break;
-    //                 case 'notContains':
-    //                     where.NOT = where.NOT || [];
-    //                     where.NOT.push({ [field]: { contains: value, mode: 'insensitive' } });
-    //                     break;
-    //                 case 'endsWith':
-    //                     where[field] = { endsWith: value, mode: 'insensitive' };
-    //                     break;
-    //                 case 'equals':
-    //                     where[field] = { equals: isNaN(value) ? value : Number(value) };
-    //                     break;
-    //                 case 'notEquals':
-    //                     where.NOT = where.NOT || [];
-    //                     where.NOT.push({ [field]: { equals: isNaN(value) ? value : Number(value) } });
-    //                     break;
-    //                 default:
-    //                     where[field] = { contains: value, mode: 'insensitive' };
-    //             }
-
-    //             // Sucursal (nombre → código numérico)
-    //             if (field === 'RA01Sucursal') {
-    //                 const sucursalFilter = await this.r11Sucursal.findMany({
-    //                     where: {
-    //                         R11Nom: { contains: value, mode: 'insensitive' },
-    //                         R11Coop_id: usuario.R12Coop_id,
-    //                     },
-    //                     select: { R11NumSuc: true },
-    //                 });
-    //                 where.RA01Sucursal =
-    //                     sucursalFilter.length > 0
-    //                         ? { in: sucursalFilter.map((s) => s.R11NumSuc) }
-    //                         : { equals: -1 };
-    //             }
-
-    //             // RA01Folio numérico
-    //             if (field === 'RA01Folio' && !isNaN(Number(value))) {
-    //                 where.RA01Folio = Number(value);
-    //             }
-    //         }
-    //     }
-
-    //     if (OR.length > 0) where.OR = OR;
-    //     return where;
-    // }
     
     private async _buildFilterWhere(
         filters: Record<string, any> | undefined,
@@ -685,7 +587,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         tamanoMuestra: number,
         controlId: number,
     ) {
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         const baseWhere = {
             RA01FEntrega: { gte: fechaInicio, lte: fechaFinal },
