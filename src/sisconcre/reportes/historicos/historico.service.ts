@@ -6,6 +6,7 @@ import { Fase, HistoricoFiltroInput } from '../dto/historicos/inputs/filtro-hist
 import { HistoricoMesDto, HistoricoResponseDto, HistoricoSucursalDto, HistoricoTotalesGlobalesDto } from '../dto/historicos/historico-response.dto';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { RpcException } from '@nestjs/microservices';
+import { normalizeToYYYYMMDD } from 'src/common/utils/date.util';
 
 @Injectable()
 export class HistoricoService extends PrismaClient implements OnModuleInit {
@@ -129,12 +130,15 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
 
 
     private async reporteFaseI(input: HistoricoFiltroInput, user: Usuario): Promise<HistoricoResponseDto> {
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
+        
         const prestamos = await this.r01Prestamo.findMany({
             where: {
                 resumenF1: { isNot: null },
                 R01FRev: {
-                    gte: new Date(input.fechaInicio).toISOString(),
-                    lte: new Date(input.fechaFinal).toISOString()
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id
             },

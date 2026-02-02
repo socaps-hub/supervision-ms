@@ -19,6 +19,7 @@ import { InventarioRevisionResponse } from './dto/outputs/inventario-revision-re
 import { mapPrimeFilterToPrisma } from 'src/common/utils/map-prime-to-prisma.util';
 import { InventarioRevisionStatsOutput } from './dto/outputs/inventario-revision-stats.output';
 import { InventarioSeguimientoStatsOutput } from './dto/outputs/inventario-seguimiento-stats.output';
+import { buildPrismaWhereFromPrimeFilters } from 'src/common/utils/prisma-where-from-prime-filters.builder';
 
 @Injectable()
 export class CreditoService extends PrismaClient implements OnModuleInit {
@@ -263,6 +264,8 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             fechaFinal,
             controlId,
         );
+        const folioEquals = baseWhere.RA01Folio;
+        delete baseWhere.RA01Folio;
 
         const ORDER = { RA01Folio: 'asc' as const };
         const skip = Math.max(0, offset);
@@ -277,8 +280,13 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             //    (para no traer miles de registros de golpe)
             const seleccionadosEnRango = await this.rA01Credito.findMany({
                 where: {
+                    // ...baseWhere,
+                    // RA01Folio: { in: foliosSeleccionados },
                     ...baseWhere,
-                    RA01Folio: { in: foliosSeleccionados },
+                    RA01Folio: {
+                        ...(folioEquals !== undefined ? { equals: folioEquals } : {}),
+                        in: foliosSeleccionados,
+                    },
                 },
                 select: this._selectBasico(),
                 orderBy: ORDER,
@@ -290,8 +298,13 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             const faltan = Math.max(0, take - seleccionadosEnRango.length);
             const noSeleccionados = await this.rA01Credito.findMany({
                 where: {
+                    // ...baseWhere,
+                    // RA01Folio: { notIn: foliosSeleccionados },
                     ...baseWhere,
-                    RA01Folio: { notIn: foliosSeleccionados },
+                    RA01Folio: {
+                        ...(folioEquals !== undefined ? { equals: folioEquals } : {}),
+                        notIn: foliosSeleccionados,
+                    },
                 },
                 select: this._selectBasico(),
                 orderBy: ORDER,
@@ -302,11 +315,23 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             registrosFiltrados = [...seleccionadosEnRango, ...noSeleccionados];
 
             // 🔹 Total global = seleccionados + no seleccionados
+            // totalFiltrados =
+            //     foliosSeleccionados.length +
+            //     (await this.rA01Credito.count({
+            //         where: { ...baseWhere, RA01Folio: { notIn: foliosSeleccionados } },
+            //     }));
             totalFiltrados =
                 foliosSeleccionados.length +
                 (await this.rA01Credito.count({
-                    where: { ...baseWhere, RA01Folio: { notIn: foliosSeleccionados } },
+                    where: {
+                    ...baseWhere,
+                    RA01Folio: {
+                        ...(folioEquals !== undefined ? { equals: folioEquals } : {}),
+                        notIn: foliosSeleccionados,
+                    },
+                    },
                 }));
+
         }
 
         // 🧩 MODO NORMAL
@@ -457,6 +482,108 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         return 1.64;
     }
 
+    // private async _buildFilterWhere(
+    //     filters: Record<string, any> | undefined,
+    //     searchText: string | undefined,
+    //     usuario: Usuario,
+    //     fechaInicio: string,
+    //     fechaFinal: string,
+    //     controlId: number,
+    // ) {
+    //     const where: any = {
+    //         RA01FEntrega: { gte: fechaInicio, lte: fechaFinal },
+    //         RA01ControlId: controlId,
+    //     };
+
+    //     const OR: any[] = [];
+
+    //     // 🔸 Búsqueda global
+    //     if (searchText && searchText.trim() !== '') {
+    //         const term = searchText.trim();
+    //         const isNumeric = /^[0-9]+$/.test(term);
+
+    //         if (isNumeric) OR.push({ RA01Folio: Number(term) });
+
+    //         OR.push(
+    //             { RA01NumeroDeCredito: { contains: term, mode: 'insensitive' } },
+    //             { RA01NumeroCag: { contains: term, mode: 'insensitive' } },
+    //             { RA01Nombre: { contains: term, mode: 'insensitive' } },
+    //             { RA01Tipo: { contains: term, mode: 'insensitive' } },
+    //             { RA01Categoria: { contains: term, mode: 'insensitive' } },
+    //         );
+
+    //         const sucursalesCoincidentes = await this.r11Sucursal.findMany({
+    //             where: {
+    //                 R11Nom: { contains: term, mode: 'insensitive' },
+    //                 R11Coop_id: usuario.R12Coop_id,
+    //             },
+    //             select: { R11NumSuc: true },
+    //         });
+
+    //         if (sucursalesCoincidentes.length > 0) {
+    //             OR.push({ RA01Sucursal: { in: sucursalesCoincidentes.map((s) => s.R11NumSuc) } });
+    //         }
+    //     }
+
+    //     // 🔸 Filtros por columna (PrimeNG)
+    //     if (filters) {
+    //         for (const [field, meta] of Object.entries(filters)) {
+    //             const constraintObj = Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
+    //             const value = constraintObj?.value;
+    //             const matchMode = constraintObj?.matchMode ?? 'contains';
+    //             if (!value && value !== 0) continue;
+
+    //             switch (matchMode) {
+    //                 case 'startsWith':
+    //                     where[field] = { startsWith: value, mode: 'insensitive' };
+    //                     break;
+    //                 case 'contains':
+    //                     where[field] = { contains: value, mode: 'insensitive' };
+    //                     break;
+    //                 case 'notContains':
+    //                     where.NOT = where.NOT || [];
+    //                     where.NOT.push({ [field]: { contains: value, mode: 'insensitive' } });
+    //                     break;
+    //                 case 'endsWith':
+    //                     where[field] = { endsWith: value, mode: 'insensitive' };
+    //                     break;
+    //                 case 'equals':
+    //                     where[field] = { equals: isNaN(value) ? value : Number(value) };
+    //                     break;
+    //                 case 'notEquals':
+    //                     where.NOT = where.NOT || [];
+    //                     where.NOT.push({ [field]: { equals: isNaN(value) ? value : Number(value) } });
+    //                     break;
+    //                 default:
+    //                     where[field] = { contains: value, mode: 'insensitive' };
+    //             }
+
+    //             // Sucursal (nombre → código numérico)
+    //             if (field === 'RA01Sucursal') {
+    //                 const sucursalFilter = await this.r11Sucursal.findMany({
+    //                     where: {
+    //                         R11Nom: { contains: value, mode: 'insensitive' },
+    //                         R11Coop_id: usuario.R12Coop_id,
+    //                     },
+    //                     select: { R11NumSuc: true },
+    //                 });
+    //                 where.RA01Sucursal =
+    //                     sucursalFilter.length > 0
+    //                         ? { in: sucursalFilter.map((s) => s.R11NumSuc) }
+    //                         : { equals: -1 };
+    //             }
+
+    //             // RA01Folio numérico
+    //             if (field === 'RA01Folio' && !isNaN(Number(value))) {
+    //                 where.RA01Folio = Number(value);
+    //             }
+    //         }
+    //     }
+
+    //     if (OR.length > 0) where.OR = OR;
+    //     return where;
+    // }
+    
     private async _buildFilterWhere(
         filters: Record<string, any> | undefined,
         searchText: string | undefined,
@@ -470,14 +597,18 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             RA01ControlId: controlId,
         };
 
-        const OR: any[] = [];
-
-        // 🔸 Búsqueda global
-        if (searchText && searchText.trim() !== '') {
+        /* =========================
+         * OR – búsqueda global
+         * ========================= */
+        if (searchText?.trim()) {
             const term = searchText.trim();
             const isNumeric = /^[0-9]+$/.test(term);
 
-            if (isNumeric) OR.push({ RA01Folio: Number(term) });
+            const OR: any[] = [];
+
+            if (isNumeric) {
+                OR.push({ RA01Folio: Number(term) });
+            }
 
             OR.push(
                 { RA01NumeroDeCredito: { contains: term, mode: 'insensitive' } },
@@ -487,7 +618,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                 { RA01Categoria: { contains: term, mode: 'insensitive' } },
             );
 
-            const sucursalesCoincidentes = await this.r11Sucursal.findMany({
+            const sucursales = await this.r11Sucursal.findMany({
                 where: {
                     R11Nom: { contains: term, mode: 'insensitive' },
                     R11Coop_id: usuario.R12Coop_id,
@@ -495,69 +626,57 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
                 select: { R11NumSuc: true },
             });
 
-            if (sucursalesCoincidentes.length > 0) {
-                OR.push({ RA01Sucursal: { in: sucursalesCoincidentes.map((s) => s.R11NumSuc) } });
+            if (sucursales.length) {
+                OR.push({
+                    RA01Sucursal: { in: sucursales.map(s => s.R11NumSuc) },
+                });
             }
+
+            where.OR = OR;
         }
 
-        // 🔸 Filtros por columna (PrimeNG)
-        if (filters) {
-            for (const [field, meta] of Object.entries(filters)) {
-                const constraintObj = Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
-                const value = constraintObj?.value;
-                const matchMode = constraintObj?.matchMode ?? 'contains';
-                if (!value && value !== 0) continue;
+        const folioValue = filters?.RA01Folio?.[0]?.value;
+        const sucursalValue = filters?.RA01Sucursal?.[0]?.value;
 
-                switch (matchMode) {
-                    case 'startsWith':
-                        where[field] = { startsWith: value, mode: 'insensitive' };
-                        break;
-                    case 'contains':
-                        where[field] = { contains: value, mode: 'insensitive' };
-                        break;
-                    case 'notContains':
-                        where.NOT = where.NOT || [];
-                        where.NOT.push({ [field]: { contains: value, mode: 'insensitive' } });
-                        break;
-                    case 'endsWith':
-                        where[field] = { endsWith: value, mode: 'insensitive' };
-                        break;
-                    case 'equals':
-                        where[field] = { equals: isNaN(value) ? value : Number(value) };
-                        break;
-                    case 'notEquals':
-                        where.NOT = where.NOT || [];
-                        where.NOT.push({ [field]: { equals: isNaN(value) ? value : Number(value) } });
-                        break;
-                    default:
-                        where[field] = { contains: value, mode: 'insensitive' };
-                }
+        let sanitizedFilters = { ...filters };
+        delete sanitizedFilters?.RA01Sucursal
+        delete sanitizedFilters?.RA01Folio        
 
-                // Sucursal (nombre → código numérico)
-                if (field === 'RA01Sucursal') {
-                    const sucursalFilter = await this.r11Sucursal.findMany({
-                        where: {
-                            R11Nom: { contains: value, mode: 'insensitive' },
-                            R11Coop_id: usuario.R12Coop_id,
-                        },
-                        select: { R11NumSuc: true },
-                    });
-                    where.RA01Sucursal =
-                        sucursalFilter.length > 0
-                            ? { in: sucursalFilter.map((s) => s.R11NumSuc) }
-                            : { equals: -1 };
-                }
+        /* =========================
+         * AND – filtros por columna (GENÉRICO)
+         * ========================= */
+        Object.assign(
+            where,
+            buildPrismaWhereFromPrimeFilters(sanitizedFilters),
+        );
 
-                // RA01Folio numérico
-                if (field === 'RA01Folio' && !isNaN(Number(value))) {
-                    where.RA01Folio = Number(value);
-                }
-            }
+        /* =========================
+         * Reglas especiales por campo
+         * ========================= */
+        if (sucursalValue) {
+            const value = filters.RA01Sucursal[0].value;
+
+            const sucursales = await this.r11Sucursal.findMany({
+                where: {
+                    R11Nom: { contains: value, mode: 'insensitive' },
+                    R11Coop_id: usuario.R12Coop_id,
+                },
+                select: { R11NumSuc: true },
+            });
+
+            where.RA01Sucursal = sucursales.length
+                ? { in: sucursales.map(s => s.R11NumSuc) }
+                : { equals: -1 };
         }
 
-        if (OR.length > 0) where.OR = OR;
+        if (folioValue && !isNaN(Number(folioValue))) {
+            where.RA01Folio = Number(folioValue);
+        }
+        
+
         return where;
     }
+
 
     private async _generarMuestraGlobal(
         usuario: Usuario,
@@ -1421,6 +1540,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         return { registrosFiltrados, totalFiltrados };
     }
 
+    // TODO -> agregar filtro de fecha en la definicion y edición de una muestra
     private async _buildInventarioWhere(
         estado: ValidEstadosAuditoria,
         user: Usuario,
@@ -1438,7 +1558,7 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
         }
 
         const OR: any[] = [];
-
+        
         // 🔹 Búsqueda global (caja de texto)
         if (searchText && searchText.trim() !== '') {
             const term = searchText.trim();
@@ -1473,31 +1593,25 @@ export class CreditoService extends PrismaClient implements OnModuleInit {
             }
         }
 
+        const folioValue = filters?.A02CreditoFolio?.[0]?.value;
+
+        let sanitizedFilters = { ...filters };
+        delete sanitizedFilters?.A02CreditoFolio     
+
         // 🔹 Filtros por columna (PrimeNG)
-        // 🔹 Filtros por columna (PrimeNG)
-        if (filters) {
-            console.log(filters);
+        Object.assign(
+            where,
+            buildPrismaWhereFromPrimeFilters(sanitizedFilters),
+        );
 
-            for (const [field, meta] of Object.entries(filters)) {
-                // Formato compatible PrimeNG:
-                // meta = { value, matchMode }  O  { constraints: [{ value, matchMode }] }
-                const constraint =
-                    Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
-
-                if (!constraint || constraint.value === undefined || constraint.value === null || constraint.value === '') {
-                    continue;
-                }
-
-                const mapped = mapPrimeFilterToPrisma(field, constraint);
-
-                // merge al where
-                Object.assign(where, mapped);
-            }
+        if (folioValue && !isNaN(Number(folioValue))) {
+            where.A02CreditoFolio = Number(folioValue);
         }
 
         if (OR.length > 0) where.OR = OR;
 
         return where;
     }
+
 
 }

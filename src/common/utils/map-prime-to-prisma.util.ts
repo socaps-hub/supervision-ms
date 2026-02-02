@@ -4,7 +4,6 @@
 //   const matchMode = filter.matchMode || 'contains';
 //   let value = filter.value;
 
-//   // Convertir DatePicker a ISO string (primer paso)
 //   if (value instanceof Date) {
 //     value = value.toISOString();
 //   }
@@ -12,69 +11,46 @@
 //   const prismaFilter: any = {};
 
 //   switch (matchMode) {
-
-//     // ───────────────────────────────────────────────
-//     // 📌 FECHAS: Date is (día completo)
-//     // ───────────────────────────────────────────────
 //     case 'dateIs': {
 //       const date = new Date(value);
-
 //       const start = new Date(date);
 //       start.setHours(0, 0, 0, 0);
-
 //       const end = new Date(date);
 //       end.setHours(23, 59, 59, 999);
-
 //       prismaFilter.gte = start.toISOString();
 //       prismaFilter.lte = end.toISOString();
 //       break;
 //     }
 
-//     // ───────────────────────────────────────────────
-//     // 📌 FECHAS: Date is not
-//     // (NOT BETWEEN día completo)
-//     // ───────────────────────────────────────────────
 //     case 'dateIsNot': {
 //       const date = new Date(value);
-
 //       const start = new Date(date);
 //       start.setHours(0, 0, 0, 0);
-
 //       const end = new Date(date);
 //       end.setHours(23, 59, 59, 999);
 
-//       // Prisma espera un array de NOTs
 //       return {
 //         NOT: {
 //           [field]: {
 //             gte: start.toISOString(),
 //             lte: end.toISOString(),
-//           }
-//         }
+//           },
+//         },
 //       };
 //     }
 
-//     // ───────────────────────────────────────────────
-//     // 📌 FECHAS: Date is before
-//     // ───────────────────────────────────────────────
 //     case 'dateBefore': {
 //       const date = new Date(value);
 //       prismaFilter.lt = date.toISOString();
 //       break;
 //     }
 
-//     // ───────────────────────────────────────────────
-//     // 📌 FECHAS: Date is after
-//     // ───────────────────────────────────────────────
 //     case 'dateAfter': {
 //       const date = new Date(value);
 //       prismaFilter.gt = date.toISOString();
 //       break;
 //     }
 
-//     // ───────────────────────────────────────────────
-//     // 📌 MATCH MODES NORMALES (texto / num)
-//     // ───────────────────────────────────────────────
 //     case 'equals':
 //       prismaFilter.equals = value;
 //       break;
@@ -107,28 +83,23 @@
 //       prismaFilter.mode = 'insensitive';
 //   }
 
-//   // ───────────────────────────────────────────────
-//   // 📌 Campos simples
-//   // ───────────────────────────────────────────────
-//   if (!field.includes('.')) {
+//   // Campos simples
+//   const path = field.split('.'); // 👈 soporta anidado
+//   if (path.length === 1) {
 //     return { [field]: prismaFilter };
 //   }
 
-//   // ───────────────────────────────────────────────
-//   // 📌 Campos anidados (e.g. resumenRevisionF1.A04CalA)
-//   // ───────────────────────────────────────────────
-//   const [relation, nestedField] = field.split('.');
+//   // Campos anidados: construimos un objeto tipo { a: { b: { c: prismaFilter } } }
+//   let nested: any = prismaFilter;
+//   for (let i = path.length - 1; i >= 0; i--) {
+//     nested = { [path[i]]: nested };
+//   }
 
-//   return {
-//     [relation]: {
-//       [nestedField]: prismaFilter,
-//     },
-//   };
+//   return nested;
 // }
-export function mapPrimeFilterToPrisma(field: string, filter: any) {
-  if (!filter || filter.value === undefined || filter.value === null) return {};
 
-  const matchMode = filter.matchMode || 'contains';
+export function mapPrimeFilterToPrisma(field: string, filter: any) {
+  const matchMode = filter.matchMode ?? 'contains';
   let value = filter.value;
 
   if (value instanceof Date) {
@@ -139,42 +110,25 @@ export function mapPrimeFilterToPrisma(field: string, filter: any) {
 
   switch (matchMode) {
     case 'dateIs': {
-      const date = new Date(value);
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
+      const d = new Date(value);
+      const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+      const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999));
       prismaFilter.gte = start.toISOString();
       prismaFilter.lte = end.toISOString();
       break;
     }
 
-    case 'dateIsNot': {
-      const date = new Date(value);
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
-
-      return {
-        NOT: {
-          [field]: {
-            gte: start.toISOString(),
-            lte: end.toISOString(),
-          },
-        },
-      };
-    }
-
-    case 'dateBefore': {
-      const date = new Date(value);
-      prismaFilter.lt = date.toISOString();
+    case 'dateAfter': {
+      const d = new Date(value);
+      const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+      prismaFilter.gte = start.toISOString();
       break;
     }
 
-    case 'dateAfter': {
-      const date = new Date(value);
-      prismaFilter.gt = date.toISOString();
+    case 'dateBefore': {
+      const d = new Date(value);
+      const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999));
+      prismaFilter.lte = end.toISOString();
       break;
     }
 
@@ -210,14 +164,10 @@ export function mapPrimeFilterToPrisma(field: string, filter: any) {
       prismaFilter.mode = 'insensitive';
   }
 
-  // Campos simples
-  const path = field.split('.'); // 👈 soporta anidado
-  if (path.length === 1) {
-    return { [field]: prismaFilter };
-  }
-
-  // Campos anidados: construimos un objeto tipo { a: { b: { c: prismaFilter } } }
+  /** 🔹 soporta campos anidados */
+  const path = field.split('.');
   let nested: any = prismaFilter;
+
   for (let i = path.length - 1; i >= 0; i--) {
     nested = { [path[i]]: nested };
   }

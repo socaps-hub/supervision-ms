@@ -15,6 +15,8 @@ import { InventarioMovimientosResponse } from './dto/output/inventario-movimient
 import { SisconcapFase1StatisticsOutput } from './dto/output/fase1-stats-response.output';
 import { InventarioSolicitudesFilterInput } from 'src/sisconcre/solicitudes/dto/inputs/solicitudes/inventario-solicitudes-filter.input';
 import { ValidEstados } from 'src/sisconcre/solicitudes/enums/valid-estados.enum';
+import { buildPrismaWhereFromPrimeFilters } from 'src/common/utils/prisma-where-from-prime-filters.builder';
+import { getFechaMexicoISO } from 'src/common/utils/date.util';
 
 @Injectable()
 export class MovimientosService extends PrismaClient implements OnModuleInit {
@@ -93,7 +95,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                             R23Rc: resumenInput.R21Rc,
                             R23Obs: resumenInput.R21Obs || 'PASO AUTOMÁTICO',
                             R23Cal: Calificativo.CORRECTO,
-                            R23FSeg: new Date().toISOString(),
+                            R23FSeg: getFechaMexicoISO(),
                             R23SP_id: user.R12Id,
                         },
                     });
@@ -112,7 +114,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                             R25Rc: resumenInput.R21Rc,
                             R25Obs: resumenInput.R21Obs || 'PASO AUTOMÁTICO',
                             R25Cal: Calificativo.CORRECTO,
-                            R25FSegG: new Date().toISOString(),
+                            R25FSegG: getFechaMexicoISO(),
                             R25SP_id: user.R12Id,
                         },
                     });
@@ -588,7 +590,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                             R23Rc: resumen.R21Rc,
                             R23Obs: resumen.R21Obs || 'PASO AUTOMÁTICO',
                             R23Cal: Calificativo.CORRECTO,
-                            R23FSeg: new Date().toISOString(),
+                            R23FSeg: getFechaMexicoISO(),
                             R23SP_id: user.R12Id,
                         },
                     });
@@ -607,7 +609,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
                             R25Rc: resumen.R21Rc,
                             R25Obs: resumen.R21Obs || 'PASO AUTOMÁTICO',
                             R25Cal: Calificativo.CORRECTO,
-                            R25FSegG: new Date().toISOString(),
+                            R25FSegG: getFechaMexicoISO(),
                             R25SP_id: user.R12Id,
                         },
                     });
@@ -993,9 +995,6 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             const termUpper = term.toUpperCase();
             const isNumeric = /^[0-9]+$/.test(term);
 
-            console.log(searchText);
-
-
             if (isNumeric) {
                 // búsqueda por folio
                 OR.push({ R19Folio: Number(term) });
@@ -1038,29 +1037,48 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             }
         }
 
-        // Filtros PrimeNG
-        if (filters) {
-            for (const [field, meta] of Object.entries(filters)) {
-                const constraint =
-                    Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
-
-                if (
-                    !constraint ||
-                    constraint.value === undefined ||
-                    constraint.value === null ||
-                    constraint.value === ''
-                ) {
-                    continue;
-                }
-
-                const mapped = mapPrimeFilterToPrisma(field, constraint);
-                Object.assign(where, mapped);
-            }
-        }
-
         if (OR.length > 0) {
             where.OR = OR;
         }
+
+        /* =========================
+         * AND – filtros por columna
+         * ========================= */
+        // if (filters) {
+        //     where.AND = [];
+
+        //     for (const [field, meta] of Object.entries(filters)) {
+        //         if (!meta) continue;
+
+        //         const constraints = Array.isArray(meta)
+        //             ? meta
+        //             : meta.constraints ?? [];
+
+        //         for (const constraint of constraints) {
+        //             if (
+        //                 constraint?.value === null ||
+        //                 constraint?.value === undefined ||
+        //                 constraint?.value === ''
+        //             ) {
+        //                 continue;
+        //             }
+
+        //             const mapped = mapPrimeFilterToPrisma(field, constraint);
+
+        //             if (Object.keys(mapped).length) {
+        //                 where.AND.push(mapped);
+        //             }
+        //         }
+        //     }
+
+        //     if (!where.AND.length) {
+        //         delete where.AND;
+        //     }
+        // }
+        Object.assign(
+            where,
+            buildPrismaWhereFromPrimeFilters(filters),
+        );
 
         return where;
     }

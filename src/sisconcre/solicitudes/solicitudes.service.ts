@@ -1,10 +1,10 @@
 import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaClient, R01Prestamo } from '@prisma/client';
-import { Usuario } from 'src/common/entities/usuario.entity';
 import { RpcException } from '@nestjs/microservices';
+import { PrismaClient, R01Prestamo } from '@prisma/client';
+import { randomUUID } from 'crypto';
+
+import { Usuario } from 'src/common/entities/usuario.entity';
 import { SisConCreCreateFase1Input } from './dto/inputs/fase1-levantamiento/create-fase1.input';
-import { mapPrimeFilterToPrisma } from 'src/common/utils/map-prime-to-prisma.util';
-import { BooleanResponse } from 'src/common/dto/boolean-response.object';
 import { UpdateAllPrestamoArgs } from './dto/args/update-all-prestamo.arg';
 import { Fase1StatisticsOutput } from './dto/output/fase1-stats-response.output';
 import { Fase2StatisticsOutput } from './dto/output/fase2-stats-response.output';
@@ -21,7 +21,8 @@ import { Calificativo } from './enums/evaluacion.enum';
 import { CreateEvaluacionFase4Input } from './dto/inputs/fase4-seguimiento-global/evaluacion/create-evaluacion-fase4.input';
 import { CreateEvaluacionResumenFase4Input } from './dto/inputs/fase4-seguimiento-global/resumen/create-evaluacion-resumen-fase4.input';
 import { ResFaseII } from './enums/evaluacion-fase2.enum';
-import { randomUUID } from 'crypto';
+import { buildPrismaWhereFromPrimeFilters } from 'src/common/utils/prisma-where-from-prime-filters.builder';
+import { getFechaMexicoISO } from 'src/common/utils/date.util';
 
 @Injectable()
 export class SolicitudesService extends PrismaClient implements OnModuleInit {
@@ -44,7 +45,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             const result = await this.$transaction(async (tx) => {
                 // 0. Verificar NO existencia de la solicitud
                 const exists = await tx.r01Prestamo.findUnique({
-                    where: { 
+                    where: {
                         R01NUM_R01Coop_id: {
                             R01NUM: prestamo.R01NUM,
                             R01Coop_id: user.R12Coop_id,
@@ -79,7 +80,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                     ...ev,
                     R05P_id: prestamoDB.R01Id,
                     R05Ev_por: user.R12Id,
-                    R05Ev_en: new Date().toISOString(),
+                    R05Ev_en: getFechaMexicoISO(),
                 }));
 
                 const evaluacion = await tx.r05EvaluacionFase1.createMany({
@@ -96,8 +97,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                     },
                 });
                 return {
-                    prestamoId: prestamoDB.R01NUM,
-                    evaluacionId: prestamoDB.R01NUM,
+                    prestamoId: prestamoDB.R01Id,
+                    evaluacionId: prestamoDB.R01Id,
                     resumenId: resumenDB.R06Id,
                 };
             });
@@ -119,7 +120,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
                 // Verificar que no exista un prestamo con el mismo num
                 const exists = await tx.r01Prestamo.findUnique({
-                    where: { 
+                    where: {
                         R01Id: currentId,
                     },
                     include: {
@@ -138,8 +139,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 }
 
                 // 1. Actualiza el préstamo
-                await tx.r01Prestamo.update({
-                    where: { 
+                const prestamoUpdated = await tx.r01Prestamo.update({
+                    where: {
                         R01Id: currentId
                     },
                     data: {
@@ -164,7 +165,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         R05P_id: currentId,
                         R05Id: crypto.randomUUID(),
                         R05Ev_por: user.R12Id,
-                        R05Ev_en: new Date().toISOString(),
+                        R05Ev_en: getFechaMexicoISO(),
                     })),
                 });
 
@@ -198,8 +199,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 }
 
                 return {
-                    prestamoId: R01NUM,
-                    evaluacionId: R01NUM,
+                    prestamoId: prestamoUpdated.R01Id,
+                    evaluacionId: prestamoUpdated.R01Id,
                     resumenId: existing.R06Id,
                 };
             });
@@ -240,7 +241,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         R07E_id: ev.R07E_id,
                         R07Res: ev.R07Res,
                         R07Ev_por: user.R12Id,
-                        R07Ev_en: new Date().toISOString(),
+                        R07Ev_en: getFechaMexicoISO(),
                     })),
                 });
 
@@ -248,7 +249,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 const newResumen = await tx.r08EvaluacionResumenFase2.create({
                     data: {
                         R08P_id: prestamoId,
-                        R08FSeg: new Date().toISOString(),
+                        R08FSeg: getFechaMexicoISO(),
                         R08Ev_por: user.R12Id,
                         ...resumen,
                     },
@@ -263,8 +264,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 })
 
                 return {
-                    prestamoId: prestamoUpdated.R01NUM,
-                    evaluacionId: prestamoUpdated.R01NUM,
+                    prestamoId: prestamoUpdated.R01Id,
+                    evaluacionId: prestamoUpdated.R01Id,
                     resumenId: newResumen.R08Id,
                 };
             });
@@ -303,7 +304,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         R09P_id: prestamoId,
                         R09E_id: ev.R09E_id,
                         R09Res: ev.R09Res,
-                        R09Ev_en: new Date().toISOString(),
+                        R09Ev_en: getFechaMexicoISO(),
                     })),
                 });
 
@@ -311,7 +312,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 const newResumen = await tx.r10EvaluacionResumenFase3.create({
                     data: {
                         R10P_id: prestamoId,
-                        R10FDes: new Date().toISOString(),
+                        R10FDes: getFechaMexicoISO(),
                         R10Sup: user.R12Id,
                         ...resumen,
                     },
@@ -326,8 +327,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 })
 
                 return {
-                    prestamoId: prestamoUpdated.R01NUM,
-                    evaluacionId: prestamoUpdated.R01NUM,
+                    prestamoId: prestamoUpdated.R01Id,
+                    evaluacionId: prestamoUpdated.R01Id,
                     resumenId: newResumen.R10Id,
                 };
             });
@@ -398,7 +399,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         R16PenCu: resumen.R16PenCu,
                         R16RcF: resumen.R16RcF,
                         R16Obs: resumen.R16Obs,
-                        R16FGlo: new Date().toISOString(),
+                        R16FGlo: getFechaMexicoISO(),
                         R16Ev_por: resumen.R16Ev_por,
                     },
                 });
@@ -412,8 +413,8 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 })
 
                 return {
-                    prestamoId: prestamoUpdated.R01NUM,
-                    evaluacionId: prestamoUpdated.R01NUM,
+                    prestamoId: prestamoUpdated.R01Id,
+                    evaluacionId: prestamoUpdated.R01Id,
                     resumenId: newResumen.R16Id,
                 };
             });
@@ -490,7 +491,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 data: {
                     ...resumen,
                     R16P_id: prestamo.R01Id,
-                    R16FGlo: new Date().toISOString(),
+                    R16FGlo: getFechaMexicoISO(),
                     R16Ev_por: user.R12Id,
                 },
             });
@@ -509,10 +510,10 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             prestamoIds,
         };
     }
-    
+
 
     // * INVENTARIOS
-    
+
     public async getInventarioSolicitudesFiltrado(
         input: InventarioSolicitudesFilterInput,
         user: Usuario,
@@ -636,7 +637,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
 
     async findById(id: string, user: Usuario): Promise<R01Prestamo> {
         const prestamo = await this.r01Prestamo.findFirst({
-            where: { 
+            where: {
                 R01Id: id,
             },
             include: {
@@ -739,7 +740,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     async findF4EvaluationsById(id: string, user: Usuario): Promise<R01Prestamo> {
         // 1) Trae el préstamo + evaluaciones F4 con su jerarquía, y el resumen (en una sola ida)
         const prestamo = await this.r01Prestamo.findUnique({
-            where: { 
+            where: {
                 R01Id: id
             },
             include: {
@@ -883,7 +884,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     // *==================
 
     // Inv Solicitudes
-    
+
     public async getInventarioSolicitudesStats(
         input: InventarioSolicitudesFilterInput,
         user: Usuario,
@@ -1335,6 +1336,101 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
     }
 
 
+    // private async _buildInventarioSolicitudesWhere(
+    //     estado: string | undefined,
+    //     user: Usuario,
+    //     filterBySucursal: boolean,
+    //     filters: Record<string, any> | undefined,
+    //     searchText: string | undefined,
+    // ) {
+    //     const where: any = {
+    //         R01Activ: true,
+    //         R01Coop_id: user.R12Coop_id,
+    //     };
+
+    //     if (filterBySucursal) {
+    //         where.R01Suc_id = user.R12Suc_id;
+    //     }
+
+    //     // 🔹 Estado solo si viene definido (no null / no undefined)
+    //     if (estado !== null && estado !== '') {
+
+    //         where.R01Est = estado;
+    //     }
+
+    //     const OR: any[] = [];
+
+    //     // 🔹 Búsqueda global (caja de texto de la tabla)
+    //     if (searchText && searchText.trim() !== '') {
+    //         const term = searchText.trim();
+    //         const isNumeric = /^[0-9]+$/.test(term);
+
+    //         if (isNumeric) {
+    //             // búsqueda por número de préstamo
+    //             // OR.push({ R01NUM: Number(term) });
+    //         }
+
+    //         OR.push(
+    //             { R01NUM: { contains: term, mode: 'insensitive' } },   // CAG
+    //             { R01Nso: { contains: term, mode: 'insensitive' } },   // CAG
+    //             { R01Nom: { contains: term, mode: 'insensitive' } },   // Socio
+    //             { R01Est: { contains: term, mode: 'insensitive' } },   // Estado
+    //             { sucursal: { R11Nom: { contains: term, mode: 'insensitive' } } },
+    //             { supervisor: { R12Nom: { contains: term, mode: 'insensitive' } } },
+    //             { resumenF2: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
+    //             { resumenF3: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
+    //             { resumenF4: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
+    //             // { categoria: { R14Nom: { contains: term, mode: 'insensitive' } } },
+    //         );
+
+    //         // Coincidencias por nombre de sucursal
+    //         const sucursalesCoincidentes = await this.r11Sucursal.findMany({
+    //             where: {
+    //                 R11Nom: { contains: term, mode: 'insensitive' },
+    //                 R11Coop_id: user.R12Coop_id,
+    //             },
+    //             select: { R11Id: true },
+    //         });
+
+    //         if (sucursalesCoincidentes.length > 0) {
+    //             OR.push({
+    //                 R01Suc_id: { in: sucursalesCoincidentes.map((s) => s.R11Id) },
+    //             });
+    //         }
+    //     }
+
+    //     // 🔹 Filtros por columna (PrimeNG)
+    //     if (filters) {
+
+    //         for (const [field, meta] of Object.entries(filters)) {
+    //             const constraint =
+    //                 Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
+
+    //             if (
+    //                 !constraint ||
+    //                 constraint.value === undefined ||
+    //                 constraint.value === null ||
+    //                 constraint.value === ''
+    //             ) {
+    //                 continue;
+    //             }
+
+    //             const mapped = mapPrimeFilterToPrisma(field, constraint);
+
+    //             console.log(where, mapped);                
+
+    //             // Fusionamos el resultado al where
+    //             Object.assign(where, mapped);
+    //         }
+    //     }
+
+    //     if (OR.length > 0) {
+    //         where.OR = OR;
+    //     }
+
+    //     return where;
+    // }
+
     private async _buildInventarioSolicitudesWhere(
         estado: string | undefined,
         user: Usuario,
@@ -1343,7 +1439,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
         searchText: string | undefined,
     ) {
         const where: any = {
-            R01Activ: true,
+            // R01Activ: true,
             R01Coop_id: user.R12Coop_id,
         };
 
@@ -1351,39 +1447,32 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
             where.R01Suc_id = user.R12Suc_id;
         }
 
-        // 🔹 Estado solo si viene definido (no null / no undefined)
-        if (estado !== null && estado !== '') {
-
+        if (estado !== null && estado !== undefined && estado !== '') {
             where.R01Est = estado;
         }
 
+        /* =========================
+         * OR – búsqueda global
+         * ========================= */
         const OR: any[] = [];
 
-        // 🔹 Búsqueda global (caja de texto de la tabla)
-        if (searchText && searchText.trim() !== '') {
+        if (searchText?.trim()) {
             const term = searchText.trim();
-            const isNumeric = /^[0-9]+$/.test(term);
-
-            if (isNumeric) {
-                // búsqueda por número de préstamo
-                // OR.push({ R01NUM: Number(term) });
-            }
 
             OR.push(
-                { R01NUM: { contains: term, mode: 'insensitive' } },   // CAG
-                { R01Nso: { contains: term, mode: 'insensitive' } },   // CAG
-                { R01Nom: { contains: term, mode: 'insensitive' } },   // Socio
-                { R01Est: { contains: term, mode: 'insensitive' } },   // Estado
+                { R01NUM: { contains: term, mode: 'insensitive' } },
+                { R01Nso: { contains: term, mode: 'insensitive' } },
+                { R01Nom: { contains: term, mode: 'insensitive' } },
+                { R01Est: { contains: term, mode: 'insensitive' } },
                 { sucursal: { R11Nom: { contains: term, mode: 'insensitive' } } },
                 { supervisor: { R12Nom: { contains: term, mode: 'insensitive' } } },
+                { resumenF1: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
                 { resumenF2: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
                 { resumenF3: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
                 { resumenF4: { evaluador: { R12Nom: { contains: term, mode: 'insensitive' } } } },
-                // { categoria: { R14Nom: { contains: term, mode: 'insensitive' } } },
             );
 
-            // Coincidencias por nombre de sucursal
-            const sucursalesCoincidentes = await this.r11Sucursal.findMany({
+            const sucursales = await this.r11Sucursal.findMany({
                 where: {
                     R11Nom: { contains: term, mode: 'insensitive' },
                     R11Coop_id: user.R12Coop_id,
@@ -1391,38 +1480,24 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                 select: { R11Id: true },
             });
 
-            if (sucursalesCoincidentes.length > 0) {
-                OR.push({
-                    R01Suc_id: { in: sucursalesCoincidentes.map((s) => s.R11Id) },
-                });
+            if (sucursales.length) {
+                OR.push({ R01Suc_id: { in: sucursales.map(s => s.R11Id) } });
             }
-        }
 
-        // 🔹 Filtros por columna (PrimeNG)
-        if (filters) {
-            for (const [field, meta] of Object.entries(filters)) {
-                const constraint =
-                    Array.isArray(meta) ? meta[0] : meta?.constraints?.[0] || meta;
-
-                if (
-                    !constraint ||
-                    constraint.value === undefined ||
-                    constraint.value === null ||
-                    constraint.value === ''
-                ) {
-                    continue;
-                }
-
-                const mapped = mapPrimeFilterToPrisma(field, constraint);
-
-                // Fusionamos el resultado al where
-                Object.assign(where, mapped);
-            }
+            where.OR = OR;
         }
 
         if (OR.length > 0) {
             where.OR = OR;
         }
+
+        /* =========================
+         * AND – filtros por columna
+         * ========================= */
+        Object.assign(
+            where,
+            buildPrismaWhereFromPrimeFilters(filters),
+        );
 
         return where;
     }

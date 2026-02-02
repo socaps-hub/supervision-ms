@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Usuario } from "src/common/entities/usuario.entity";
 import { SisconcapHistoricoResponseDto, SisconcapHistoricoSucursalDto, SisconcapHistoricoTotalesGlobalesDto, SisconcapHistoricoMesDto } from "../dto/historicos/historico-response.dto";
 import { SisconcapHistoricoFiltroInput, MovimientoOptions, SisconcapFaseOptions } from "../dto/historicos/inputs/filtro-historico-reporte.input";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class HistoricoService extends PrismaClient implements OnModuleInit {
@@ -30,14 +31,16 @@ export class HistoricoService extends PrismaClient implements OnModuleInit {
         input: SisconcapHistoricoFiltroInput,
         user: Usuario,
     ): Promise<SisconcapHistoricoResponseDto> {
-        const { fase, movimiento, fechaInicio, fechaFinal } = input;
+        const { fase, movimiento } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         // Filtro base
         const where: any = {
             R19Coop_id: user.R12Coop_id,
             R19FRev: {
-                gte: new Date(fechaInicio).toISOString(),
-                lte: new Date(fechaFinal).toISOString(),
+                gte: fechaInicio,
+                lte: fechaFinal,
             },
         };
 

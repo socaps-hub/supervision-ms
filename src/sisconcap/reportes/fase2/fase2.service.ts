@@ -3,6 +3,7 @@ import { Movimiento, PrismaClient } from "@prisma/client";
 import { Usuario } from "src/common/entities/usuario.entity";
 import { FiltroFechasInput } from "src/sisconcre/common/dto/filtro-fechas.input";
 import { ResultadosSeguimientoResponse, ReporteCategoriaF2Response, ReporteSucursalF2Response } from "../dto/fase2/resultados-seguimiento-response.output";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
@@ -18,7 +19,8 @@ export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
         filtro: FiltroFechasInput,
         user: Usuario,
     ): Promise<ResultadosSeguimientoResponse> {
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         // Trae todos los resúmenes de Fase2 dentro del rango
         const registros = await this.r23EvaluacionResumenFase2.findMany({

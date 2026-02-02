@@ -8,6 +8,7 @@ import { NATS_SERVICE } from "src/config";
 import { FiltroFechasInput } from "src/sisconcre/common/dto/filtro-fechas.input";
 import { ReporteFase3Response, ReporteFase3Sucursal } from "../dto/fase3/revision-desembolsos.dto";
 import { DetalleAnomaliasF3Response, SucursalDetalleDto } from "../dto/fase3/anomalias-desembolso.dto";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class ReporteFase3Service extends PrismaClient implements OnModuleInit {
@@ -26,7 +27,8 @@ export class ReporteFase3Service extends PrismaClient implements OnModuleInit {
     }
 
     async getRevisionDesembolsos(input: FiltroFechasInput, user: Usuario): Promise<ReporteFase3Response> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         // Obtener sucursales disponibles para el usuario
         const sucursales = await firstValueFrom(
@@ -39,8 +41,8 @@ export class ReporteFase3Service extends PrismaClient implements OnModuleInit {
                 prestamo: {
                     R01Coop_id: user.R12Coop_id,
                     R01FRec: {
-                        gte: new Date(fechaInicio).toISOString(),
-                        lte: new Date(fechaFinal).toISOString(),
+                        gte: fechaInicio,
+                        lte: fechaFinal,
                     },
                 },
             },
@@ -107,7 +109,8 @@ export class ReporteFase3Service extends PrismaClient implements OnModuleInit {
     }
 
     async getDetalleAnomaliasF3(input: FiltroFechasInput, user: Usuario): Promise<DetalleAnomaliasF3Response> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         // 1️⃣ Obtener rubros y elementos del grupo "Desembolso"
         const rubros = await this.r03Rubro.findMany({
@@ -141,8 +144,8 @@ export class ReporteFase3Service extends PrismaClient implements OnModuleInit {
         const solicitudes = await this.r01Prestamo.findMany({
             where: {
                 R01FRec: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id,
             },

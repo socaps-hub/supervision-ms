@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { CreateFase1RevisionInput } from './dto/inputs/credito/create-fase1-revision.input';
+import { getFechaMexicoISO } from 'src/common/utils/date.util';
 
 @Injectable()
 export class Fase1RevisionService extends PrismaClient implements OnModuleInit {
@@ -67,7 +68,7 @@ export class Fase1RevisionService extends PrismaClient implements OnModuleInit {
                         A04FPlzo: resumen.A04FPlzo,
                         A04Resp: ejecutivo.R12Id,
                         A04Aud_id: resumen.A04Aud_id,
-                        A04FRev: new Date().toISOString(),
+                        A04FRev: getFechaMexicoISO(),
                     },
                 });
 

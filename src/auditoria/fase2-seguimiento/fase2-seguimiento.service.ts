@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { CreateFase2SeguimientoInput } from './dto/inputs/credito/create-fase2-seguimiento.input';
+import { getFechaMexicoISO } from 'src/common/utils/date.util';
 
 @Injectable()
 export class Fase2SeguimientoService extends PrismaClient implements OnModuleInit {
@@ -45,7 +46,7 @@ export class Fase2SeguimientoService extends PrismaClient implements OnModuleIni
                 await tx.a06EvaluacionResumenFase2.create({
                     data: {
                         A06Id: id,
-                        A06FSeg: new Date().toISOString(),
+                        A06FSeg: getFechaMexicoISO(),
                         ...resumen,
                     },
                 });

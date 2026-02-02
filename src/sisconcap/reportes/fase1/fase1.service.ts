@@ -5,6 +5,7 @@ import { ReporteFase1Response } from "../dto/fase1/reporte-segmentado-response.o
 import { Usuario } from "src/common/entities/usuario.entity";
 import { ResumenAnomaliasSucAndEjecutivosCategoriaResponse, ResumenAnomaliasSucAndEjecutivosEjecutivoResponse, ResumenAnomaliasSucAndEjecutivosResponseDto, ResumenAnomaliasSucAndEjecutivosSucursalResponse } from "../dto/fase1/resumen-anomalias-suc-with-ejecutivos-response.output";
 import { ResumenAnomaliasArgs } from "../dto/fase1/arg/resumen-anomalias.args";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
@@ -20,7 +21,9 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         filtro: FiltroFechasInput,
         user: Usuario,
     ): Promise<ReporteFase1Response> {
-        const { fechaInicio, fechaFinal, grupoId } = filtro;
+        const { grupoId } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         try {
             const movimientos = await this.r19Movimientos.findMany({
@@ -172,7 +175,8 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         filtro: FiltroFechasInput,
         user: Usuario,
     ): Promise<ResumenAnomaliasSucAndEjecutivosResponseDto> {
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);
 
         const res = await this.r21EvaluacionResumenFase1.findMany({
             where: {
@@ -260,7 +264,8 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         user: Usuario,
     ): Promise<ResumenAnomaliasSucAndEjecutivosEjecutivoResponse[]> {
         const { categoria, sucursal, filtro } = resumenAnomaliasArgs;
-        const { fechaInicio, fechaFinal } = filtro;
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);   
 
         const res = await this.r21EvaluacionResumenFase1.findMany({
             where: {

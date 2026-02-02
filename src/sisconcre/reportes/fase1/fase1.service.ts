@@ -7,6 +7,7 @@ import { AnomaliasResumenResponseF1, GrupoResumenGlobal, SucursalResumen } from 
 import { DetalleAnomaliasEjecutivoF1Response, EjecutivoDetalle, TotalesColumnasDetalle } from '../dto/fase1/detalle-anomalias-f1-ejecutivo.output';
 import { Usuario } from 'src/common/entities/usuario.entity';
 import { AnomaliasEjecutivoResumen, DetalleAnomaliasIntegralEjecutivosResponseF1 } from '../dto/fase1/detalle-anomalias-integral-f1-ejecutivos.output';
+import { normalizeToYYYYMMDD } from 'src/common/utils/date.util';
 
 @Injectable()
 export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
@@ -19,13 +20,14 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
     }
 
     async getReporteSegmentadoF1(input: FiltroFechasInput, user: Usuario): Promise<ReporteSegmentadoFase1Response> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);        
 
         const solicitudes = await this.r01Prestamo.findMany({
             where: {
                 R01FRec: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id,
                 // R01Est: 'Sin seguimiento',
@@ -143,7 +145,8 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
     }
 
     async getDetalleAnomalias(input: FiltroFechasInput, user: Usuario): Promise<DetalleAnomaliasF1Response> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);        
 
         // 🧩 Obtener todos los rubros y elementos registrados
         const rubros = await this.r03Rubro.findMany({
@@ -178,8 +181,8 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
             where: {
                 // R01Est: 'Sin seguimiento',
                 R01FRec: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id,
                 resumenF1: {
@@ -325,16 +328,16 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
     }
 
     async getDetalleAnomaliasIntegralPorGrupos(input: FiltroFechasInput, user: Usuario): Promise<AnomaliasResumenResponseF1> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         const prestamos = await this.r01Prestamo.findMany({
             where: {
                 R01FRec: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id,
-                // R01Est: 'Sin seguimiento',
                 R01Activ: true,
                 resumenF1: {
                     R06Res: Resolucion.PASA_COMITE
@@ -445,12 +448,12 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         };
     }
 
-
     async getDetalleAnomaliasPorEjecutivo(
         input: FiltroFechasInput,
         user: Usuario
     ): Promise<DetalleAnomaliasEjecutivoF1Response> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         // 🧩 Obtener todos los rubros y elementos registrados
         const rubros = await this.r03Rubro.findMany({
@@ -480,8 +483,8 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
             where: {
                 // R01Est: 'Sin seguimiento',
                 R01FRec: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id,
                 resumenF1: { R06Res: Resolucion.PASA_COMITE },
@@ -632,13 +635,14 @@ export class ReporteFase1Service extends PrismaClient implements OnModuleInit {
         user: Usuario
     ): Promise<DetalleAnomaliasIntegralEjecutivosResponseF1> {
 
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);
 
         const prestamos = await this.r01Prestamo.findMany({
             where: {
                 R01FRec: {
-                    gte: new Date(fechaInicio).toISOString(),
-                    lte: new Date(fechaFinal).toISOString(),
+                    gte: fechaInicio,
+                    lte: fechaFinal,
                 },
                 R01Coop_id: user.R12Coop_id,
                 // R01Est: 'Sin seguimiento',

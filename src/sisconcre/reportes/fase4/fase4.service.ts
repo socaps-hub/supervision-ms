@@ -7,6 +7,7 @@ import { Usuario } from "src/common/entities/usuario.entity";
 import { NATS_SERVICE } from "src/config";
 import { FiltroFechasInput } from "src/sisconcre/common/dto/filtro-fechas.input";
 import { ReporteFase4Response, ReporteFase4SucursalDto } from "../dto/fase4/reporte-global.dto";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class ReporteFase4Service extends PrismaClient implements OnModuleInit {
@@ -25,7 +26,8 @@ export class ReporteFase4Service extends PrismaClient implements OnModuleInit {
     }
 
     async getReporteGlobalF4(input: FiltroFechasInput, user: Usuario): Promise<ReporteFase4Response> {
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         // const sucursales = await firstValueFrom(
         //     this._client.send('config.sucursales.getAll', { user })
@@ -37,8 +39,8 @@ export class ReporteFase4Service extends PrismaClient implements OnModuleInit {
                 prestamo: {
                     R01Coop_id: user.R12Coop_id,
                     R01FRec: {
-                        gte: new Date(fechaInicio).toISOString(),
-                        lte: new Date(fechaFinal).toISOString(),
+                        gte: fechaInicio,
+                        lte: fechaFinal,
                     },
                 },
             },
@@ -265,7 +267,5 @@ export class ReporteFase4Service extends PrismaClient implements OnModuleInit {
             pctTotalAnomaliasTotalesPorSolventarGlobal: anomaliasT ? Math.round((totalAnomaliasTotalesPorSolventarGlobal / anomaliasT) * 100) : 0,
         };
     }
-
-    // TODO: ACTUALIZAR SCHEMA EN FRONTEND Y PLAYGROUND
 
 }

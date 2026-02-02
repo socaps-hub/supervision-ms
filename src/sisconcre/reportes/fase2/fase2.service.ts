@@ -8,6 +8,7 @@ import { FiltroFechasInput } from "src/sisconcre/common/dto/filtro-fechas.input"
 import { NATS_SERVICE } from "src/config";
 import { firstValueFrom } from "rxjs";
 import { Calificativo } from "src/sisconcre/solicitudes/enums/evaluacion.enum";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
@@ -27,7 +28,8 @@ export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
 
     async getResultadosSeguimiento(input: FiltroFechasInput, user: Usuario): Promise<ReporteFase2Response> {
 
-        const { fechaInicio, fechaFinal } = input;
+        const fechaInicio = normalizeToYYYYMMDD(input.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(input.fechaFinal);   
 
         const sucursales = await firstValueFrom(
             this._client.send('config.sucursales.getAll', { user })
@@ -38,8 +40,8 @@ export class ReporteFase2Service extends PrismaClient implements OnModuleInit {
                 prestamo: {
                     R01Coop_id: user.R12Coop_id,
                     R01FRec: {
-                        gte: new Date(fechaInicio).toISOString(),
-                        lte: new Date(fechaFinal).toISOString(),
+                        gte: fechaInicio,
+                        lte: fechaFinal,
                     },
                 },
             },
