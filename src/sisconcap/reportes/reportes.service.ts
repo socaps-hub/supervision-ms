@@ -61,8 +61,8 @@ export class ReportesService {
     }
 
     // * BALANCE
-    async getBalance(user: Usuario): Promise<BalanceResponse> {
-        return await this._balanceService.getBalance(user);
+    async getBalance(input: FiltroFechasInput, user: Usuario): Promise<BalanceResponse> {
+        return await this._balanceService.getBalance(input, user);
     }
 
 }

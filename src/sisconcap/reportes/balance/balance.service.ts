@@ -2,6 +2,8 @@ import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
 import { BalanceResponse } from "../dto/balance/balance-response.output";
 import { Usuario } from "src/common/entities/usuario.entity";
+import { FiltroFechasInput } from "src/sisconcre/common/dto/filtro-fechas.input";
+import { normalizeToYYYYMMDD } from "src/common/utils/date.util";
 
 @Injectable()
 export class BalanceService extends PrismaClient implements OnModuleInit {
@@ -13,22 +15,50 @@ export class BalanceService extends PrismaClient implements OnModuleInit {
         this._logger.log('Database connected')
     }
 
-    async getBalance(user: Usuario): Promise<BalanceResponse> {
+    async getBalance(filtro: FiltroFechasInput, user: Usuario): Promise<BalanceResponse> {
+
+        const fechaInicio = normalizeToYYYYMMDD(filtro.fechaInicio);
+        const fechaFinal  = normalizeToYYYYMMDD(filtro.fechaFinal);  
+
         // === FASE 1 ===
         const fase1 = await this.r21EvaluacionResumenFase1.findMany({
-            where: { movimiento: { R19Coop_id: user.R12Coop_id } },
+            where: { 
+                movimiento: { 
+                    R19Coop_id: user.R12Coop_id,
+                    R19FRev: {
+                        gte: fechaInicio,
+                        lte: fechaFinal,
+                    },
+                } 
+            },
             select: { R21Folio: true, R21Ha: true },
         });
 
         // === FASE 2 ===
         const fase2 = await this.r23EvaluacionResumenFase2.findMany({
-            where: { movimiento: { R19Coop_id: user.R12Coop_id } },
+            where: { 
+                movimiento: { 
+                    R19Coop_id: user.R12Coop_id,
+                    R19FRev: {
+                        gte: fechaInicio,
+                        lte: fechaFinal,
+                    },
+                } 
+            },
             select: { R23Folio: true, R23PSolv: true },
         });
 
         // === FASE 3 ===
         const fase3 = await this.r25EvaluacionResumenFase3.findMany({
-            where: { movimiento: { R19Coop_id: user.R12Coop_id } },
+            where: { 
+                movimiento: { 
+                    R19Coop_id: user.R12Coop_id,
+                    R19FRev: {
+                        gte: fechaInicio,
+                        lte: fechaFinal,
+                    },
+                } 
+            },
             select: { R25Folio: true, R25PSolv: true },
         });
 

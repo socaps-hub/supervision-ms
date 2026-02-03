@@ -20,71 +20,72 @@ export class ReportesResolver {
   constructor(private readonly reportesService: ReportesService) { }
 
   // * FASE 1
-  @Query(() => ReporteFase1Response)
-  async reporteSegmentadoFase1(
-    @Args('input') input: FiltroFechasInput,
-    @GetUserGraphQL() user: Usuario
-  ): Promise<ReporteFase1Response> {
-    return this.reportesService.getReporteSegmentadoF1(input, user);
-  }
+  // @Query(() => ReporteFase1Response)
+  // async reporteSegmentadoFase1(
+  //   @Args('input') input: FiltroFechasInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ): Promise<ReporteFase1Response> {
+  //   return this.reportesService.getReporteSegmentadoF1(input, user);
+  // }
 
-  @Query(() => ResumenAnomaliasSucAndEjecutivosResponseDto)
-  async resumenAnomaliasSucAndEjecutivos(
-    @Args('input') input: FiltroFechasInput,
-    @GetUserGraphQL() user: Usuario
-  ): Promise<ResumenAnomaliasSucAndEjecutivosResponseDto> {
-    return this.reportesService.getResumenAnomaliasSucAndEjecutivos(input, user);
-  }
+  // @Query(() => ResumenAnomaliasSucAndEjecutivosResponseDto)
+  // async resumenAnomaliasSucAndEjecutivos(
+  //   @Args('input') input: FiltroFechasInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ): Promise<ResumenAnomaliasSucAndEjecutivosResponseDto> {
+  //   return this.reportesService.getResumenAnomaliasSucAndEjecutivos(input, user);
+  // }
 
-  @Query(() => [ResumenAnomaliasSucAndEjecutivosEjecutivoResponse])
-  async resumenAnomaliasEjecutivosPorSucursal(
-    @Args() resumenAnomaliasArgs: ResumenAnomaliasArgs,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.reportesService.getResumenAnomaliasEjecutivosPorSucursal(resumenAnomaliasArgs, user);
-  }
+  // @Query(() => [ResumenAnomaliasSucAndEjecutivosEjecutivoResponse])
+  // async resumenAnomaliasEjecutivosPorSucursal(
+  //   @Args() resumenAnomaliasArgs: ResumenAnomaliasArgs,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.reportesService.getResumenAnomaliasEjecutivosPorSucursal(resumenAnomaliasArgs, user);
+  // }
 
-  @Query(() => ResumenAnomaliasSucAndEjecutivosCategoriaResponse)
-  async resumenAnomaliasEjecutivosGlobal(
-    @Args('input') input: FiltroFechasInput,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.reportesService.getResumenAnomaliasEjecutivosGlobal(input, user);
-  }
+  // @Query(() => ResumenAnomaliasSucAndEjecutivosCategoriaResponse)
+  // async resumenAnomaliasEjecutivosGlobal(
+  //   @Args('input') input: FiltroFechasInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.reportesService.getResumenAnomaliasEjecutivosGlobal(input, user);
+  // }
 
-  // * FASE 2
-  @Query(() => ResultadosSeguimientoResponse)
-  async resultadosSeguimiento(
-    @Args('input') input: FiltroFechasInput,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.reportesService.getResultadosSeguimiento(input, user);
-  }
+  // // * FASE 2
+  // @Query(() => ResultadosSeguimientoResponse)
+  // async resultadosSeguimiento(
+  //   @Args('input') input: FiltroFechasInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.reportesService.getResultadosSeguimiento(input, user);
+  // }
 
-  // * FASE 3
-  @Query(() => ResultadosSeguimientoResponse)
-  async resultadosFinales(
-    @Args('input') input: FiltroFechasInput,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.reportesService.getResultadosFinales(input, user);
-  }
+  // // * FASE 3
+  // @Query(() => ResultadosSeguimientoResponse)
+  // async resultadosFinales(
+  //   @Args('input') input: FiltroFechasInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.reportesService.getResultadosFinales(input, user);
+  // }
 
-  // * HISTORICO
-  @Query(() => SisconcapHistoricoResponseDto)
-  async historico(
-    @Args('input') input: SisconcapHistoricoFiltroInput,
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.reportesService.getHistoricos(input, user);
-  }
+  // // * HISTORICO
+  // @Query(() => SisconcapHistoricoResponseDto)
+  // async historico(
+  //   @Args('input') input: SisconcapHistoricoFiltroInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.reportesService.getHistoricos(input, user);
+  // }
 
-  // * BALANCE
-  @Query(() => BalanceResponse)
-  async balance(
-    @GetUserGraphQL() user: Usuario
-  ) {
-    return this.reportesService.getBalance(user);
-  }
+  // // * BALANCE
+  // @Query(() => BalanceResponse)
+  // async balance(
+  //   @Args('input') input: FiltroFechasInput,
+  //   @GetUserGraphQL() user: Usuario
+  // ) {
+  //   return this.reportesService.getBalance(input, user);
+  // }
 
 }

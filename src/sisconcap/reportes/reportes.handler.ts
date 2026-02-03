@@ -69,9 +69,9 @@ export class ReportesHandler {
     // * BALANCE
     @MessagePattern('reportes-sisconcap.balance')
     handleGetBalance(
-        @Payload() { user }: { user: Usuario }
+        @Payload() { input, user }: { input: FiltroFechasInput, user: Usuario }
     ) {
-        return this._service.getBalance(user)
+        return this._service.getBalance(input, user)
     }
 
 }
