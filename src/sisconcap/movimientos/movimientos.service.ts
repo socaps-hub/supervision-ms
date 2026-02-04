@@ -1044,37 +1044,6 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
         /* =========================
          * AND – filtros por columna
          * ========================= */
-        // if (filters) {
-        //     where.AND = [];
-
-        //     for (const [field, meta] of Object.entries(filters)) {
-        //         if (!meta) continue;
-
-        //         const constraints = Array.isArray(meta)
-        //             ? meta
-        //             : meta.constraints ?? [];
-
-        //         for (const constraint of constraints) {
-        //             if (
-        //                 constraint?.value === null ||
-        //                 constraint?.value === undefined ||
-        //                 constraint?.value === ''
-        //             ) {
-        //                 continue;
-        //             }
-
-        //             const mapped = mapPrimeFilterToPrisma(field, constraint);
-
-        //             if (Object.keys(mapped).length) {
-        //                 where.AND.push(mapped);
-        //             }
-        //         }
-        //     }
-
-        //     if (!where.AND.length) {
-        //         delete where.AND;
-        //     }
-        // }
         Object.assign(
             where,
             buildPrismaWhereFromPrimeFilters(filters),
