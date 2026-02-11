@@ -632,7 +632,7 @@ export class MovimientosService extends PrismaClient implements OnModuleInit {
             this.logger.error('❌ Error en updateFase1:', error);
             return {
                 success: false,
-                message: error.message || 'No se pudo actualizar el movimiento',
+                message: error instanceof Error ? error.message : 'No se pudo actualizar el movimiento',
             };
         }
     }
