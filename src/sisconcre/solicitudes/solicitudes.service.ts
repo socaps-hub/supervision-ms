@@ -763,7 +763,7 @@ export class SolicitudesService extends PrismaClient implements OnModuleInit {
                         },
                     },
                 },
-
+                resumenF3: true,
                 resumenF4: {
                     include: { evaluador: true },
                 },
